@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-trama-green-50: #f0fdf4;
+  --color-trama-green-100: #dcfce7;
+  --color-trama-green-500: #22c55e;
+  --color-trama-green-600: #16a34a;
+  --color-trama-green-700: #15803d;
+
+  --color-trama-sand-50: #fafaf7;
+  --color-trama-sand-100: #f5f5f0;
+  --color-trama-sand-200: #e8e8e0;
+
+  --color-trama-dark: #1a1a1a;
+  --color-trama-brand: #2e7d54;
+  --color-trama-gold: #e3a92b;
+}
