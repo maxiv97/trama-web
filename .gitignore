@@ -141,3 +141,17 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Angular
+/.angular/cache
+/out-tsc
+/bazel-out
+.angular/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Local tooling
+.claude/
+.vscode/
