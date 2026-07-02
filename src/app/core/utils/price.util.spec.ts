@@ -1,0 +1,14 @@
+import { describe, expect, it } from 'vitest';
+import { calculateConsignorAmount, calculateSalePrice } from './price.util';
+
+describe('price util', () => {
+  it('calcula el precio de venta desde el precio del cedente y su porcentaje', () => {
+    expect(calculateSalePrice(7000, 70)).toBe(10000);
+    expect(calculateSalePrice(3000, 30)).toBe(10000);
+  });
+
+  it('calcula el monto del cedente desde la venta real y su porcentaje', () => {
+    expect(calculateConsignorAmount(10000, 70)).toBe(7000);
+    expect(calculateConsignorAmount(12000, 30)).toBe(3600);
+  });
+});

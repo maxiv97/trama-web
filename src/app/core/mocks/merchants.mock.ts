@@ -1,0 +1,75 @@
+import { Merchant } from '../models/user.model';
+
+export const MERCHANTS: Merchant[] = [
+  {
+    id: 'mer-trama',
+    name: 'María López',
+    email: 'contacto@tramaboutique.com',
+    phone: '351-3000001',
+    role: 'merchant',
+    verified: true,
+    createdAt: new Date('2026-01-15'),
+    accountStatus: 'active',
+    location: { neighborhood: 'Nueva Córdoba', city: 'Córdoba', lat: -31.4281, lng: -64.1888 },
+    businessName: 'Trama Boutique',
+    salesPoints: [
+      {
+        id: 'sp-nc',
+        merchantId: 'mer-trama',
+        name: 'Trama Nueva Córdoba',
+        address: 'Independencia 700',
+        geo: { lat: -31.4281, lng: -64.1888 },
+        phone: '351-3000001',
+        receptionSchedule: {
+          days: 'Lun a Vie',
+          hours: '10 a 18 h',
+          instructions: 'Preguntar por Recepción en planta baja.',
+        },
+      },
+      {
+        id: 'sp-cr',
+        merchantId: 'mer-trama',
+        name: 'Trama Cerro',
+        address: 'Rafael Núñez 4500',
+        geo: { lat: -31.3605, lng: -64.2456 },
+        phone: '351-3000003',
+        receptionSchedule: {
+          days: 'Mar a Sáb',
+          hours: '11 a 19 h',
+          instructions: 'Entregar en mostrador con DNI.',
+        },
+      },
+    ],
+    commissionConfig: { consignorPercentage: 30, merchantPercentage: 70 },
+    terms: { saleWindowMonths: 3, graceMonths: 1, payoutDay: 20 },
+  },
+  {
+    id: 'mer-vintage',
+    name: 'Sofía Paz',
+    email: 'hola@vintagecba.com',
+    phone: '351-3000002',
+    role: 'merchant',
+    verified: true,
+    createdAt: new Date('2026-02-20'),
+    accountStatus: 'active',
+    location: { neighborhood: 'Güemes', city: 'Córdoba', lat: -31.4256, lng: -64.195 },
+    businessName: 'Vintage Córdoba',
+    salesPoints: [
+      {
+        id: 'sp-gu',
+        merchantId: 'mer-vintage',
+        name: 'Vintage Güemes',
+        address: 'Belgrano 800',
+        geo: { lat: -31.4256, lng: -64.195 },
+        phone: '351-3000002',
+        receptionSchedule: {
+          days: 'Lun a Sáb',
+          hours: '10 a 20 h',
+          instructions: 'Timbre local 2.',
+        },
+      },
+    ],
+    commissionConfig: { consignorPercentage: 40, merchantPercentage: 60 },
+    terms: { saleWindowMonths: 3, graceMonths: 1, payoutDay: 15 },
+  },
+];
