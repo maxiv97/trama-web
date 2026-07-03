@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Proposal } from '../models/proposal.model';
+import { Proposal, ProposalStatus } from '../models/proposal.model';
 import { MockStore } from '../mocks/mock-store';
 import { mockResponse } from '../mocks/mock-response';
 
@@ -25,6 +25,15 @@ export class ProposalsService {
     };
     this.store.data.proposals.push(proposal);
     this.store.persist();
+    return mockResponse(proposal);
+  }
+
+  setStatus(garmentId: string, status: ProposalStatus): Observable<Proposal | undefined> {
+    const proposal = this.store.data.proposals.find((item) => item.garmentId === garmentId);
+    if (proposal) {
+      proposal.status = status;
+      this.store.persist();
+    }
     return mockResponse(proposal);
   }
 

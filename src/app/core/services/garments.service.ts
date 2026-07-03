@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Garment } from '../models/garment.model';
-import { transition } from '../state-machine/garment.state-machine';
+import { Observable, throwError } from 'rxjs';
+import { EventActor, Garment } from '../models/garment.model';
+import { GarmentAction, transition } from '../state-machine/garment.state-machine';
 import { MockStore } from '../mocks/mock-store';
 import { mockResponse } from '../mocks/mock-response';
 
@@ -29,6 +29,23 @@ export class GarmentsService {
       ],
     };
     this.store.data.garments.push(garment);
+    this.store.persist();
+    return mockResponse(garment);
+  }
+
+  applyAction(
+    id: string,
+    action: GarmentAction,
+    actor: EventActor,
+    note?: string,
+  ): Observable<Garment> {
+    const garment = this.store.data.garments.find((item) => item.id === id);
+    if (!garment) {
+      return throwError(() => new Error(`Prenda no encontrada: ${id}`));
+    }
+    const status = transition(garment.status, action);
+    garment.status = status;
+    garment.timeline.push({ date: new Date(), actor, status, note });
     this.store.persist();
     return mockResponse(garment);
   }

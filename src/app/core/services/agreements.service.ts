@@ -12,6 +12,12 @@ export class AgreementsService {
     return mockResponse(this.store.data.agreements);
   }
 
+  create(agreement: Agreement): Observable<Agreement> {
+    this.store.data.agreements.push(agreement);
+    this.store.persist();
+    return mockResponse(agreement);
+  }
+
   byGarment(garmentId: string): Observable<Agreement | undefined> {
     return mockResponse(
       this.store.data.agreements.find((agreement) => agreement.garmentId === garmentId),

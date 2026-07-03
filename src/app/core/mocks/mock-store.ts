@@ -29,7 +29,7 @@ export interface MockData {
 
 const STORAGE_KEY = 'trama.mockdb';
 const VERSION_KEY = 'trama.mockdb.version';
-const SEED_VERSION = '2';
+const SEED_VERSION = '3';
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 
 function seed(): MockData {
