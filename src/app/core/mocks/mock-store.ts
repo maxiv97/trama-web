@@ -11,6 +11,7 @@ import { CONSIGNORS } from './consignors.mock';
 import { MERCHANTS } from './merchants.mock';
 import { GARMENTS } from './garments.mock';
 import { PROPOSALS } from './proposals.mock';
+import { AGREEMENTS } from './agreements.mock';
 import { PAYOUTS } from './payouts.mock';
 import { NOTIFICATIONS } from './notifications.mock';
 
@@ -27,6 +28,8 @@ export interface MockData {
 }
 
 const STORAGE_KEY = 'trama.mockdb';
+const VERSION_KEY = 'trama.mockdb.version';
+const SEED_VERSION = '2';
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 
 function seed(): MockData {
@@ -35,7 +38,7 @@ function seed(): MockData {
     merchants: MERCHANTS,
     garments: GARMENTS,
     proposals: PROPOSALS,
-    agreements: [] as Agreement[],
+    agreements: AGREEMENTS,
     receptions: [] as Reception[],
     sales: [] as Sale[],
     payouts: PAYOUTS,
@@ -52,19 +55,25 @@ export class MockStore {
   }
 
   persist(): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state));
+    this.write(this.state);
   }
 
   reset(): void {
     this.state = seed();
-    this.persist();
+    this.write(this.state);
+  }
+
+  private write(data: MockData): void {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    localStorage.setItem(VERSION_KEY, SEED_VERSION);
   }
 
   private load(): MockData {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
+    const version = localStorage.getItem(VERSION_KEY);
+    if (!raw || version !== SEED_VERSION) {
       const fresh = seed();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+      this.write(fresh);
       return fresh;
     }
     return JSON.parse(raw, (_key, value) =>

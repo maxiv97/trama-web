@@ -20,8 +20,8 @@ export class AuthService {
   loginAs(role: Role): void {
     const user: SessionUser =
       role === 'consignor'
-        ? { id: 'demo-consignor', name: 'Cedente demo', role }
-        : { id: 'demo-merchant', name: 'Comercio demo', role };
+        ? { id: 'con-ana', name: 'Ana Gómez', role }
+        : { id: 'mer-trama', name: 'María López', role };
     this.currentUser.set(user);
     localStorage.setItem(AuthService.STORAGE_KEY, JSON.stringify(user));
   }
