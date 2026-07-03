@@ -47,10 +47,8 @@ const MENUS: Record<Role, NavItem[]> = {
   selector: 'app-shell',
   imports: [RouterLink, RouterLinkActive, LucideAngularModule],
   template: `
-    @if (isPublic()) {
-      <ng-content />
-    } @else {
-      <div class="min-h-screen bg-trama-sand-50">
+    <div [class]="isPublic() ? '' : 'min-h-screen bg-trama-sand-50'">
+      @if (!isPublic()) {
         <aside
           class="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-trama-sand-200 bg-white md:flex"
         >
@@ -82,11 +80,13 @@ const MENUS: Record<Role, NavItem[]> = {
             <span>Salir</span>
           </button>
         </aside>
+      }
 
-        <main class="px-4 py-6 pb-24 md:ml-60 md:px-8 md:pb-6">
-          <ng-content />
-        </main>
+      <div [class]="isPublic() ? '' : 'px-4 py-6 pb-24 md:ml-60 md:px-8 md:pb-6'">
+        <ng-content />
+      </div>
 
+      @if (!isPublic()) {
         <nav
           class="fixed inset-x-0 bottom-0 z-40 flex border-t border-trama-sand-200 bg-white md:hidden"
         >
@@ -104,8 +104,8 @@ const MENUS: Record<Role, NavItem[]> = {
             </a>
           }
         </nav>
-      </div>
-    }
+      }
+    </div>
   `,
 })
 export class Shell {
