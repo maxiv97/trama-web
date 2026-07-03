@@ -4,9 +4,29 @@ import { Proposal } from '../models/proposal.model';
 import { MockStore } from '../mocks/mock-store';
 import { mockResponse } from '../mocks/mock-response';
 
+export interface NewProposal {
+  garmentId: string;
+  requestedConsignorPrice: number;
+  calculatedSalePrice: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProposalsService {
   private readonly store = inject(MockStore);
+
+  create(input: NewProposal): Observable<Proposal> {
+    const proposal: Proposal = {
+      id: `prop-${Date.now()}`,
+      garmentId: input.garmentId,
+      requestedConsignorPrice: input.requestedConsignorPrice,
+      calculatedSalePrice: input.calculatedSalePrice,
+      status: 'under_review',
+      createdAt: new Date(),
+    };
+    this.store.data.proposals.push(proposal);
+    this.store.persist();
+    return mockResponse(proposal);
+  }
 
   getById(id: string): Observable<Proposal | undefined> {
     return mockResponse(this.store.data.proposals.find((proposal) => proposal.id === id));
