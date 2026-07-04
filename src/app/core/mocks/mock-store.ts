@@ -12,6 +12,7 @@ import { MERCHANTS } from './merchants.mock';
 import { GARMENTS } from './garments.mock';
 import { PROPOSALS } from './proposals.mock';
 import { AGREEMENTS } from './agreements.mock';
+import { SALES } from './sales.mock';
 import { PAYOUTS } from './payouts.mock';
 import { NOTIFICATIONS } from './notifications.mock';
 
@@ -29,7 +30,7 @@ export interface MockData {
 
 const STORAGE_KEY = 'trama.mockdb';
 const VERSION_KEY = 'trama.mockdb.version';
-const SEED_VERSION = '4';
+const SEED_VERSION = '5';
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 
 function seed(): MockData {
@@ -40,7 +41,7 @@ function seed(): MockData {
     proposals: PROPOSALS,
     agreements: AGREEMENTS,
     receptions: [] as Reception[],
-    sales: [] as Sale[],
+    sales: SALES,
     payouts: PAYOUTS,
     notifications: NOTIFICATIONS,
   });

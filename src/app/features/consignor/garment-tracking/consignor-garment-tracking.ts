@@ -15,12 +15,14 @@ import {
 import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
+import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Merchant } from '../../../core/models/user.model';
 import { AgreementsService } from '../../../core/services/agreements.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
@@ -30,12 +32,18 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
+const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+};
+
 interface TrackingData {
   garment: Garment;
   proposal?: Proposal;
   agreement?: Agreement;
   merchant?: Merchant;
   salesPoint?: SalesPoint;
+  sale?: Sale;
 }
 
 type TrackingState =
@@ -209,27 +217,42 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
               @case ('sold') {
                 <div class="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
                   <p class="text-sm font-medium text-trama-dark">¡Tu prenda fue vendida!</p>
-                  @if (d.agreement; as agreement) {
-                    <div class="grid grid-cols-2 gap-4">
-                      <div>
-                        <p class="text-xs text-trama-dark/50">Te corresponde</p>
-                        <p class="text-lg font-semibold text-trama-dark">
-                          {{ agreement.agreedConsignorPrice | money }}
-                        </p>
-                      </div>
-                      <div>
-                        <p class="text-xs text-trama-dark/50">Comisión del comercio</p>
-                        <p class="text-lg font-semibold text-trama-dark">
-                          {{ agreement.agreedSalePrice - agreement.agreedConsignorPrice | money }}
-                        </p>
-                      </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-xs text-trama-dark/50">Te corresponde</p>
+                      <p class="text-lg font-semibold text-trama-dark">
+                        {{ settlementConsignor() | money }}
+                      </p>
                     </div>
-                  }
+                    <div>
+                      <p class="text-xs text-trama-dark/50">Comisión del comercio</p>
+                      <p class="text-lg font-semibold text-trama-dark">
+                        {{ settlementMerchant() | money }}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               }
               @case ('paid_out') {
-                <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-                  <p class="text-sm text-trama-dark/80">Recibiste tu pago.</p>
+                <div class="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <p class="text-sm font-medium text-trama-dark">¡Recibiste tu pago!</p>
+                  <div>
+                    <p class="text-xs text-trama-dark/50">Cobraste</p>
+                    <p class="text-lg font-semibold text-trama-dark">
+                      {{ settlementConsignor() | money }}
+                    </p>
+                  </div>
+                  @if (d.sale; as sale) {
+                    @if (sale.paidAt) {
+                      <p class="text-sm text-trama-dark/70">
+                        {{ methodLabel(sale.paymentMethod) }}
+                        @if (sale.receiptNumber) {
+                          · Comp. {{ sale.receiptNumber }}
+                        }
+                        · {{ sale.paidAt | shortDate }}
+                      </p>
+                    }
+                  }
                 </div>
               }
               @case ('no_agreement') {
@@ -265,6 +288,7 @@ export class ConsignorGarmentTracking {
   private readonly proposalsService = inject(ProposalsService);
   private readonly agreementsService = inject(AgreementsService);
   private readonly merchantsService = inject(MerchantsService);
+  private readonly salesService = inject(SalesService);
   private readonly toast = inject(ToastService);
 
   private readonly garmentId = toSignal(
@@ -293,6 +317,22 @@ export class ConsignorGarmentTracking {
     const current = this.state();
     return current.status === 'loaded' ? current.data : null;
   });
+
+  protected readonly settlementConsignor = computed(() => {
+    const d = this.data();
+    return d?.sale?.consignorAmount ?? d?.agreement?.agreedConsignorPrice ?? 0;
+  });
+
+  protected readonly settlementMerchant = computed(() => {
+    const d = this.data();
+    if (d?.sale) return d.sale.merchantCommission;
+    if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
+    return 0;
+  });
+
+  protected methodLabel(method?: PaymentMethod): string {
+    return method ? PAYMENT_METHOD_LABELS[method] : '—';
+  }
 
   protected readonly activeModal = signal<ActiveModal>(null);
   protected readonly acting = signal(false);
@@ -430,14 +470,16 @@ export class ConsignorGarmentTracking {
           merchant: garment.merchantId
             ? this.merchantsService.getById(garment.merchantId)
             : of(undefined),
+          sale: this.salesService.byGarment(id),
         }).pipe(
           map(
-            ({ proposal, agreement, merchant }): TrackingData => ({
+            ({ proposal, agreement, merchant, sale }): TrackingData => ({
               garment,
               proposal,
               agreement,
               merchant,
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
+              sale,
             }),
           ),
         );

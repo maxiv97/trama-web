@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
@@ -16,6 +16,7 @@ import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Reception, ReceptionDiscrepancy } from '../../../core/models/reception.model';
+import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Consignor, Merchant } from '../../../core/models/user.model';
 import { AgreementsService } from '../../../core/services/agreements.service';
@@ -24,10 +25,13 @@ import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
+import { SalesService } from '../../../core/services/sales.service';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { Timeline } from '../../../shared/components/timeline/timeline';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 
@@ -40,6 +44,11 @@ const DISCREPANCY_LABELS: Record<ReceptionDiscrepancy, string> = {
   hygiene: 'Sin higienizar',
 };
 
+const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Efectivo',
+  transfer: 'Transferencia',
+};
+
 interface TrackingData {
   garment: Garment;
   proposal?: Proposal;
@@ -48,6 +57,7 @@ interface TrackingData {
   merchant?: Merchant;
   salesPoint?: SalesPoint;
   reception?: Reception;
+  sale?: Sale;
 }
 
 type TrackingState =
@@ -57,7 +67,16 @@ type TrackingState =
 
 @Component({
   selector: 'app-merchant-garment-tracking',
-  imports: [RouterLink, PhotoGallery, ProgressTracker, Timeline, StatusBadge, MoneyPipe, ShortDatePipe],
+  imports: [
+    RouterLink,
+    PhotoGallery,
+    ProgressTracker,
+    Timeline,
+    StatusBadge,
+    ConfirmModal,
+    MoneyPipe,
+    ShortDatePipe,
+  ],
   template: `
     @if (isLoading()) {
       <div class="flex min-h-[60vh] items-center justify-center">
@@ -144,9 +163,7 @@ type TrackingState =
               }
               @case ('with_remarks') {
                 <div class="space-y-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
-                  <p class="text-sm font-medium text-trama-dark">
-                    Recibida con observaciones.
-                  </p>
+                  <p class="text-sm font-medium text-trama-dark">Recibida con observaciones.</p>
                   @if (d.reception; as reception) {
                     @if (reception.discrepancies.length) {
                       <ul class="list-disc pl-5 text-sm text-trama-dark/70">
@@ -177,23 +194,106 @@ type TrackingState =
                 </div>
               }
               @case ('sold') {
-                <div class="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                <div class="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
                   <p class="text-sm font-medium text-trama-dark">Prenda vendida.</p>
-                  @if (d.agreement; as agreement) {
-                    <div class="grid grid-cols-2 gap-4">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-xs text-trama-dark/50">Le corresponde al cedente</p>
+                      <p class="text-lg font-semibold text-trama-dark">
+                        {{ settlementConsignor() | money }}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
+                      <p class="text-lg font-semibold text-trama-dark">
+                        {{ settlementMerchant() | money }}
+                      </p>
+                    </div>
+                  </div>
+                  @if (!payingOut()) {
+                    <button
+                      type="button"
+                      (click)="payingOut.set(true)"
+                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    >
+                      Marcar liquidación pagada
+                    </button>
+                  } @else {
+                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-white p-4">
                       <div>
-                        <p class="text-xs text-trama-dark/50">Le corresponde al cedente</p>
-                        <p class="text-lg font-semibold text-trama-dark">
-                          {{ agreement.agreedConsignorPrice | money }}
-                        </p>
+                        <label class="mb-1 block text-sm font-medium text-trama-dark"
+                          >Método de pago</label
+                        >
+                        <select
+                          [value]="paymentMethod()"
+                          (change)="paymentMethod.set($any($event.target).value)"
+                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                        >
+                          <option value="transfer">Transferencia</option>
+                          <option value="cash">Efectivo</option>
+                        </select>
                       </div>
                       <div>
-                        <p class="text-xs text-trama-dark/50">Tu comisión</p>
-                        <p class="text-lg font-semibold text-trama-dark">
-                          {{ agreement.agreedSalePrice - agreement.agreedConsignorPrice | money }}
-                        </p>
+                        <label class="mb-1 block text-sm font-medium text-trama-dark"
+                          >Nº de comprobante</label
+                        >
+                        <input
+                          type="text"
+                          [value]="receiptNumber()"
+                          (input)="receiptNumber.set($any($event.target).value)"
+                          placeholder="Opcional"
+                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                        />
+                      </div>
+                      <div class="flex gap-3">
+                        <button
+                          type="button"
+                          (click)="confirmingPayout.set(true)"
+                          [disabled]="acting()"
+                          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                        >
+                          {{ acting() ? 'Registrando…' : 'Registrar pago' }}
+                        </button>
+                        <button
+                          type="button"
+                          (click)="payingOut.set(false)"
+                          [disabled]="acting()"
+                          class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-40"
+                        >
+                          Cancelar
+                        </button>
                       </div>
                     </div>
+                  }
+                </div>
+              }
+              @case ('paid_out') {
+                <div class="space-y-2 rounded-2xl border border-trama-sand-200 bg-white p-5">
+                  <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <p class="text-xs text-trama-dark/50">Le pagaste al cedente</p>
+                      <p class="text-lg font-semibold text-trama-dark">
+                        {{ settlementConsignor() | money }}
+                      </p>
+                    </div>
+                    <div>
+                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
+                      <p class="text-lg font-semibold text-trama-dark">
+                        {{ settlementMerchant() | money }}
+                      </p>
+                    </div>
+                  </div>
+                  @if (d.sale; as sale) {
+                    @if (sale.paidAt) {
+                      <p class="text-sm text-trama-dark/70">
+                        {{ methodLabel(sale.paymentMethod) }}
+                        @if (sale.receiptNumber) {
+                          · Comp. {{ sale.receiptNumber }}
+                        }
+                        · {{ sale.paidAt | shortDate }}
+                      </p>
+                    }
                   }
                 </div>
               }
@@ -207,11 +307,6 @@ type TrackingState =
                   <p class="text-sm text-trama-dark/70">
                     Contraoferta enviada. Esperando la respuesta del cedente.
                   </p>
-                </div>
-              }
-              @case ('paid_out') {
-                <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-                  <p class="text-sm text-trama-dark/80">Liquidación pagada.</p>
                 </div>
               }
               @case ('no_agreement') {
@@ -228,6 +323,15 @@ type TrackingState =
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
+
+      <app-confirm-modal
+        [open]="confirmingPayout()"
+        title="Registrar liquidación"
+        body="La prenda quedará marcada como pagada al cedente. ¿Confirmás el pago?"
+        confirmLabel="Registrar"
+        (confirmed)="markPaidOut()"
+        (cancelled)="confirmingPayout.set(false)"
+      />
     }
   `,
 })
@@ -239,6 +343,14 @@ export class MerchantGarmentTracking {
   private readonly consignorsService = inject(ConsignorsService);
   private readonly merchantsService = inject(MerchantsService);
   private readonly receptionsService = inject(ReceptionsService);
+  private readonly salesService = inject(SalesService);
+  private readonly toast = inject(ToastService);
+
+  protected readonly payingOut = signal(false);
+  protected readonly confirmingPayout = signal(false);
+  protected readonly paymentMethod = signal<PaymentMethod>('transfer');
+  protected readonly receiptNumber = signal('');
+  protected readonly acting = signal(false);
 
   private readonly garmentId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
@@ -267,8 +379,59 @@ export class MerchantGarmentTracking {
     return current.status === 'loaded' ? current.data : null;
   });
 
+  protected readonly settlementConsignor = computed(() => {
+    const d = this.data();
+    return d?.sale?.consignorAmount ?? d?.agreement?.agreedConsignorPrice ?? 0;
+  });
+
+  protected readonly settlementMerchant = computed(() => {
+    const d = this.data();
+    if (d?.sale) return d.sale.merchantCommission;
+    if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
+    return 0;
+  });
+
   protected discrepancyLabel(discrepancy: ReceptionDiscrepancy): string {
     return DISCREPANCY_LABELS[discrepancy];
+  }
+
+  protected methodLabel(method?: PaymentMethod): string {
+    return method ? PAYMENT_METHOD_LABELS[method] : '—';
+  }
+
+  protected markPaidOut(): void {
+    const d = this.data();
+    this.confirmingPayout.set(false);
+    if (!d || this.acting()) return;
+
+    const garmentId = d.garment.id;
+    const method = this.paymentMethod();
+    const receipt = this.receiptNumber().trim();
+    const note = `Pago: ${this.methodLabel(method)} · Comp. ${receipt || '—'}`;
+
+    this.acting.set(true);
+    this.garmentsService
+      .applyAction(garmentId, 'MARK_PAID_OUT', 'merchant', note)
+      .pipe(
+        switchMap(() =>
+          this.salesService.markPaid(garmentId, {
+            paymentMethod: method,
+            receiptNumber: receipt || undefined,
+          }),
+        ),
+      )
+      .subscribe({
+        next: () => {
+          this.acting.set(false);
+          this.payingOut.set(false);
+          this.toast.show('Liquidación registrada');
+          this.reload.next();
+        },
+        error: () => {
+          this.acting.set(false);
+          this.toast.show('No pudimos registrar la liquidación', 'error');
+        },
+      });
   }
 
   private load(): Observable<TrackingData> {
@@ -284,9 +447,10 @@ export class MerchantGarmentTracking {
             ? this.merchantsService.getById(garment.merchantId)
             : of(undefined),
           reception: this.receptionsService.byGarment(id),
+          sale: this.salesService.byGarment(id),
         }).pipe(
           map(
-            ({ proposal, agreement, consignor, merchant, reception }): TrackingData => ({
+            ({ proposal, agreement, consignor, merchant, reception, sale }): TrackingData => ({
               garment,
               proposal,
               agreement,
@@ -294,6 +458,7 @@ export class MerchantGarmentTracking {
               merchant,
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
               reception,
+              sale,
             }),
           ),
         );
