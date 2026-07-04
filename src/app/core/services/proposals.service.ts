@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Proposal, ProposalStatus } from '../models/proposal.model';
+import { Counteroffer, Proposal, ProposalStatus } from '../models/proposal.model';
 import { MockStore } from '../mocks/mock-store';
 import { mockResponse } from '../mocks/mock-response';
 
@@ -32,6 +32,19 @@ export class ProposalsService {
     const proposal = this.store.data.proposals.find((item) => item.garmentId === garmentId);
     if (proposal) {
       proposal.status = status;
+      this.store.persist();
+    }
+    return mockResponse(proposal);
+  }
+
+  setCounteroffer(
+    garmentId: string,
+    counteroffer: Counteroffer,
+  ): Observable<Proposal | undefined> {
+    const proposal = this.store.data.proposals.find((item) => item.garmentId === garmentId);
+    if (proposal) {
+      proposal.counteroffer = counteroffer;
+      proposal.status = 'counteroffer';
       this.store.persist();
     }
     return mockResponse(proposal);

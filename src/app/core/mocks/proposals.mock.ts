@@ -30,4 +30,12 @@ export const PROPOSALS: Proposal[] = [
     status: 'agreed',
     createdAt: new Date('2026-06-18'),
   },
+  {
+    id: 'prop-4',
+    garmentId: 'gar-6',
+    requestedConsignorPrice: 7500,
+    calculatedSalePrice: 25000,
+    status: 'under_review',
+    createdAt: new Date('2026-06-29'),
+  },
 ];
