@@ -13,3 +13,27 @@ export interface Payout {
   paymentMethod?: string;
   receiptNumber?: string;
 }
+
+export interface MonthlyPayoutLine {
+  garmentId: string;
+  garmentName: string;
+  soldAt: Date;
+  consignorAmount: number;
+  paid: boolean;
+}
+
+export interface MonthlyPayout {
+  key: string;
+  month: string;
+  counterpartId: string;
+  counterpartName: string;
+  counterpartDni?: string;
+  lines: MonthlyPayoutLine[];
+  unpaidGarmentIds: string[];
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  status: PayoutStatus;
+  dueDate: Date;
+  paidAt?: Date;
+}
