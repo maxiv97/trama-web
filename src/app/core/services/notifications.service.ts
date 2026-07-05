@@ -16,6 +16,12 @@ export class NotificationsService {
     );
   }
 
+  create(notification: Notification): Observable<Notification> {
+    this.store.data.notifications.push(notification);
+    this.store.persist();
+    return mockResponse(notification);
+  }
+
   unreadCountFor(userId: string): number {
     return this.store.data.notifications.filter(
       (notification) => notification.userId === userId && !notification.read,
