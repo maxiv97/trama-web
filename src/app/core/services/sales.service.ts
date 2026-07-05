@@ -8,6 +8,10 @@ import { mockResponse } from '../mocks/mock-response';
 export class SalesService {
   private readonly store = inject(MockStore);
 
+  list(): Observable<Sale[]> {
+    return mockResponse(this.store.data.sales);
+  }
+
   byGarment(garmentId: string): Observable<Sale | undefined> {
     return mockResponse(this.store.data.sales.find((sale) => sale.garmentId === garmentId));
   }
