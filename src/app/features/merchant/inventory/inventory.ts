@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GarmentStatus } from '../../../core/models/garment.model';
@@ -130,9 +130,11 @@ type InventoryState =
             (change)="consignorFilter.set($any($event.target).value)"
             class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
           >
-            <option value="all">Todos los cedentes</option>
+            <option value="all" [selected]="consignorFilter() === 'all'">Todos los cedentes</option>
             @for (option of d.consignors; track option.id) {
-              <option [value]="option.id">{{ option.name }}</option>
+              <option [value]="option.id" [selected]="consignorFilter() === option.id">
+                {{ option.name }}
+              </option>
             }
           </select>
           <select
@@ -208,6 +210,7 @@ type InventoryState =
   `,
 })
 export class Inventory {
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly garmentsService = inject(GarmentsService);
   private readonly consignorsService = inject(ConsignorsService);
@@ -218,7 +221,9 @@ export class Inventory {
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilter>('all');
-  protected readonly consignorFilter = signal('all');
+  protected readonly consignorFilter = signal(
+    this.route.snapshot.queryParamMap.get('consignor') ?? 'all',
+  );
   protected readonly salesPointFilter = signal('all');
 
   private readonly reload = new BehaviorSubject<void>(undefined);
