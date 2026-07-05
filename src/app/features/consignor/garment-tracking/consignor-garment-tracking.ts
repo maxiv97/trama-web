@@ -1,7 +1,447 @@
-import { Component } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  BehaviorSubject,
+  catchError,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+  throwError,
+} from 'rxjs';
+import { Agreement } from '../../../core/models/agreement.model';
+import { Garment } from '../../../core/models/garment.model';
+import { Proposal } from '../../../core/models/proposal.model';
+import { SalesPoint } from '../../../core/models/sales-point.model';
+import { Merchant } from '../../../core/models/user.model';
+import { AgreementsService } from '../../../core/services/agreements.service';
+import { GarmentsService } from '../../../core/services/garments.service';
+import { MerchantsService } from '../../../core/services/merchants.service';
+import { ProposalsService } from '../../../core/services/proposals.service';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
+import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
+import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
+import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
+import { Timeline } from '../../../shared/components/timeline/timeline';
+import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+
+interface TrackingData {
+  garment: Garment;
+  proposal?: Proposal;
+  agreement?: Agreement;
+  merchant?: Merchant;
+  salesPoint?: SalesPoint;
+}
+
+type TrackingState =
+  | { status: 'loading'; data: null }
+  | { status: 'error'; data: null }
+  | { status: 'loaded'; data: TrackingData };
+
+type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
 
 @Component({
   selector: 'app-consignor-garment-tracking',
-  template: `<h1 class="text-2xl font-semibold text-trama-dark">Seguimiento del artículo</h1>`,
+  imports: [
+    RouterLink,
+    ProgressTracker,
+    Timeline,
+    PhotoGallery,
+    StatusBadge,
+    ConfirmModal,
+    MoneyPipe,
+    ShortDatePipe,
+  ],
+  template: `
+    @if (isLoading()) {
+      <div class="flex min-h-[60vh] items-center justify-center">
+        <div
+          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
+        ></div>
+      </div>
+    } @else if (isError()) {
+      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
+        <p class="text-trama-dark/70">No encontramos esta prenda.</p>
+        <a
+          routerLink="/c"
+          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+          >Volver al panel</a
+        >
+      </div>
+    } @else if (data(); as d) {
+      <div class="space-y-6">
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
+          <app-status-badge [status]="d.garment.status" />
+          <span class="text-sm text-trama-dark/50"
+            >Cargada el {{ d.garment.createdAt | shortDate }}</span
+          >
+        </div>
+
+        <div class="grid gap-6 md:grid-cols-3">
+          <div class="md:col-span-1">
+            <app-photo-gallery [photos]="d.garment.photos" />
+          </div>
+
+          <div class="space-y-6 md:col-span-2">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <p class="text-xs text-trama-dark/50">Precio que pediste</p>
+                <p class="mt-1 text-lg font-semibold text-trama-dark">
+                  {{ d.proposal?.requestedConsignorPrice | money }}
+                </p>
+              </div>
+              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
+                <p class="mt-1 text-lg font-semibold text-trama-dark">
+                  {{ d.agreement?.agreedSalePrice | money }}
+                </p>
+              </div>
+            </div>
+
+            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <app-progress-tracker [currentStatus]="d.garment.status" />
+            </div>
+
+            @switch (d.garment.status) {
+              @case ('under_review') {
+                <div class="rounded-2xl bg-trama-sand-50 p-5">
+                  <p class="text-sm text-trama-dark/80">
+                    Tu propuesta está siendo evaluada por el comercio.
+                  </p>
+                </div>
+              }
+              @case ('counteroffer') {
+                <div class="space-y-4 rounded-2xl border border-orange-200 bg-orange-50 p-5">
+                  <p class="text-sm font-medium text-trama-dark">
+                    El comercio te hizo una contraoferta.
+                  </p>
+                  @if (d.proposal?.counteroffer; as counter) {
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <p class="text-xs text-trama-dark/50">Recibirías</p>
+                        <p class="text-lg font-semibold text-trama-dark">
+                          {{ counter.consignorPrice | money }}
+                        </p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-trama-dark/50">Se vendería a</p>
+                        <p class="text-lg font-semibold text-trama-dark">
+                          {{ counter.salePrice | money }}
+                        </p>
+                      </div>
+                    </div>
+                  }
+                  <div class="flex gap-3">
+                    <button
+                      type="button"
+                      (click)="openAccept()"
+                      [disabled]="acting()"
+                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                    >
+                      Aceptar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="openReject()"
+                      [disabled]="acting()"
+                      class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-40"
+                    >
+                      Rechazar
+                    </button>
+                  </div>
+                </div>
+              }
+              @case ('agreed') {
+                <div class="space-y-2 rounded-2xl border border-green-200 bg-green-50 p-5">
+                  <p class="text-sm font-medium text-trama-dark">
+                    ¡Acuerdo confirmado! Coordiná la entrega:
+                  </p>
+                  @if (d.salesPoint; as point) {
+                    <p class="text-sm text-trama-dark/80">
+                      <span class="font-medium">{{ point.name }}</span> — {{ point.address }}
+                    </p>
+                    <p class="text-sm text-trama-dark/70">
+                      Recepción: {{ point.receptionSchedule.days }}
+                      {{ point.receptionSchedule.hours }}
+                    </p>
+                    <p class="text-sm text-trama-dark/70">
+                      {{ point.receptionSchedule.instructions }}
+                    </p>
+                  }
+                  @if (d.agreement; as agreement) {
+                    <p class="text-sm text-trama-dark/70">
+                      Plazo de entrega: hasta {{ agreement.saleDeadline | shortDate }}
+                    </p>
+                  }
+                </div>
+              }
+              @case ('rejected') {
+                <div class="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-5">
+                  <p class="text-sm text-trama-dark/80">El comercio rechazó la recepción.</p>
+                  <button
+                    type="button"
+                    (click)="openRedeliver()"
+                    [disabled]="acting()"
+                    class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                  >
+                    Coordinar nueva entrega
+                  </button>
+                </div>
+              }
+              @case ('with_remarks') {
+                <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
+                  <p class="text-sm text-trama-dark/80">
+                    Tu prenda está en el comercio, recibida con observaciones.
+                  </p>
+                </div>
+              }
+              @case ('in_stock') {
+                <div class="rounded-2xl border border-green-200 bg-green-50 p-5">
+                  <p class="text-sm text-trama-dark/80">Tu prenda está en el comercio, en venta.</p>
+                </div>
+              }
+              @case ('sold') {
+                <div class="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                  <p class="text-sm font-medium text-trama-dark">¡Tu prenda fue vendida!</p>
+                  @if (d.agreement; as agreement) {
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <p class="text-xs text-trama-dark/50">Te corresponde</p>
+                        <p class="text-lg font-semibold text-trama-dark">
+                          {{ agreement.agreedConsignorPrice | money }}
+                        </p>
+                      </div>
+                      <div>
+                        <p class="text-xs text-trama-dark/50">Comisión del comercio</p>
+                        <p class="text-lg font-semibold text-trama-dark">
+                          {{ agreement.agreedSalePrice - agreement.agreedConsignorPrice | money }}
+                        </p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              @case ('paid_out') {
+                <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+                  <p class="text-sm text-trama-dark/80">Recibiste tu pago.</p>
+                </div>
+              }
+              @case ('no_agreement') {
+                <div class="rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
+                  <p class="text-sm text-trama-dark/70">No hubo acuerdo con el comercio.</p>
+                </div>
+              }
+            }
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
+          <app-timeline [events]="d.garment.timeline" />
+        </div>
+      </div>
+
+      <app-confirm-modal
+        [open]="activeModal() !== null"
+        [title]="modalTitle()"
+        [body]="modalBody()"
+        [confirmLabel]="modalConfirmLabel()"
+        [confirmColor]="modalColor()"
+        (confirmed)="onConfirmed()"
+        (cancelled)="activeModal.set(null)"
+      />
+    }
+  `,
 })
-export class ConsignorGarmentTracking {}
+export class ConsignorGarmentTracking {
+  private readonly route = inject(ActivatedRoute);
+  private readonly garmentsService = inject(GarmentsService);
+  private readonly proposalsService = inject(ProposalsService);
+  private readonly agreementsService = inject(AgreementsService);
+  private readonly merchantsService = inject(MerchantsService);
+  private readonly toast = inject(ToastService);
+
+  private readonly garmentId = toSignal(
+    this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
+    { initialValue: '' },
+  );
+
+  private readonly reload = new BehaviorSubject<void>(undefined);
+
+  private readonly state = toSignal(
+    this.reload.pipe(
+      switchMap(() =>
+        this.load().pipe(
+          map((data): TrackingState => ({ status: 'loaded', data })),
+          startWith<TrackingState>({ status: 'loading', data: null }),
+          catchError((): Observable<TrackingState> => of({ status: 'error', data: null })),
+        ),
+      ),
+    ),
+    { initialValue: { status: 'loading', data: null } as TrackingState },
+  );
+
+  protected readonly isLoading = computed(() => this.state().status === 'loading');
+  protected readonly isError = computed(() => this.state().status === 'error');
+  protected readonly data = computed(() => {
+    const current = this.state();
+    return current.status === 'loaded' ? current.data : null;
+  });
+
+  protected readonly activeModal = signal<ActiveModal>(null);
+  protected readonly acting = signal(false);
+
+  protected readonly modalTitle = computed(() => {
+    switch (this.activeModal()) {
+      case 'accept':
+        return 'Aceptar contraoferta';
+      case 'reject':
+        return 'Rechazar contraoferta';
+      case 'redeliver':
+        return 'Coordinar nueva entrega';
+      default:
+        return '';
+    }
+  });
+
+  protected readonly modalBody = computed(() => {
+    switch (this.activeModal()) {
+      case 'accept':
+        return 'Vas a aceptar el precio propuesto por el comercio y se generará el acuerdo.';
+      case 'reject':
+        return 'Vas a rechazar la contraoferta. La propuesta quedará sin acuerdo.';
+      case 'redeliver':
+        return 'Vas a coordinar una nueva entrega de la prenda con el comercio.';
+      default:
+        return '';
+    }
+  });
+
+  protected readonly modalConfirmLabel = computed(() =>
+    this.activeModal() === 'reject' ? 'Rechazar' : 'Confirmar',
+  );
+
+  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
+    this.activeModal() === 'reject' ? 'red' : 'green',
+  );
+
+  protected openAccept(): void {
+    this.activeModal.set('accept');
+  }
+
+  protected openReject(): void {
+    this.activeModal.set('reject');
+  }
+
+  protected openRedeliver(): void {
+    this.activeModal.set('redeliver');
+  }
+
+  protected onConfirmed(): void {
+    const modal = this.activeModal();
+    this.activeModal.set(null);
+    if (modal === 'accept') this.acceptCounteroffer();
+    else if (modal === 'reject') this.rejectCounteroffer();
+    else if (modal === 'redeliver') this.redeliver();
+  }
+
+  private acceptCounteroffer(): void {
+    const data = this.data();
+    const counter = data?.proposal?.counteroffer;
+    const merchant = data?.merchant;
+    if (!data || !counter || !merchant || this.acting()) return;
+
+    const agreedAt = new Date();
+    const saleDeadline = new Date(agreedAt);
+    saleDeadline.setMonth(saleDeadline.getMonth() + merchant.terms.saleWindowMonths);
+
+    this.acting.set(true);
+    this.garmentsService
+      .applyAction(data.garment.id, 'ACCEPT_COUNTEROFFER', 'consignor', 'Contraoferta aceptada')
+      .pipe(
+        switchMap(() =>
+          this.agreementsService.create({
+            garmentId: data.garment.id,
+            agreedConsignorPrice: counter.consignorPrice,
+            agreedSalePrice: counter.salePrice,
+            appliedCommission: merchant.commissionConfig.merchantPercentage,
+            agreedAt,
+            saleDeadline,
+          }),
+        ),
+        switchMap(() => this.proposalsService.setStatus(data.garment.id, 'agreed')),
+      )
+      .subscribe({
+        next: () => this.onActionSuccess('Aceptaste la contraoferta'),
+        error: () => this.onActionError(),
+      });
+  }
+
+  private rejectCounteroffer(): void {
+    const data = this.data();
+    if (!data || this.acting()) return;
+    this.acting.set(true);
+    this.garmentsService
+      .applyAction(data.garment.id, 'REJECT', 'consignor', 'Contraoferta rechazada')
+      .pipe(switchMap(() => this.proposalsService.setStatus(data.garment.id, 'no_agreement')))
+      .subscribe({
+        next: () => this.onActionSuccess('Rechazaste la contraoferta'),
+        error: () => this.onActionError(),
+      });
+  }
+
+  private redeliver(): void {
+    const data = this.data();
+    if (!data || this.acting()) return;
+    this.acting.set(true);
+    this.garmentsService
+      .applyAction(data.garment.id, 'REDELIVER', 'consignor', 'Nueva entrega coordinada')
+      .subscribe({
+        next: () => this.onActionSuccess('Coordinaste una nueva entrega'),
+        error: () => this.onActionError(),
+      });
+  }
+
+  private onActionSuccess(message: string): void {
+    this.acting.set(false);
+    this.toast.show(message);
+    this.reload.next();
+  }
+
+  private onActionError(): void {
+    this.acting.set(false);
+    this.toast.show('No pudimos completar la acción', 'error');
+  }
+
+  private load(): Observable<TrackingData> {
+    const id = this.garmentId();
+    return this.garmentsService.getById(id).pipe(
+      switchMap((garment) => {
+        if (!garment) return throwError(() => new Error(`Prenda no encontrada: ${id}`));
+        return forkJoin({
+          proposal: this.proposalsService.byGarment(id),
+          agreement: this.agreementsService.byGarment(id),
+          merchant: garment.merchantId
+            ? this.merchantsService.getById(garment.merchantId)
+            : of(undefined),
+        }).pipe(
+          map(
+            ({ proposal, agreement, merchant }): TrackingData => ({
+              garment,
+              proposal,
+              agreement,
+              merchant,
+              salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
+            }),
+          ),
+        );
+      }),
+    );
+  }
+}
