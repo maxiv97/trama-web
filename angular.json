@@ -39,6 +39,9 @@
           "builder": "@angular/build:application",
           "options": {
             "browser": "src/main.ts",
+            "allowedCommonJsDependencies": [
+              "leaflet"
+            ],
             "polyfills": [
               "zone.js"
             ],
@@ -50,6 +53,7 @@
               }
             ],
             "styles": [
+              "node_modules/leaflet/dist/leaflet.css",
               "src/styles.css"
             ]
           },
