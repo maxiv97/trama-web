@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { Merchant } from '../models/user.model';
 import { MockStore } from '../mocks/mock-store';
 import { mockResponse } from '../mocks/mock-response';
@@ -14,5 +14,15 @@ export class MerchantsService {
 
   getById(id: string): Observable<Merchant | undefined> {
     return mockResponse(this.store.data.merchants.find((merchant) => merchant.id === id));
+  }
+
+  update(merchant: Merchant): Observable<Merchant> {
+    const index = this.store.data.merchants.findIndex((item) => item.id === merchant.id);
+    if (index < 0) {
+      return throwError(() => new Error(`Comercio no encontrado: ${merchant.id}`));
+    }
+    this.store.data.merchants[index] = merchant;
+    this.store.persist();
+    return mockResponse(merchant);
   }
 }
