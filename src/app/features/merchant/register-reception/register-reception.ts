@@ -14,6 +14,7 @@ import {
 } from 'rxjs';
 import { Garment, GarmentCondition } from '../../../core/models/garment.model';
 import { GarmentAction } from '../../../core/state-machine/garment.state-machine';
+import { DISCREPANCY_OPTIONS } from '../../../core/models/reception.labels';
 import {
   ReceptionDiscrepancy,
   ReceptionResult,
@@ -47,15 +48,6 @@ const RESULT_OPTIONS: { value: ReceptionResult; label: string; hint: string }[] 
   { value: 'accepted', label: 'Conforme', hint: 'Coincide con lo pactado' },
   { value: 'with_remarks', label: 'Con observaciones', hint: 'Acepto con salvedades' },
   { value: 'rejected', label: 'Rechazar', hint: 'No se puede recibir' },
-];
-
-const DISCREPANCY_OPTIONS: { value: ReceptionDiscrepancy; label: string }[] = [
-  { value: 'condition', label: 'Condición inferior' },
-  { value: 'damage', label: 'Daños no declarados' },
-  { value: 'photo_mismatch', label: 'No coincide con fotos' },
-  { value: 'measurements', label: 'Medidas distintas' },
-  { value: 'accessories', label: 'Faltan accesorios/etiquetas' },
-  { value: 'hygiene', label: 'Sin higienizar' },
 ];
 
 const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
