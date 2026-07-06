@@ -131,7 +131,10 @@ export class Shell {
     return role ? MENUS[role] : [];
   });
 
-  protected readonly unread = this.notifications.unreadCount;
+  protected readonly unread = computed(() => {
+    const userId = this.auth.user()?.id;
+    return userId ? this.notifications.unreadCountFor(userId) : 0;
+  });
   protected readonly logoutIcon = LogOut;
 
   protected logout(): void {

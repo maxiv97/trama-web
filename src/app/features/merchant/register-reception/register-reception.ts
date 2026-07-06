@@ -21,7 +21,6 @@ import {
 import { Merchant } from '../../../core/models/user.model';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
-import { NotificationsService } from '../../../core/services/notifications.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
@@ -210,7 +209,6 @@ export class RegisterReception {
   private readonly garmentsService = inject(GarmentsService);
   private readonly merchantsService = inject(MerchantsService);
   private readonly receptionsService = inject(ReceptionsService);
-  private readonly notificationsService = inject(NotificationsService);
   private readonly toast = inject(ToastService);
 
   protected readonly resultOptions = RESULT_OPTIONS;
@@ -313,22 +311,6 @@ export class RegisterReception {
             receiptNumber: `REC-${Date.now()}`,
             handledBy: data.merchant?.name ?? 'Comercio',
           }),
-        ),
-        switchMap(() =>
-          result === 'accepted'
-            ? of(null)
-            : this.notificationsService.create({
-                id: `not-${Date.now()}`,
-                userId: garment.consignorId,
-                type: 'reception',
-                text:
-                  result === 'rejected'
-                    ? `El comercio rechazó la recepción de ${garment.name}.`
-                    : `El comercio recibió ${garment.name} con observaciones.`,
-                date: now,
-                read: false,
-                target: garment.id,
-              }),
         ),
       )
       .subscribe({
