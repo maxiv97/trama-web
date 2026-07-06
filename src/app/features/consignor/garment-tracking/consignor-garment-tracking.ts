@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   BehaviorSubject,
   catchError,
@@ -25,6 +25,8 @@ import { ProposalsService } from '../../../core/services/proposals.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { Timeline } from '../../../shared/components/timeline/timeline';
@@ -56,7 +58,6 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
 @Component({
   selector: 'app-consignor-garment-tracking',
   imports: [
-    RouterLink,
     ProgressTracker,
     Timeline,
     PhotoGallery,
@@ -64,23 +65,14 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
     ConfirmModal,
     MoneyPipe,
     ShortDatePipe,
+    LoadingSpinner,
+    ErrorState,
   ],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No encontramos esta prenda.</p>
-        <a
-          routerLink="/c"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-          >Volver al panel</a
-        >
-      </div>
+      <app-error-state message="No encontramos esta prenda." link="/c" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
         <div class="flex flex-wrap items-center gap-3">

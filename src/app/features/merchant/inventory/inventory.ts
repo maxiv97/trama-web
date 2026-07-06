@@ -8,6 +8,9 @@ import { AgreementsService } from '../../../core/services/agreements.service';
 import { ConsignorsService } from '../../../core/services/consignors.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
@@ -65,25 +68,12 @@ type InventoryState =
 
 @Component({
   selector: 'app-inventory',
-  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe],
+  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar el inventario.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar el inventario." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Inventario</h1>
@@ -199,11 +189,7 @@ type InventoryState =
             </table>
           </div>
         } @else {
-          <div
-            class="rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center text-trama-dark/60"
-          >
-            No hay artículos que coincidan con los filtros.
-          </div>
+          <app-empty-state message="No hay artículos que coincidan con los filtros." />
         }
       </div>
     }

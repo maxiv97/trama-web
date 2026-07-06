@@ -24,6 +24,8 @@ import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
@@ -77,23 +79,18 @@ type DetailState =
     StatusBadge,
     MoneyPipe,
     ShortDatePipe,
+    LoadingSpinner,
+    ErrorState,
   ],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No encontramos este artículo.</p>
-        <a
-          routerLink="/m/inventory"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-          >Volver al inventario</a
-        >
-      </div>
+      <app-error-state
+        message="No encontramos este artículo."
+        link="/m/inventory"
+        linkLabel="Volver al inventario"
+      />
     } @else if (data(); as d) {
       <div class="space-y-6">
         <div>
@@ -183,7 +180,7 @@ type DetailState =
             @if (d.agreement; as agreement) {
               <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
                 <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Precios acordados</h2>
-                <div class="grid grid-cols-3 gap-4 text-sm">
+                <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
                   <div>
                     <p class="text-trama-dark/50">Precio del cedente</p>
                     <p class="mt-1 font-semibold text-trama-dark">

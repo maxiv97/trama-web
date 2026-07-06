@@ -9,6 +9,9 @@ import { ConsignorsService } from '../../../core/services/consignors.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
@@ -46,30 +49,17 @@ type PanelState =
 
 @Component({
   selector: 'app-merchant-panel',
-  imports: [RouterLink, StatCard, MoneyPipe, ShortDatePipe],
+  imports: [RouterLink, StatCard, MoneyPipe, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar el panel.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar el panel." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Panel</h1>
 
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <app-stat-card title="Propuestas pendientes" [value]="d.pendingCount" />
           <app-stat-card title="Artículos en stock" [value]="d.stockCount" />
           <app-stat-card title="Vendidos del mes" [value]="d.soldThisMonth" />
@@ -142,11 +132,7 @@ type PanelState =
               </table>
             </div>
           } @else {
-            <div
-              class="rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center text-trama-dark/60"
-            >
-              No tenés propuestas pendientes.
-            </div>
+            <app-empty-state message="No tenés propuestas pendientes." />
           }
         } @else {
           @if (d.inventory.length) {
@@ -174,11 +160,7 @@ type PanelState =
               </div>
             </div>
           } @else {
-            <div
-              class="rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center text-trama-dark/60"
-            >
-              Todavía no tenés artículos en stock.
-            </div>
+            <app-empty-state message="Todavía no tenés artículos en stock." />
           }
         }
       </div>

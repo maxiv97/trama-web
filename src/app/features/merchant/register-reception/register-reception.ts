@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   BehaviorSubject,
   catchError,
@@ -22,6 +22,8 @@ import { Merchant } from '../../../core/models/user.model';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
 interface ReviewData {
@@ -64,23 +66,12 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
 
 @Component({
   selector: 'app-register-reception',
-  imports: [RouterLink],
+  imports: [LoadingSpinner, ErrorState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No encontramos esta prenda.</p>
-        <a
-          routerLink="/m"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-          >Volver al panel</a
-        >
-      </div>
+      <app-error-state message="No encontramos esta prenda." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="mx-auto max-w-2xl space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Registrar recepción</h1>

@@ -6,6 +6,9 @@ import { MonthlyPayout } from '../../../core/models/payout.model';
 import { PaymentMethod } from '../../../core/models/sale.model';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { PayoutStatusBadge } from '../../../shared/components/payout-status-badge/payout-status-badge';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -26,25 +29,12 @@ type PayoutsState =
 
 @Component({
   selector: 'app-merchant-payouts',
-  imports: [StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe],
+  imports: [StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar las liquidaciones.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar las liquidaciones." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
@@ -65,7 +55,7 @@ type PayoutsState =
         </div>
 
         @if (monthRows().length) {
-          <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <app-stat-card title="Total a pagar" [value]="summary().total | money" />
             <app-stat-card title="Pendiente" [value]="summary().pending | money" />
             <app-stat-card title="Vencido" [value]="summary().overdue | money" color="red" />
@@ -141,11 +131,7 @@ type PayoutsState =
             </table>
           </div>
         } @else {
-          <div
-            class="rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center text-trama-dark/60"
-          >
-            No hay liquidaciones en este mes.
-          </div>
+          <app-empty-state message="No hay liquidaciones en este mes." />
         }
       </div>
 
