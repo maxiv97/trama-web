@@ -40,7 +40,12 @@
           "options": {
             "browser": "src/main.ts",
             "allowedCommonJsDependencies": [
-              "leaflet"
+              "leaflet",
+              "core-js",
+              "canvg",
+              "html2canvas",
+              "raf",
+              "rgbcolor"
             ],
             "polyfills": [
               "zone.js"

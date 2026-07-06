@@ -8,9 +8,9 @@ describe('MockStore', () => {
   it('siembra los datos iniciales', () => {
     const store = TestBed.inject(MockStore);
     expect(store.data.merchants.length).toBe(2);
-    expect(store.data.garments.length).toBe(6);
+    expect(store.data.garments.length).toBe(9);
     expect(store.data.proposals.length).toBe(4);
-    expect(store.data.sales.length).toBe(1);
+    expect(store.data.sales.length).toBe(4);
   });
 
   it('revive las fechas como instancias de Date', () => {
@@ -26,6 +26,6 @@ describe('MockStore', () => {
 
     store.reset();
     expect(store.data.garments.some((garment) => garment.id === 'temp')).toBe(false);
-    expect(store.data.garments.length).toBe(6);
+    expect(store.data.garments.length).toBe(9);
   });
 });
