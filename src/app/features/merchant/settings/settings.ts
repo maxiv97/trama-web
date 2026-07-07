@@ -6,29 +6,18 @@ import { BehaviorSubject, catchError, of, switchMap, tap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Merchant } from '../../../core/models/user.model';
 import { MerchantsService } from '../../../core/services/merchants.service';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-settings',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, LoadingSpinner, ErrorState],
   template: `
     @if (loading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (error()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar la configuración.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar la configuración." (retry)="retry()" />
     } @else {
       <form [formGroup]="form" (ngSubmit)="save()" class="mx-auto max-w-2xl space-y-6">
         <div class="flex items-center justify-between gap-3">

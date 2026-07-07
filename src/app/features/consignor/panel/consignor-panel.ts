@@ -8,6 +8,9 @@ import { AgreementsService } from '../../../core/services/agreements.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
@@ -36,28 +39,15 @@ type PanelState =
 
 @Component({
   selector: 'app-consignor-panel',
-  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe],
+  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar tu panel.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar tu panel." (retry)="retry()" />
     } @else if (data(); as data) {
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <h1 class="text-2xl font-semibold text-trama-dark">Mi panel</h1>
           <a
             routerLink="/c/upload"
@@ -66,7 +56,7 @@ type PanelState =
           >
         </div>
 
-        <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <app-stat-card title="Artículos activos" [value]="data.activeCount" />
           <app-stat-card title="Pendientes de acuerdo" [value]="data.pendingCount" />
           <app-stat-card title="Liquidación pendiente" [value]="data.pendingPayout | money" />
@@ -102,16 +92,11 @@ type PanelState =
             </table>
           </div>
         } @else {
-          <div
-            class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center"
-          >
-            <p class="text-trama-dark/70">Todavía no cargaste ninguna prenda.</p>
-            <a
-              routerLink="/c/upload"
-              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-              >Cargá tu primera prenda</a
-            >
-          </div>
+          <app-empty-state
+            message="Todavía no cargaste ninguna prenda."
+            link="/c/upload"
+            linkLabel="Cargá tu primera prenda"
+          />
         }
       </div>
     }

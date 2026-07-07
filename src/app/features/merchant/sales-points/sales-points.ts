@@ -8,6 +8,9 @@ import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { SalesPointsService } from '../../../core/services/sales-points.service';
 import { LeafletMap } from '../../../shared/directives/leaflet-map';
+import { EmptyState } from '../../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 
@@ -38,28 +41,15 @@ type SalesPointsState =
 
 @Component({
   selector: 'app-sales-points',
-  imports: [LeafletMap, MoneyPipe],
+  imports: [LeafletMap, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar los puntos de venta.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar los puntos de venta." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <div class="flex items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
           <h1 class="text-2xl font-semibold text-trama-dark">Puntos de venta</h1>
           <button
             type="button"
@@ -112,11 +102,7 @@ type SalesPointsState =
             }
           </div>
         } @else {
-          <div
-            class="rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center text-trama-dark/60"
-          >
-            Todavía no cargaste puntos de venta.
-          </div>
+          <app-empty-state message="Todavía no cargaste puntos de venta." />
         }
       </div>
 

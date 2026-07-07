@@ -14,6 +14,9 @@ import {
 import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { Notification, NotificationType } from '../../../core/models/notification.model';
 import { NotificationsService } from '../../../core/services/notifications.service';
+import { EmptyState } from '../empty-state/empty-state';
+import { ErrorState } from '../error-state/error-state';
+import { LoadingSpinner } from '../loading-spinner/loading-spinner';
 import { ShortDatePipe } from '../../pipes/short-date.pipe';
 
 type ListState =
@@ -32,25 +35,12 @@ const TYPE_ICON: Record<NotificationType, LucideIconData> = {
 
 @Component({
   selector: 'app-notification-list',
-  imports: [LucideAngularModule, ShortDatePipe],
+  imports: [LucideAngularModule, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <div class="flex min-h-[60vh] items-center justify-center">
-        <div
-          class="h-8 w-8 animate-spin rounded-full border-2 border-trama-sand-200 border-t-trama-brand"
-        ></div>
-      </div>
+      <app-loading-spinner />
     } @else if (isError()) {
-      <div class="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
-        <p class="text-trama-dark/70">No pudimos cargar las notificaciones.</p>
-        <button
-          type="button"
-          (click)="retry()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-        >
-          Reintentar
-        </button>
-      </div>
+      <app-error-state message="No pudimos cargar las notificaciones." (retry)="retry()" />
     } @else if (data(); as notifications) {
       <div class="space-y-6">
         <div class="flex items-center justify-between gap-4">
@@ -97,11 +87,7 @@ const TYPE_ICON: Record<NotificationType, LucideIconData> = {
             }
           </div>
         } @else {
-          <div
-            class="rounded-2xl border border-dashed border-trama-sand-200 py-16 text-center text-trama-dark/60"
-          >
-            No tenés notificaciones.
-          </div>
+          <app-empty-state message="No tenés notificaciones." />
         }
       </div>
     }
