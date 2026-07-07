@@ -12,6 +12,7 @@ import {
   switchMap,
   throwError,
 } from 'rxjs';
+import { CONDITION_LABELS } from '../../../core/models/garment.labels';
 import { Garment, GarmentCondition } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Consignor, Merchant } from '../../../core/models/user.model';
@@ -39,13 +40,6 @@ type ReviewState =
   | { status: 'loading'; data: null }
   | { status: 'error'; data: null }
   | { status: 'loaded'; data: ReviewData };
-
-const CONDITION_LABELS: Record<GarmentCondition, string> = {
-  new: 'Nuevo',
-  very_good: 'Muy bueno',
-  good: 'Bueno',
-  fair: 'Regular',
-};
 
 @Component({
   selector: 'app-review-proposal',

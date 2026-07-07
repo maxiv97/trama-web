@@ -13,8 +13,10 @@ import {
   throwError,
 } from 'rxjs';
 import { Agreement } from '../../../core/models/agreement.model';
+import { CONDITION_LABELS } from '../../../core/models/garment.labels';
 import { Garment, GarmentCondition } from '../../../core/models/garment.model';
 import { Reception } from '../../../core/models/reception.model';
+import { PAYMENT_METHOD_LABELS } from '../../../core/models/sale.labels';
 import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Consignor, Merchant } from '../../../core/models/user.model';
@@ -33,18 +35,6 @@ import { StatusBadge } from '../../../shared/components/status-badge/status-badg
 import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
-
-const CONDITION_LABELS: Record<GarmentCondition, string> = {
-  new: 'Nuevo',
-  very_good: 'Muy bueno',
-  good: 'Bueno',
-  fair: 'Regular',
-};
-
-const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: 'Efectivo',
-  transfer: 'Transferencia',
-};
 
 interface DetailData {
   garment: Garment;

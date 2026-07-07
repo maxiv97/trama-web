@@ -16,6 +16,7 @@ import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Reception } from '../../../core/models/reception.model';
+import { PAYMENT_METHOD_LABELS } from '../../../core/models/sale.labels';
 import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Merchant } from '../../../core/models/user.model';
@@ -36,11 +37,6 @@ import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-
-const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: 'Efectivo',
-  transfer: 'Transferencia',
-};
 
 interface TrackingData {
   garment: Garment;
