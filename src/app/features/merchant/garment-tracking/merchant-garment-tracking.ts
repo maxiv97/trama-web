@@ -15,7 +15,7 @@ import {
 import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
-import { Reception, ReceptionDiscrepancy } from '../../../core/models/reception.model';
+import { Reception } from '../../../core/models/reception.model';
 import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Consignor, Merchant } from '../../../core/models/user.model';
@@ -31,20 +31,12 @@ import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
+import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { Timeline } from '../../../shared/components/timeline/timeline';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
-
-const DISCREPANCY_LABELS: Record<ReceptionDiscrepancy, string> = {
-  condition: 'Condición inferior',
-  damage: 'Daños no declarados',
-  photo_mismatch: 'No coincide con fotos',
-  measurements: 'Medidas distintas',
-  accessories: 'Faltan accesorios/etiquetas',
-  hygiene: 'Sin higienizar',
-};
 
 const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Efectivo',
@@ -73,6 +65,7 @@ type TrackingState =
     RouterLink,
     PhotoGallery,
     ProgressTracker,
+    ReceptionRemarks,
     Timeline,
     StatusBadge,
     ConfirmModal,
@@ -158,16 +151,7 @@ type TrackingState =
                 <div class="space-y-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
                   <p class="text-sm font-medium text-trama-dark">Recibida con observaciones.</p>
                   @if (d.reception; as reception) {
-                    @if (reception.discrepancies.length) {
-                      <ul class="list-disc pl-5 text-sm text-trama-dark/70">
-                        @for (item of reception.discrepancies; track item) {
-                          <li>{{ discrepancyLabel(item) }}</li>
-                        }
-                      </ul>
-                    }
-                    @if (reception.detail) {
-                      <p class="text-sm text-trama-dark/70">{{ reception.detail }}</p>
-                    }
+                    <app-reception-remarks [reception]="reception" />
                   }
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
@@ -181,8 +165,8 @@ type TrackingState =
                   <p class="text-sm font-medium text-trama-dark">
                     Recepción rechazada. La prenda se devuelve al cedente.
                   </p>
-                  @if (d.reception?.detail) {
-                    <p class="text-sm text-trama-dark/70">{{ d.reception?.detail }}</p>
+                  @if (d.reception; as reception) {
+                    <app-reception-remarks [reception]="reception" />
                   }
                 </div>
               }
@@ -383,10 +367,6 @@ export class MerchantGarmentTracking {
     if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
     return 0;
   });
-
-  protected discrepancyLabel(discrepancy: ReceptionDiscrepancy): string {
-    return DISCREPANCY_LABELS[discrepancy];
-  }
 
   protected methodLabel(method?: PaymentMethod): string {
     return method ? PAYMENT_METHOD_LABELS[method] : '—';

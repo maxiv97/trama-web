@@ -14,7 +14,7 @@ import {
 } from 'rxjs';
 import { Agreement } from '../../../core/models/agreement.model';
 import { Garment, GarmentCondition } from '../../../core/models/garment.model';
-import { Reception, ReceptionDiscrepancy } from '../../../core/models/reception.model';
+import { Reception } from '../../../core/models/reception.model';
 import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Consignor, Merchant } from '../../../core/models/user.model';
@@ -28,6 +28,7 @@ import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
+import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
@@ -38,15 +39,6 @@ const CONDITION_LABELS: Record<GarmentCondition, string> = {
   very_good: 'Muy bueno',
   good: 'Bueno',
   fair: 'Regular',
-};
-
-const DISCREPANCY_LABELS: Record<ReceptionDiscrepancy, string> = {
-  condition: 'Condición inferior',
-  damage: 'Daños no declarados',
-  photo_mismatch: 'No coincide con fotos',
-  measurements: 'Medidas distintas',
-  accessories: 'Faltan accesorios/etiquetas',
-  hygiene: 'Sin higienizar',
 };
 
 const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -75,6 +67,7 @@ type DetailState =
     RouterLink,
     PhotoGallery,
     ProgressTracker,
+    ReceptionRemarks,
     Timeline,
     StatusBadge,
     MoneyPipe,
@@ -210,16 +203,7 @@ type DetailState =
                   Comprobante {{ reception.receiptNumber }} ·
                   {{ reception.receivedAt | shortDate }}
                 </p>
-                @if (reception.discrepancies.length) {
-                  <ul class="mt-2 list-disc pl-5 text-sm text-trama-dark/70">
-                    @for (item of reception.discrepancies; track item) {
-                      <li>{{ discrepancyLabel(item) }}</li>
-                    }
-                  </ul>
-                }
-                @if (reception.detail) {
-                  <p class="mt-2 text-sm text-trama-dark/70">{{ reception.detail }}</p>
-                }
+                <app-reception-remarks [reception]="reception" class="mt-3 block" />
               </div>
             }
 
@@ -310,10 +294,6 @@ export class GarmentDetail {
 
   protected conditionLabel(condition: GarmentCondition): string {
     return CONDITION_LABELS[condition];
-  }
-
-  protected discrepancyLabel(discrepancy: ReceptionDiscrepancy): string {
-    return DISCREPANCY_LABELS[discrepancy];
   }
 
   protected methodLabel(method?: PaymentMethod): string {

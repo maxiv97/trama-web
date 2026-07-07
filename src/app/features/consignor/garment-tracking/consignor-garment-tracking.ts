@@ -15,6 +15,7 @@ import {
 import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
+import { Reception } from '../../../core/models/reception.model';
 import { PaymentMethod, Sale } from '../../../core/models/sale.model';
 import { SalesPoint } from '../../../core/models/sales-point.model';
 import { Merchant } from '../../../core/models/user.model';
@@ -22,12 +23,14 @@ import { AgreementsService } from '../../../core/services/agreements.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
+import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
@@ -45,6 +48,7 @@ interface TrackingData {
   agreement?: Agreement;
   merchant?: Merchant;
   salesPoint?: SalesPoint;
+  reception?: Reception;
   sale?: Sale;
 }
 
@@ -59,6 +63,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
   selector: 'app-consignor-garment-tracking',
   imports: [
     ProgressTracker,
+    ReceptionRemarks,
     Timeline,
     PhotoGallery,
     StatusBadge,
@@ -184,6 +189,9 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
               @case ('rejected') {
                 <div class="space-y-3 rounded-2xl border border-red-200 bg-red-50 p-5">
                   <p class="text-sm text-trama-dark/80">El comercio rechazó la recepción.</p>
+                  @if (d.reception; as reception) {
+                    <app-reception-remarks [reception]="reception" />
+                  }
                   <button
                     type="button"
                     (click)="openRedeliver()"
@@ -195,10 +203,13 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
                 </div>
               }
               @case ('with_remarks') {
-                <div class="rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
+                <div class="space-y-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
                   <p class="text-sm text-trama-dark/80">
                     Tu prenda está en el comercio, recibida con observaciones.
                   </p>
+                  @if (d.reception; as reception) {
+                    <app-reception-remarks [reception]="reception" />
+                  }
                 </div>
               }
               @case ('in_stock') {
@@ -280,6 +291,7 @@ export class ConsignorGarmentTracking {
   private readonly proposalsService = inject(ProposalsService);
   private readonly agreementsService = inject(AgreementsService);
   private readonly merchantsService = inject(MerchantsService);
+  private readonly receptionsService = inject(ReceptionsService);
   private readonly salesService = inject(SalesService);
   private readonly toast = inject(ToastService);
 
@@ -462,15 +474,17 @@ export class ConsignorGarmentTracking {
           merchant: garment.merchantId
             ? this.merchantsService.getById(garment.merchantId)
             : of(undefined),
+          reception: this.receptionsService.byGarment(id),
           sale: this.salesService.byGarment(id),
         }).pipe(
           map(
-            ({ proposal, agreement, merchant, sale }): TrackingData => ({
+            ({ proposal, agreement, merchant, reception, sale }): TrackingData => ({
               garment,
               proposal,
               agreement,
               merchant,
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
+              reception,
               sale,
             }),
           ),
