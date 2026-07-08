@@ -12,6 +12,7 @@ import {
   switchMap,
   throwError,
 } from 'rxjs';
+import { CONDITION_LABELS } from '../../../core/models/garment.labels';
 import { Garment, GarmentCondition } from '../../../core/models/garment.model';
 import { GarmentAction } from '../../../core/state-machine/garment.state-machine';
 import { DISCREPANCY_OPTIONS } from '../../../core/models/reception.labels';
@@ -36,13 +37,6 @@ type PageState =
   | { status: 'loading'; data: null }
   | { status: 'error'; data: null }
   | { status: 'loaded'; data: ReviewData };
-
-const CONDITION_LABELS: Record<GarmentCondition, string> = {
-  new: 'Nuevo',
-  very_good: 'Muy bueno',
-  good: 'Bueno',
-  fair: 'Regular',
-};
 
 const RESULT_OPTIONS: { value: ReceptionResult; label: string; hint: string }[] = [
   { value: 'accepted', label: 'Conforme', hint: 'Coincide con lo pactado' },
