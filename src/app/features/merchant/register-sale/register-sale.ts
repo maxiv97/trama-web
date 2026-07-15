@@ -184,24 +184,10 @@ export class RegisterSale {
 
     const garmentId = data.garment.id;
     const actualSalePrice = this.effectivePrice();
-    const consignorAmount = this.consignorAmount();
-    const merchantCommission = this.merchantCommission();
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(garmentId, 'REGISTER_SALE', 'merchant', 'Venta registrada')
-      .pipe(
-        switchMap(() =>
-          this.salesService.create({
-            id: `sale-${Date.now()}`,
-            garmentId,
-            actualSalePrice,
-            soldAt: new Date(this.soldAt()),
-            consignorAmount,
-            merchantCommission,
-          }),
-        ),
-      )
+    this.salesService
+      .create({ garmentId, actualSalePrice, soldAt: this.soldAt() })
       .subscribe({
         next: () => {
           this.toast.show('Venta registrada');

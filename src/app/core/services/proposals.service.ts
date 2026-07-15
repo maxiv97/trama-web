@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Counteroffer, Proposal, ProposalStatus } from '../models/proposal.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Proposal } from '../models/proposal.model';
 
 export interface NewProposal {
   garmentId: string;
@@ -12,63 +12,45 @@ export interface NewProposal {
 
 @Injectable({ providedIn: 'root' })
 export class ProposalsService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
 
   create(input: NewProposal): Observable<Proposal> {
-    const proposal: Proposal = {
-      id: `prop-${Date.now()}`,
+    return this.http.post<Proposal>(`${this.api}/proposals`, {
       garmentId: input.garmentId,
       requestedConsignorPrice: input.requestedConsignorPrice,
-      calculatedSalePrice: input.calculatedSalePrice,
-      status: 'under_review',
-      createdAt: new Date(),
-    };
-    this.store.data.proposals.push(proposal);
-    this.store.persist();
-    return mockResponse(proposal);
+    });
   }
 
-  setStatus(garmentId: string, status: ProposalStatus): Observable<Proposal | undefined> {
-    const proposal = this.store.data.proposals.find((item) => item.garmentId === garmentId);
-    if (proposal) {
-      proposal.status = status;
-      this.store.persist();
-    }
-    return mockResponse(proposal);
-  }
-
-  setCounteroffer(
-    garmentId: string,
-    counteroffer: Counteroffer,
-  ): Observable<Proposal | undefined> {
-    const proposal = this.store.data.proposals.find((item) => item.garmentId === garmentId);
-    if (proposal) {
-      proposal.counteroffer = counteroffer;
-      proposal.status = 'counteroffer';
-      this.store.persist();
-    }
-    return mockResponse(proposal);
-  }
-
-  getById(id: string): Observable<Proposal | undefined> {
-    return mockResponse(this.store.data.proposals.find((proposal) => proposal.id === id));
+  getById(id: string): Observable<Proposal> {
+    return this.http.get<Proposal>(`${this.api}/proposals/${id}`);
   }
 
   byGarment(garmentId: string): Observable<Proposal | undefined> {
-    return mockResponse(this.store.data.proposals.find((proposal) => proposal.garmentId === garmentId));
+    return this.http
+      .get<Proposal | null>(`${this.api}/garments/${garmentId}/proposal`)
+      .pipe(map((proposal) => proposal ?? undefined));
   }
 
-  pendingForMerchant(merchantId: string): Observable<Proposal[]> {
-    const merchantGarmentIds = new Set(
-      this.store.data.garments
-        .filter((garment) => garment.merchantId === merchantId)
-        .map((garment) => garment.id),
-    );
-    return mockResponse(
-      this.store.data.proposals.filter(
-        (proposal) =>
-          proposal.status === 'under_review' && merchantGarmentIds.has(proposal.garmentId),
-      ),
-    );
+  pendingForMerchant(_merchantId: string): Observable<Proposal[]> {
+    return this.http.get<Proposal[]>(`${this.api}/proposals`);
+  }
+
+  accept(garmentId: string): Observable<Proposal> {
+    return this.http.post<Proposal>(`${this.api}/proposals/${garmentId}/accept`, {});
+  }
+
+  counteroffer(garmentId: string, consignorPrice: number): Observable<Proposal> {
+    return this.http.post<Proposal>(`${this.api}/proposals/${garmentId}/counteroffer`, {
+      consignorPrice,
+    });
+  }
+
+  acceptCounteroffer(garmentId: string): Observable<Proposal> {
+    return this.http.post<Proposal>(`${this.api}/proposals/${garmentId}/accept-counteroffer`, {});
+  }
+
+  reject(garmentId: string): Observable<unknown> {
+    return this.http.post(`${this.api}/proposals/${garmentId}/reject`, {});
   }
 }

@@ -1,48 +1,31 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { SalesPoint } from '../models/sales-point.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
 
 @Injectable({ providedIn: 'root' })
 export class SalesPointsService {
-  private readonly store = inject(MockStore);
-
-  private all(): SalesPoint[] {
-    return this.store.data.merchants.flatMap((merchant) => merchant.salesPoints);
-  }
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/sales-points`;
 
   list(): Observable<SalesPoint[]> {
-    return mockResponse(this.all());
+    return this.http.get<SalesPoint[]>(this.base);
   }
 
   byMerchant(merchantId: string): Observable<SalesPoint[]> {
-    const merchant = this.store.data.merchants.find((item) => item.id === merchantId);
-    return mockResponse(merchant ? merchant.salesPoints : []);
+    return this.http.get<SalesPoint[]>(this.base, { params: { merchantId } });
   }
 
-  getById(id: string): Observable<SalesPoint | undefined> {
-    return mockResponse(this.all().find((salesPoint) => salesPoint.id === id));
+  getById(id: string): Observable<SalesPoint> {
+    return this.http.get<SalesPoint>(`${this.base}/${id}`);
   }
 
   create(point: SalesPoint): Observable<SalesPoint> {
-    const merchant = this.store.data.merchants.find((item) => item.id === point.merchantId);
-    if (!merchant) {
-      return throwError(() => new Error(`Comercio no encontrado: ${point.merchantId}`));
-    }
-    merchant.salesPoints.push(point);
-    this.store.persist();
-    return mockResponse(point);
+    return this.http.post<SalesPoint>(this.base, point);
   }
 
   update(point: SalesPoint): Observable<SalesPoint> {
-    const merchant = this.store.data.merchants.find((item) => item.id === point.merchantId);
-    const index = merchant?.salesPoints.findIndex((item) => item.id === point.id) ?? -1;
-    if (!merchant || index < 0) {
-      return throwError(() => new Error(`Punto de venta no encontrado: ${point.id}`));
-    }
-    merchant.salesPoints[index] = point;
-    this.store.persist();
-    return mockResponse(point);
+    return this.http.patch<SalesPoint>(`${this.base}/${point.id}`, point);
   }
 }

@@ -1,39 +1,31 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { PaymentMethod, Sale } from '../models/sale.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Sale } from '../models/sale.model';
+
+export interface NewSale {
+  garmentId: string;
+  actualSalePrice: number;
+  soldAt: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SalesService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
 
   list(): Observable<Sale[]> {
-    return mockResponse(this.store.data.sales);
+    return this.http.get<Sale[]>(`${this.api}/sales`);
   }
 
   byGarment(garmentId: string): Observable<Sale | undefined> {
-    return mockResponse(this.store.data.sales.find((sale) => sale.garmentId === garmentId));
+    return this.http
+      .get<Sale | null>(`${this.api}/garments/${garmentId}/sale`)
+      .pipe(map((sale) => sale ?? undefined));
   }
 
-  create(sale: Sale): Observable<Sale> {
-    this.store.data.sales.push(sale);
-    this.store.persist();
-    return mockResponse(sale);
-  }
-
-  markPaid(
-    garmentId: string,
-    payment: { paymentMethod: PaymentMethod; receiptNumber?: string },
-  ): Observable<Sale> {
-    const sale = this.store.data.sales.find((item) => item.garmentId === garmentId);
-    if (!sale) {
-      return throwError(() => new Error(`Venta no encontrada para la prenda: ${garmentId}`));
-    }
-    sale.paidAt = new Date();
-    sale.paymentMethod = payment.paymentMethod;
-    sale.receiptNumber = payment.receiptNumber;
-    this.store.persist();
-    return mockResponse(sale);
+  create(input: NewSale): Observable<Sale> {
+    return this.http.post<Sale>(`${this.api}/sales`, input);
   }
 }

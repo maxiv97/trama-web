@@ -1,7 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
+
+const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
+  consignor: { email: 'ana@example.com', password: 'trama1234' },
+  merchant: { email: 'contacto@tramaboutique.com', password: 'trama1234' },
+};
 
 @Component({
   selector: 'app-login',
@@ -14,18 +19,25 @@ import { Role } from '../../../core/models/user.model';
           <button
             type="button"
             (click)="enter('consignor')"
-            class="w-full rounded-lg bg-trama-brand px-4 py-2.5 font-medium text-white hover:bg-trama-green-700"
+            [disabled]="loading()"
+            class="w-full rounded-lg bg-trama-brand px-4 py-2.5 font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
           >
             Entrar como cedente
           </button>
           <button
             type="button"
             (click)="enter('merchant')"
-            class="w-full rounded-lg border border-trama-brand px-4 py-2.5 font-medium text-trama-brand hover:bg-trama-green-50"
+            [disabled]="loading()"
+            class="w-full rounded-lg border border-trama-brand px-4 py-2.5 font-medium text-trama-brand hover:bg-trama-green-50 disabled:opacity-40"
           >
             Entrar como comercio
           </button>
         </div>
+        @if (error()) {
+          <p class="mt-4 text-center text-sm text-red-600">
+            No pudimos iniciar sesión. Verificá que el servidor esté activo.
+          </p>
+        }
       </div>
     </div>
   `,
@@ -34,8 +46,22 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  protected readonly loading = signal(false);
+  protected readonly error = signal(false);
+
   enter(role: Role): void {
-    this.auth.loginAs(role);
-    this.router.navigateByUrl(role === 'consignor' ? '/c' : '/m');
+    if (this.loading()) return;
+    const credentials = DEMO_CREDENTIALS[role];
+    this.loading.set(true);
+    this.error.set(false);
+    this.auth.login(credentials.email, credentials.password).subscribe({
+      next: (response) => {
+        this.router.navigateByUrl(response.user.role === 'consignor' ? '/c' : '/m');
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set(true);
+      },
+    });
   }
 }

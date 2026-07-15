@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter, map } from 'rxjs';
+import { catchError, filter, map, of, switchMap } from 'rxjs';
 import {
   Bell,
   LayoutDashboard,
@@ -131,10 +131,21 @@ export class Shell {
     return role ? MENUS[role] : [];
   });
 
-  protected readonly unread = computed(() => {
-    const userId = this.auth.user()?.id;
-    return userId ? this.notifications.unreadCountFor(userId) : 0;
-  });
+  private readonly unreadSource = computed(() => ({
+    userId: this.auth.user()?.id ?? null,
+    url: this.url(),
+  }));
+
+  protected readonly unread = toSignal(
+    toObservable(this.unreadSource).pipe(
+      switchMap(({ userId }) =>
+        userId
+          ? this.notifications.unreadCountFor(userId).pipe(catchError(() => of(0)))
+          : of(0),
+      ),
+    ),
+    { initialValue: 0 },
+  );
   protected readonly logoutIcon = LogOut;
 
   protected logout(): void {

@@ -1,29 +1,23 @@
 import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Consignor } from '../models/user.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
 
 @Injectable({ providedIn: 'root' })
 export class ConsignorsService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/consignors`;
 
   list(): Observable<Consignor[]> {
-    return mockResponse(this.store.data.consignors);
+    return this.http.get<Consignor[]>(this.base);
   }
 
-  getById(id: string): Observable<Consignor | undefined> {
-    return mockResponse(this.store.data.consignors.find((consignor) => consignor.id === id));
+  getById(id: string): Observable<Consignor> {
+    return this.http.get<Consignor>(`${this.base}/${id}`);
   }
 
   byMerchant(merchantId: string): Observable<Consignor[]> {
-    const consignorIds = new Set(
-      this.store.data.garments
-        .filter((garment) => garment.merchantId === merchantId)
-        .map((garment) => garment.consignorId),
-    );
-    return mockResponse(
-      this.store.data.consignors.filter((consignor) => consignorIds.has(consignor.id)),
-    );
+    return this.http.get<Consignor[]>(this.base, { params: { merchantId } });
   }
 }

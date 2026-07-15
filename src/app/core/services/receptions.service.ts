@@ -1,22 +1,30 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Reception } from '../models/reception.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Reception, ReceptionDiscrepancy, ReceptionResult } from '../models/reception.model';
+
+export interface NewReception {
+  garmentId: string;
+  salesPointId: string;
+  result: ReceptionResult;
+  discrepancies: ReceptionDiscrepancy[];
+  detail?: string;
+  evidence: string[];
+}
 
 @Injectable({ providedIn: 'root' })
 export class ReceptionsService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
 
   byGarment(garmentId: string): Observable<Reception | undefined> {
-    return mockResponse(
-      this.store.data.receptions.find((reception) => reception.garmentId === garmentId),
-    );
+    return this.http
+      .get<Reception | null>(`${this.api}/garments/${garmentId}/reception`)
+      .pipe(map((reception) => reception ?? undefined));
   }
 
-  create(reception: Reception): Observable<Reception> {
-    this.store.data.receptions.push(reception);
-    this.store.persist();
-    return mockResponse(reception);
+  create(input: NewReception): Observable<Reception> {
+    return this.http.post<Reception>(`${this.api}/receptions`, input);
   }
 }

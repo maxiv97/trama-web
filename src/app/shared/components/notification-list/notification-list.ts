@@ -130,13 +130,12 @@ export class NotificationList {
   }
 
   protected open(notification: Notification): void {
-    this.notifications.markRead(notification.id);
+    this.notifications.markRead(notification.id).subscribe();
     this.router.navigateByUrl(notification.target);
   }
 
   protected markAll(): void {
-    this.notifications.markAllRead(this.userId());
-    this.reload.next();
+    this.notifications.markAllRead(this.userId()).subscribe(() => this.reload.next());
   }
 
   protected retry(): void {

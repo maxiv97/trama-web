@@ -268,28 +268,18 @@ export class RegisterReception {
     if (!data || !result || !this.canConfirm() || this.acting()) return;
 
     const garment = data.garment;
-    const now = new Date();
     const detail = this.detail().trim();
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(garment.id, RESULT_ACTION[result], 'merchant', this.actionNote(result))
-      .pipe(
-        switchMap(() =>
-          this.receptionsService.create({
-            id: `rec-${Date.now()}`,
-            garmentId: garment.id,
-            receivedAt: now,
-            salesPointId: this.salesPointId(),
-            result,
-            discrepancies: this.discrepancies(),
-            detail: detail || undefined,
-            evidence: this.evidence(),
-            receiptNumber: `REC-${Date.now()}`,
-            handledBy: data.merchant?.name ?? 'Comercio',
-          }),
-        ),
-      )
+    this.receptionsService
+      .create({
+        garmentId: garment.id,
+        salesPointId: this.salesPointId(),
+        result,
+        discrepancies: this.discrepancies(),
+        detail: detail || undefined,
+        evidence: this.evidence(),
+      })
       .subscribe({
         next: () => {
           this.toast.show('Recepción registrada');

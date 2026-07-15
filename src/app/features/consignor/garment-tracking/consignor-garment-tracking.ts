@@ -394,46 +394,23 @@ export class ConsignorGarmentTracking {
   private acceptCounteroffer(): void {
     const data = this.data();
     const counter = data?.proposal?.counteroffer;
-    const merchant = data?.merchant;
-    if (!data || !counter || !merchant || this.acting()) return;
-
-    const agreedAt = new Date();
-    const saleDeadline = new Date(agreedAt);
-    saleDeadline.setMonth(saleDeadline.getMonth() + merchant.terms.saleWindowMonths);
+    if (!data || !counter || this.acting()) return;
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(data.garment.id, 'ACCEPT_COUNTEROFFER', 'consignor', 'Contraoferta aceptada')
-      .pipe(
-        switchMap(() =>
-          this.agreementsService.create({
-            garmentId: data.garment.id,
-            agreedConsignorPrice: counter.consignorPrice,
-            agreedSalePrice: counter.salePrice,
-            appliedCommission: merchant.commissionConfig.merchantPercentage,
-            agreedAt,
-            saleDeadline,
-          }),
-        ),
-        switchMap(() => this.proposalsService.setStatus(data.garment.id, 'agreed')),
-      )
-      .subscribe({
-        next: () => this.onActionSuccess('Aceptaste la contraoferta'),
-        error: () => this.onActionError(),
-      });
+    this.proposalsService.acceptCounteroffer(data.garment.id).subscribe({
+      next: () => this.onActionSuccess('Aceptaste la contraoferta'),
+      error: () => this.onActionError(),
+    });
   }
 
   private rejectCounteroffer(): void {
     const data = this.data();
     if (!data || this.acting()) return;
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(data.garment.id, 'REJECT', 'consignor', 'Contraoferta rechazada')
-      .pipe(switchMap(() => this.proposalsService.setStatus(data.garment.id, 'no_agreement')))
-      .subscribe({
-        next: () => this.onActionSuccess('Rechazaste la contraoferta'),
-        error: () => this.onActionError(),
-      });
+    this.proposalsService.reject(data.garment.id).subscribe({
+      next: () => this.onActionSuccess('Rechazaste la contraoferta'),
+      error: () => this.onActionError(),
+    });
   }
 
   private redeliver(): void {

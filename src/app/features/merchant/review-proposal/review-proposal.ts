@@ -294,85 +294,48 @@ export class ReviewProposal {
 
   private accept(): void {
     const data = this.data();
-    const merchant = data?.merchant;
-    if (!data || !merchant || this.acting()) return;
-
-    const agreedAt = new Date();
-    const saleDeadline = new Date(agreedAt);
-    saleDeadline.setMonth(saleDeadline.getMonth() + merchant.terms.saleWindowMonths);
+    if (!data || this.acting()) return;
     const garmentId = data.garment.id;
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(garmentId, 'ACCEPT_PROPOSAL', 'merchant', 'Propuesta aceptada')
-      .pipe(
-        switchMap(() =>
-          this.agreementsService.create({
-            garmentId,
-            agreedConsignorPrice: data.proposal.requestedConsignorPrice,
-            agreedSalePrice: data.proposal.calculatedSalePrice,
-            appliedCommission: merchant.commissionConfig.merchantPercentage,
-            agreedAt,
-            saleDeadline,
-          }),
-        ),
-        switchMap(() => this.proposalsService.setStatus(garmentId, 'agreed')),
-      )
-      .subscribe({
-        next: () => {
-          this.toast.show('Propuesta aceptada');
-          this.router.navigate(['/m/garment', garmentId]);
-        },
-        error: () => this.onActionError(),
-      });
+    this.proposalsService.accept(garmentId).subscribe({
+      next: () => {
+        this.toast.show('Propuesta aceptada');
+        this.router.navigate(['/m/garment', garmentId]);
+      },
+      error: () => this.onActionError(),
+    });
   }
 
   protected sendCounteroffer(): void {
     const data = this.data();
-    const merchant = data?.merchant;
     const price = this.counterPrice();
-    if (!data || !merchant || !price || price <= 0 || this.acting()) return;
-
-    const salePrice = calculateSalePrice(price, merchant.commissionConfig.consignorPercentage);
+    if (!data || !price || price <= 0 || this.acting()) return;
     const garmentId = data.garment.id;
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(garmentId, 'COUNTER_OFFER', 'merchant', 'Contraoferta enviada')
-      .pipe(
-        switchMap(() =>
-          this.proposalsService.setCounteroffer(garmentId, {
-            consignorPrice: price,
-            salePrice,
-            date: new Date(),
-          }),
-        ),
-      )
-      .subscribe({
-        next: () => {
-          this.toast.show('Contraoferta enviada');
-          this.router.navigate(['/m']);
-        },
-        error: () => this.onActionError(),
-      });
+    this.proposalsService.counteroffer(garmentId, price).subscribe({
+      next: () => {
+        this.toast.show('Contraoferta enviada');
+        this.router.navigate(['/m']);
+      },
+      error: () => this.onActionError(),
+    });
   }
 
-  private reject(reason?: string): void {
+  private reject(_reason?: string): void {
     const data = this.data();
     if (!data || this.acting()) return;
     const garmentId = data.garment.id;
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(garmentId, 'REJECT', 'merchant', reason)
-      .pipe(switchMap(() => this.proposalsService.setStatus(garmentId, 'no_agreement')))
-      .subscribe({
-        next: () => {
-          this.toast.show('Propuesta rechazada');
-          this.router.navigate(['/m']);
-        },
-        error: () => this.onActionError(),
-      });
+    this.proposalsService.reject(garmentId).subscribe({
+      next: () => {
+        this.toast.show('Propuesta rechazada');
+        this.router.navigate(['/m']);
+      },
+      error: () => this.onActionError(),
+    });
   }
 
   private onActionError(): void {
