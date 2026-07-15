@@ -3,7 +3,7 @@ import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { map, switchMap } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GarmentCondition } from '../../../core/models/garment.model';
 import { GarmentsService } from '../../../core/services/garments.service';
@@ -367,7 +367,9 @@ export class UploadGarment {
 
   private readonly merchants = toSignal(this.merchantsService.list(), { initialValue: [] });
   private readonly consignor = toSignal(
-    this.consignorsService.getById(this.auth.user()?.id ?? ''),
+    this.consignorsService
+      .getById(this.auth.user()?.id ?? '')
+      .pipe(catchError(() => of(undefined))),
     { initialValue: undefined },
   );
 
