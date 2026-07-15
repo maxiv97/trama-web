@@ -25,6 +25,7 @@ import { ConsignorsService } from '../../../core/services/consignors.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { PayoutsService } from '../../../core/services/payouts.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
@@ -317,6 +318,7 @@ export class MerchantGarmentTracking {
   private readonly merchantsService = inject(MerchantsService);
   private readonly receptionsService = inject(ReceptionsService);
   private readonly salesService = inject(SalesService);
+  private readonly payoutsService = inject(PayoutsService);
   private readonly toast = inject(ToastService);
 
   protected readonly payingOut = signal(false);
@@ -376,19 +378,13 @@ export class MerchantGarmentTracking {
     const garmentId = d.garment.id;
     const method = this.paymentMethod();
     const receipt = this.receiptNumber().trim();
-    const note = `Pago: ${this.methodLabel(method)} · Comp. ${receipt || '—'}`;
 
     this.acting.set(true);
-    this.garmentsService
-      .applyAction(garmentId, 'MARK_PAID_OUT', 'merchant', note)
-      .pipe(
-        switchMap(() =>
-          this.salesService.markPaid(garmentId, {
-            paymentMethod: method,
-            receiptNumber: receipt || undefined,
-          }),
-        ),
-      )
+    this.payoutsService
+      .settleMonthly([garmentId], {
+        paymentMethod: method,
+        receiptNumber: receipt || undefined,
+      })
       .subscribe({
         next: () => {
           this.acting.set(false);

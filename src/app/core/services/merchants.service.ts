@@ -1,28 +1,23 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Merchant } from '../models/user.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
 
 @Injectable({ providedIn: 'root' })
 export class MerchantsService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/merchants`;
 
   list(): Observable<Merchant[]> {
-    return mockResponse(this.store.data.merchants);
+    return this.http.get<Merchant[]>(this.base);
   }
 
-  getById(id: string): Observable<Merchant | undefined> {
-    return mockResponse(this.store.data.merchants.find((merchant) => merchant.id === id));
+  getById(id: string): Observable<Merchant> {
+    return this.http.get<Merchant>(`${this.base}/${id}`);
   }
 
   update(merchant: Merchant): Observable<Merchant> {
-    const index = this.store.data.merchants.findIndex((item) => item.id === merchant.id);
-    if (index < 0) {
-      return throwError(() => new Error(`Comercio no encontrado: ${merchant.id}`));
-    }
-    this.store.data.merchants[index] = merchant;
-    this.store.persist();
-    return mockResponse(merchant);
+    return this.http.patch<Merchant>(`${this.base}/${merchant.id}`, merchant);
   }
 }

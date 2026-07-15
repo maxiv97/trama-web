@@ -1,26 +1,21 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Agreement } from '../models/agreement.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
 
 @Injectable({ providedIn: 'root' })
 export class AgreementsService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
 
   list(): Observable<Agreement[]> {
-    return mockResponse(this.store.data.agreements);
-  }
-
-  create(agreement: Agreement): Observable<Agreement> {
-    this.store.data.agreements.push(agreement);
-    this.store.persist();
-    return mockResponse(agreement);
+    return this.http.get<Agreement[]>(`${this.api}/agreements`);
   }
 
   byGarment(garmentId: string): Observable<Agreement | undefined> {
-    return mockResponse(
-      this.store.data.agreements.find((agreement) => agreement.garmentId === garmentId),
-    );
+    return this.http
+      .get<Agreement | null>(`${this.api}/garments/${garmentId}/agreement`)
+      .pipe(map((agreement) => agreement ?? undefined));
   }
 }

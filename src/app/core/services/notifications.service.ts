@@ -1,56 +1,29 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map, Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { Notification } from '../models/notification.model';
-import { MockStore } from '../mocks/mock-store';
-import { mockResponse } from '../mocks/mock-response';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationsService {
-  private readonly store = inject(MockStore);
+  private readonly http = inject(HttpClient);
+  private readonly base = `${environment.apiUrl}/notifications`;
 
-  private readonly items = signal<Notification[]>([...this.store.data.notifications]);
-  readonly all = this.items.asReadonly();
-
-  byUser(userId: string): Observable<Notification[]> {
-    return mockResponse(this.items().filter((notification) => notification.userId === userId));
+  byUser(_userId: string): Observable<Notification[]> {
+    return this.http.get<Notification[]>(this.base);
   }
 
-  emit(notification: Notification): void {
-    this.store.data.notifications.push(notification);
-    this.commit();
+  unreadCountFor(_userId: string): Observable<number> {
+    return this.http
+      .get<{ count: number }>(`${this.base}/unread-count`)
+      .pipe(map((response) => response.count));
   }
 
-  create(notification: Notification): Observable<Notification> {
-    this.emit(notification);
-    return mockResponse(notification);
+  markRead(id: string): Observable<Notification> {
+    return this.http.patch<Notification>(`${this.base}/${id}/read`, {});
   }
 
-  markRead(id: string): void {
-    const notification = this.store.data.notifications.find((item) => item.id === id);
-    if (!notification || notification.read) return;
-    notification.read = true;
-    this.commit();
-  }
-
-  markAllRead(userId: string): void {
-    let changed = false;
-    for (const notification of this.store.data.notifications) {
-      if (notification.userId === userId && !notification.read) {
-        notification.read = true;
-        changed = true;
-      }
-    }
-    if (changed) this.commit();
-  }
-
-  unreadCountFor(userId: string): number {
-    return this.items().filter(
-      (notification) => notification.userId === userId && !notification.read,
-    ).length;
-  }
-
-  private commit(): void {
-    this.store.persist();
-    this.items.set([...this.store.data.notifications]);
+  markAllRead(_userId: string): Observable<unknown> {
+    return this.http.patch(`${this.base}/read-all`, {});
   }
 }
