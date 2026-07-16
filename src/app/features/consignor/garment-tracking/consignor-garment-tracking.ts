@@ -53,7 +53,7 @@ type TrackingState =
   | { status: 'error'; data: null }
   | { status: 'loaded'; data: TrackingData };
 
-type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
+type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
 @Component({
   selector: 'app-consignor-garment-tracking',
@@ -263,6 +263,25 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | null;
           </div>
         </div>
 
+        @if (canCancel()) {
+          <div class="flex items-center justify-between gap-3 rounded-2xl border border-red-200 bg-white p-5">
+            <div>
+              <p class="text-sm font-medium text-trama-dark">¿Ya no querés consignar esta prenda?</p>
+              <p class="text-xs text-trama-dark/50">
+                Podés darla de baja mientras el comercio no la haya recibido.
+              </p>
+            </div>
+            <button
+              type="button"
+              (click)="openCancel()"
+              [disabled]="acting()"
+              class="shrink-0 rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-40"
+            >
+              Cancelar prenda
+            </button>
+          </div>
+        }
+
         <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
           <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
@@ -345,6 +364,8 @@ export class ConsignorGarmentTracking {
         return 'Rechazar contraoferta';
       case 'redeliver':
         return 'Coordinar nueva entrega';
+      case 'cancel':
+        return 'Cancelar prenda';
       default:
         return '';
     }
@@ -358,18 +379,32 @@ export class ConsignorGarmentTracking {
         return 'Vas a rechazar la contraoferta. La propuesta quedará sin acuerdo.';
       case 'redeliver':
         return 'Vas a coordinar una nueva entrega de la prenda con el comercio.';
+      case 'cancel':
+        return 'Vas a dar de baja esta prenda. La acción no se puede deshacer.';
       default:
         return '';
     }
   });
 
-  protected readonly modalConfirmLabel = computed(() =>
-    this.activeModal() === 'reject' ? 'Rechazar' : 'Confirmar',
-  );
+  protected readonly modalConfirmLabel = computed(() => {
+    switch (this.activeModal()) {
+      case 'reject':
+        return 'Rechazar';
+      case 'cancel':
+        return 'Cancelar prenda';
+      default:
+        return 'Confirmar';
+    }
+  });
 
   protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
-    this.activeModal() === 'reject' ? 'red' : 'green',
+    this.activeModal() === 'reject' || this.activeModal() === 'cancel' ? 'red' : 'green',
   );
+
+  protected readonly canCancel = computed(() => {
+    const status = this.data()?.garment.status;
+    return status === 'under_review' || status === 'counteroffer' || status === 'agreed';
+  });
 
   protected openAccept(): void {
     this.activeModal.set('accept');
@@ -383,12 +418,27 @@ export class ConsignorGarmentTracking {
     this.activeModal.set('redeliver');
   }
 
+  protected openCancel(): void {
+    this.activeModal.set('cancel');
+  }
+
   protected onConfirmed(): void {
     const modal = this.activeModal();
     this.activeModal.set(null);
     if (modal === 'accept') this.acceptCounteroffer();
     else if (modal === 'reject') this.rejectCounteroffer();
     else if (modal === 'redeliver') this.redeliver();
+    else if (modal === 'cancel') this.cancel();
+  }
+
+  private cancel(): void {
+    const data = this.data();
+    if (!data || this.acting()) return;
+    this.acting.set(true);
+    this.garmentsService.applyAction(data.garment.id, 'CANCEL', 'consignor', 'Prenda cancelada').subscribe({
+      next: () => this.onActionSuccess('Cancelaste la prenda'),
+      error: () => this.onActionError(),
+    });
   }
 
   private acceptCounteroffer(): void {

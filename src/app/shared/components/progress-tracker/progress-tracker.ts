@@ -14,6 +14,7 @@ const STEP_INDEX: Record<GarmentStatus, number> = {
   with_remarks: 3,
   sold: 4,
   paid_out: 5,
+  cancelled: 1,
 };
 
 @Component({

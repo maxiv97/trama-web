@@ -8,7 +8,8 @@ export type GarmentStatus =
   | 'rejected'
   | 'sold'
   | 'paid_out'
-  | 'no_agreement';
+  | 'no_agreement'
+  | 'cancelled';
 
 export type EventActor = 'consignor' | 'merchant' | 'system';
 
