@@ -17,6 +17,7 @@ const STATUS_META: Record<GarmentStatus, StatusMeta> = {
   sold: { label: 'Vendido', badgeClass: 'bg-emerald-200 text-emerald-900' },
   paid_out: { label: 'Liquidado', badgeClass: 'bg-gray-100 text-gray-700' },
   no_agreement: { label: 'Sin acuerdo', badgeClass: 'bg-red-50 text-red-600' },
+  cancelled: { label: 'Cancelada', badgeClass: 'bg-gray-100 text-gray-500' },
 };
 
 @Component({
