@@ -70,7 +70,9 @@ type PayoutsState =
           </p>
 
           @if (summary().overdueCount > 0) {
-            <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-3 text-sm font-medium text-red-700">
+            <div
+              class="rounded-2xl border border-status-none/20 bg-status-none-soft px-5 py-3 text-sm font-medium text-status-none"
+            >
               {{ summary().overdueCount }}
               {{ summary().overdueCount === 1 ? 'liquidación vencida' : 'liquidaciones vencidas' }}
               en este mes.
@@ -93,7 +95,7 @@ type PayoutsState =
                 @for (row of monthRows(); track row.key) {
                   <tr
                     class="border-b border-trama-sand-100 last:border-0"
-                    [class.bg-red-50]="row.status === 'overdue'"
+                    [class.bg-status-none-soft]="row.status === 'overdue'"
                   >
                     <td class="px-4 py-3">
                       <div class="font-medium text-trama-dark">{{ row.counterpartName }}</div>

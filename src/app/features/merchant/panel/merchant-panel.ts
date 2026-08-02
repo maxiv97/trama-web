@@ -57,7 +57,7 @@ type PanelState =
       <app-error-state message="No pudimos cargar el panel." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Panel</h1>
+        <h1 class="font-display text-2xl font-semibold text-trama-dark">Panel</h1>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <app-stat-card title="Propuestas pendientes" [value]="d.pendingCount" />

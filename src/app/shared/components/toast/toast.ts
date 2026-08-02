@@ -8,7 +8,7 @@ import { ToastService } from './toast.service';
       @for (toast of toastService.messages(); track toast.id) {
         <div
           class="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm text-white shadow-lg"
-          [class]="toast.type === 'error' ? 'bg-red-600' : 'bg-trama-brand'"
+          [class]="toast.type === 'error' ? 'bg-status-none' : 'bg-trama-brand'"
         >
           {{ toast.text }}
         </div>

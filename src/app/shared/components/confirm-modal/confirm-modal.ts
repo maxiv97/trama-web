@@ -5,7 +5,7 @@ type ConfirmColor = 'green' | 'red' | 'blue';
 
 const COLOR_CLASSES: Record<ConfirmColor, string> = {
   green: 'bg-trama-brand hover:bg-trama-green-700',
-  red: 'bg-red-600 hover:bg-red-700',
+  red: 'bg-status-none hover:brightness-90',
   blue: 'bg-blue-600 hover:bg-blue-700',
 };
 
