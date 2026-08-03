@@ -52,7 +52,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
             />
             @if (invalid('profile', 'businessName')) {
-              <span class="mt-1 block text-xs text-red-600">Ingresá el nombre del negocio.</span>
+              <span class="mt-1 block text-xs text-status-none">Ingresá el nombre del negocio.</span>
             }
           </label>
 
@@ -65,7 +65,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'email')) {
-                <span class="mt-1 block text-xs text-red-600">Ingresá un email válido.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá un email válido.</span>
               }
             </label>
             <label class="block text-sm">
@@ -75,7 +75,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'phone')) {
-                <span class="mt-1 block text-xs text-red-600">Ingresá el teléfono.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá el teléfono.</span>
               }
             </label>
           </div>
@@ -88,7 +88,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'neighborhood')) {
-                <span class="mt-1 block text-xs text-red-600">Ingresá el barrio.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá el barrio.</span>
               }
             </label>
             <label class="block text-sm">
@@ -98,7 +98,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'city')) {
-                <span class="mt-1 block text-xs text-red-600">Ingresá la ciudad.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá la ciudad.</span>
               }
             </label>
           </div>
@@ -120,7 +120,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('commission', 'consignorPercentage')) {
-                <span class="mt-1 block text-xs text-red-600">Ingresá un valor entre 0 y 100.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá un valor entre 0 y 100.</span>
               }
             </label>
             <label class="block text-sm">
@@ -146,7 +146,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('terms', 'saleWindowMonths')) {
-                <span class="mt-1 block text-xs text-red-600">Mínimo 1 mes.</span>
+                <span class="mt-1 block text-xs text-status-none">Mínimo 1 mes.</span>
               }
             </label>
             <label class="block text-sm">
@@ -158,7 +158,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('terms', 'graceMonths')) {
-                <span class="mt-1 block text-xs text-red-600">No puede ser negativo.</span>
+                <span class="mt-1 block text-xs text-status-none">No puede ser negativo.</span>
               }
             </label>
             <label class="block text-sm">
@@ -171,7 +171,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('terms', 'payoutDay')) {
-                <span class="mt-1 block text-xs text-red-600">Entre 1 y 28.</span>
+                <span class="mt-1 block text-xs text-status-none">Entre 1 y 28.</span>
               }
             </label>
           </div>

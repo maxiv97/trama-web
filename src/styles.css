@@ -1,17 +1,47 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-trama-green-50: #f0fdf4;
-  --color-trama-green-100: #dcfce7;
-  --color-trama-green-500: #22c55e;
-  --color-trama-green-600: #16a34a;
-  --color-trama-green-700: #15803d;
-
-  --color-trama-sand-50: #fafaf7;
-  --color-trama-sand-100: #f5f5f0;
-  --color-trama-sand-200: #e8e8e0;
-
-  --color-trama-dark: #1a1a1a;
+  /* marca */
   --color-trama-brand: #2e7d54;
+  --color-trama-teal: #1e8079;
   --color-trama-gold: #e3a92b;
+
+  /* tinta y neutrales */
+  --color-trama-dark: #1c2620;
+  --color-trama-muted: #868d83;
+  --color-trama-faint: #9ca398;
+
+  /* superficies */
+  --color-trama-sand-50: #edf2e5;
+  --color-trama-sand-100: #f2f6ec;
+  --color-trama-sand-200: rgba(0, 0, 0, 0.06);
+  --color-trama-sidebar: #19281d;
+
+  /* verdes derivados de marca (hover, rings, chips) */
+  --color-trama-green-50: #dceddf;
+  --color-trama-green-100: #c7e3cd;
+  --color-trama-green-700: #235f42;
+
+  /* semánticos de estado */
+  --color-status-agreed: #2e7d54;
+  --color-status-agreed-soft: #dceddf;
+  --color-status-sold: #1e8079;
+  --color-status-sold-soft: #d7ebe4;
+  --color-status-pending: #9a6b12;
+  --color-status-pending-soft: #f7ebd2;
+  --color-status-counter: #b5791f;
+  --color-status-counter-soft: #f6eccf;
+  --color-status-settled: #a87a1b;
+  --color-status-settled-soft: #f4ebc9;
+  --color-status-none: #c0392b;
+  --color-status-none-soft: #f7dedb;
+  --color-status-neutral: #586056;
+  --color-status-neutral-soft: #dde4d2;
+
+  /* tipografía */
+  --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+
+  /* radio de botón (el resto de la escala ya calza con rounded-lg/xl/2xl/full) */
+  --radius-btn: 11px;
 }

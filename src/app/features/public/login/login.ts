@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
+import { LogoIcon } from '../../../shared/components/logo/logo';
 
 const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
   consignor: { email: 'ana@example.com', password: 'trama1234' },
@@ -10,10 +11,16 @@ const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
 
 @Component({
   selector: 'app-login',
+  imports: [LogoIcon],
   template: `
     <div class="flex min-h-screen items-center justify-center bg-trama-sand-50 p-6">
       <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm">
-        <h1 class="text-center text-3xl font-semibold text-trama-brand">Trama</h1>
+        <div class="flex justify-center">
+          <app-logo-icon [size]="48" />
+        </div>
+        <h1 class="mt-3 text-center font-display text-3xl font-semibold text-trama-brand">
+          Trama
+        </h1>
         <p class="mt-2 text-center text-sm text-trama-dark/60">Ingresá para continuar</p>
         <div class="mt-8 space-y-3">
           <button
@@ -34,7 +41,7 @@ const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
           </button>
         </div>
         @if (error()) {
-          <p class="mt-4 text-center text-sm text-red-600">
+          <p class="mt-4 text-center text-sm text-status-none">
             No pudimos iniciar sesión. Verificá que el servidor esté activo.
           </p>
         }

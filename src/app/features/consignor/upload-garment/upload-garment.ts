@@ -120,7 +120,7 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
                     <button
                       type="button"
                       (click)="removeVideo()"
-                      class="ml-2 shrink-0 text-xs text-trama-dark/50 hover:text-red-600"
+                      class="ml-2 shrink-0 text-xs text-trama-dark/50 hover:text-status-none"
                     >
                       Quitar
                     </button>

@@ -7,9 +7,9 @@ interface StatusMeta {
 }
 
 const STATUS_META: Record<PayoutStatus, StatusMeta> = {
-  pending: { label: 'Pendiente', badgeClass: 'bg-amber-100 text-amber-800' },
-  paid: { label: 'Pagada', badgeClass: 'bg-trama-green-100 text-trama-green-700' },
-  overdue: { label: 'Vencida', badgeClass: 'bg-red-100 text-red-800' },
+  pending: { label: 'Pendiente', badgeClass: 'bg-status-pending-soft text-status-pending' },
+  paid: { label: 'Pagada', badgeClass: 'bg-status-agreed-soft text-status-agreed' },
+  overdue: { label: 'Vencida', badgeClass: 'bg-status-none-soft text-status-none' },
 };
 
 @Component({

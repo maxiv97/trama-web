@@ -123,7 +123,7 @@ type TrackingState =
 
             @switch (d.garment.status) {
               @case ('agreed') {
-                <div class="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
+                <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
                   <p class="text-sm font-medium text-trama-dark">
                     Acuerdo confirmado. Cuando recibas la prenda, registrá la recepción.
                   </p>
@@ -135,7 +135,7 @@ type TrackingState =
                 </div>
               }
               @case ('in_stock') {
-                <div class="space-y-3 rounded-2xl border border-green-200 bg-green-50 p-5">
+                <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
                   <p class="text-sm font-medium text-trama-dark">La prenda está en stock.</p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
@@ -145,7 +145,7 @@ type TrackingState =
                 </div>
               }
               @case ('with_remarks') {
-                <div class="space-y-3 rounded-2xl border border-yellow-200 bg-yellow-50 p-5">
+                <div class="space-y-3 rounded-2xl border border-status-pending/20 bg-status-pending-soft p-5">
                   <p class="text-sm font-medium text-trama-dark">Recibida con observaciones.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
@@ -158,7 +158,7 @@ type TrackingState =
                 </div>
               }
               @case ('rejected') {
-                <div class="space-y-2 rounded-2xl border border-red-200 bg-red-50 p-5">
+                <div class="space-y-2 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
                   <p class="text-sm font-medium text-trama-dark">
                     Recepción rechazada. La prenda se devuelve al cedente.
                   </p>
@@ -168,7 +168,7 @@ type TrackingState =
                 </div>
               }
               @case ('sold') {
-                <div class="space-y-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
+                <div class="space-y-4 rounded-2xl border border-status-sold/20 bg-status-sold-soft p-5">
                   <p class="text-sm font-medium text-trama-dark">Prenda vendida.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -277,7 +277,7 @@ type TrackingState =
                 </div>
               }
               @case ('counteroffer') {
-                <div class="rounded-2xl border border-orange-200 bg-orange-50 p-5">
+                <div class="rounded-2xl border border-status-counter/20 bg-status-counter-soft p-5">
                   <p class="text-sm text-trama-dark/70">
                     Contraoferta enviada. Esperando la respuesta del cedente.
                   </p>

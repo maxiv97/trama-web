@@ -5,7 +5,6 @@ import { catchError, filter, map, of, switchMap } from 'rxjs';
 import {
   Bell,
   LayoutDashboard,
-  LogOut,
   LucideAngularModule,
   LucideIconData,
   MapPin,
@@ -17,6 +16,8 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { Role } from '../../../core/models/user.model';
+import { LogoIcon } from '../logo/logo';
+import { UserMenu } from '../user-menu/user-menu';
 
 interface NavItem {
   label: string;
@@ -45,21 +46,22 @@ const MENUS: Record<Role, NavItem[]> = {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule],
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule, LogoIcon, UserMenu],
   template: `
     <div [class]="isPublic() ? '' : 'min-h-screen bg-trama-sand-50'">
       @if (!isPublic()) {
-        <aside
-          class="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col border-r border-trama-sand-200 bg-white md:flex"
-        >
-          <div class="px-6 py-5 text-2xl font-semibold text-trama-brand">Trama</div>
+        <aside class="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col bg-trama-sidebar md:flex">
+          <div class="flex items-center gap-2 px-6 py-5">
+            <app-logo-icon [size]="26" />
+            <span class="font-display text-xl font-semibold text-white">Trama</span>
+          </div>
           <nav class="flex-1 space-y-1 px-3">
             @for (item of menu(); track item.link) {
               <a
                 [routerLink]="item.link"
-                routerLinkActive="bg-trama-green-50 text-trama-brand"
+                routerLinkActive="bg-trama-brand text-white"
                 [routerLinkActiveOptions]="{ exact: !!item.exact }"
-                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/70 hover:bg-white/10"
               >
                 <lucide-angular [img]="item.icon" [size]="20" />
                 <span>{{ item.label }}</span>
@@ -71,15 +73,24 @@ const MENUS: Record<Role, NavItem[]> = {
               </a>
             }
           </nav>
-          <button
-            type="button"
-            (click)="logout()"
-            class="m-3 flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-trama-dark/60 hover:bg-trama-sand-100"
-          >
-            <lucide-angular [img]="logoutIcon" [size]="20" />
-            <span>Salir</span>
-          </button>
         </aside>
+      }
+
+      @if (!isPublic()) {
+        <header
+          class="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-trama-sand-200 bg-white px-4 py-3 md:ml-60 md:px-8"
+        >
+          <a
+            [routerLink]="notificationsLink()"
+            class="relative hidden items-center justify-center rounded-lg p-2 text-trama-dark/60 hover:bg-trama-sand-100 md:flex"
+          >
+            <lucide-angular [img]="bellIcon" [size]="20" />
+            @if (unread()) {
+              <span class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"></span>
+            }
+          </a>
+          <app-user-menu [name]="currentUserName()" [role]="currentRole()" (logout)="logout()" />
+        </header>
       }
 
       <div [class]="isPublic() ? '' : 'px-4 py-6 pb-24 md:ml-60 md:px-8 md:pb-6'">
@@ -126,10 +137,17 @@ export class Shell {
     return url === '/' || url.startsWith('/login');
   });
 
+  protected readonly currentRole = computed(() => this.auth.role());
+  protected readonly currentUserName = computed(() => this.auth.user()?.name ?? '');
+
   protected readonly menu = computed<NavItem[]>(() => {
     const role = this.auth.role();
     return role ? MENUS[role] : [];
   });
+
+  protected readonly notificationsLink = computed(() =>
+    this.auth.role() === 'merchant' ? '/m/notifications' : '/c/notifications',
+  );
 
   private readonly unreadSource = computed(() => ({
     userId: this.auth.user()?.id ?? null,
@@ -146,7 +164,7 @@ export class Shell {
     ),
     { initialValue: 0 },
   );
-  protected readonly logoutIcon = LogOut;
+  protected readonly bellIcon = Bell;
 
   protected logout(): void {
     this.auth.logout();

@@ -82,7 +82,7 @@ type InventoryState =
           <button
             type="button"
             (click)="statusFilter.set('agreed')"
-            class="flex w-full items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 px-5 py-3 text-left hover:bg-orange-100"
+            class="flex w-full items-center justify-between rounded-2xl border border-status-pending/20 bg-status-pending-soft px-5 py-3 text-left hover:brightness-95"
           >
             <span class="text-sm font-medium text-trama-dark">
               {{ toReceive() }}
