@@ -3,11 +3,12 @@ import { Component, input } from '@angular/core';
 @Component({
   selector: 'app-logo-icon',
   template: `
-    <svg [attr.width]="size()" [attr.height]="size()" viewBox="0 0 200 200" fill="none">
-      <g transform="translate(18 12) scale(5.125)">
+    <svg [attr.width]="size()" [attr.height]="size()" viewBox="0 0 240 240" fill="none">
+      <rect width="240" height="240" rx="70" fill="#2E7D54"></rect>
+      <g transform="translate(42.3 42.3) scale(4.853)">
         <path
           d="M16 3.5 C 24.5 9, 25.5 18.5, 16 28.5 C 6.5 18.5, 7.5 9, 16 3.5 Z"
-          fill="#2E7D54"
+          fill="#ffffff"
         ></path>
         <path
           d="M16 8 L16 24.5"

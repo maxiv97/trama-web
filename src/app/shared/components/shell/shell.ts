@@ -59,7 +59,7 @@ const MENUS: Record<Role, NavItem[]> = {
             @for (item of menu(); track item.link) {
               <a
                 [routerLink]="item.link"
-                routerLinkActive="bg-trama-green-50 text-trama-brand"
+                routerLinkActive="bg-trama-brand text-white"
                 [routerLinkActiveOptions]="{ exact: !!item.exact }"
                 class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/70 hover:bg-white/10"
               >
