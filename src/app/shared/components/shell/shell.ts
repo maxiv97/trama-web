@@ -11,6 +11,7 @@ import {
   Package,
   Receipt,
   Settings,
+  ShieldAlert,
   Users,
 } from 'lucide-angular';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -37,6 +38,7 @@ const MENUS: Record<Role, NavItem[]> = {
     { label: 'Panel', link: '/m', icon: LayoutDashboard, exact: true },
     { label: 'Inventario', link: '/m/inventory', icon: Package },
     { label: 'Liquidaciones', link: '/m/payouts', icon: Receipt },
+    { label: 'Cumplimiento', link: '/m/compliance', icon: ShieldAlert },
     { label: 'Mis cedentes', link: '/m/consignors', icon: Users },
     { label: 'Puntos de venta', link: '/m/sales-points', icon: MapPin },
     { label: 'Configuración', link: '/m/settings', icon: Settings },
