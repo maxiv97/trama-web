@@ -112,6 +112,11 @@ export const routes: Routes = [
           import('./features/merchant/compliance/compliance').then((m) => m.Compliance),
       },
       {
+        path: 'financials',
+        loadComponent: () =>
+          import('./features/merchant/financials/financials').then((m) => m.Financials),
+      },
+      {
         path: 'consignors',
         loadComponent: () =>
           import('./features/merchant/consignors/consignors').then((m) => m.Consignors),

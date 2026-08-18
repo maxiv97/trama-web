@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { CategorySales } from '../models/category-sales.model';
 import { ExpiringConsignment } from '../models/expiring-consignment.model';
 
 @Injectable({ providedIn: 'root' })
@@ -13,5 +14,9 @@ export class ReportsService {
     const options =
       withinDays != null ? { params: { withinDays: String(withinDays) } } : {};
     return this.http.get<ExpiringConsignment[]>(`${this.base}/expiring`, options);
+  }
+
+  byCategory(): Observable<CategorySales[]> {
+    return this.http.get<CategorySales[]>(`${this.base}/by-category`);
   }
 }
