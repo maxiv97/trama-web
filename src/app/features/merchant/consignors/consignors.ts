@@ -27,7 +27,7 @@ type ConsignorsState =
       <div class="space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Mis cedentes</h1>
 
-        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
           <app-stat-card title="Cedentes" [value]="rows.length" />
           <app-stat-card
             title="Aceptación promedio"
@@ -37,6 +37,7 @@ type ConsignorsState =
             title="Liquidación promedio"
             [value]="summary().avgPayoutDays === null ? '—' : summary().avgPayoutDays + ' días'"
           />
+          <app-stat-card title="Ganancia total" [value]="summary().merchantProfit | money" />
           <app-stat-card
             title="Liquidación pendiente"
             [value]="summary().pendingAmount | money"
@@ -63,6 +64,7 @@ type ConsignorsState =
                   <th class="px-4 py-3 font-medium">Aceptación</th>
                   <th class="px-4 py-3 font-medium">Liquidación (prom.)</th>
                   <th class="px-4 py-3 font-medium">En stock</th>
+                  <th class="px-4 py-3 font-medium">Ganancia</th>
                   <th class="px-4 py-3 font-medium">Liquidación pendiente</th>
                 </tr>
               </thead>
@@ -97,6 +99,7 @@ type ConsignorsState =
                       {{ row.avgPayoutDays === null ? '—' : row.avgPayoutDays + ' días' }}
                     </td>
                     <td class="px-4 py-3 text-trama-dark/70">{{ row.inStockCount }}</td>
+                    <td class="px-4 py-3 text-trama-dark/70">{{ row.merchantProfit | money }}</td>
                     <td class="px-4 py-3 text-trama-dark/70">{{ row.pendingAmount | money }}</td>
                   </tr>
                 }
@@ -148,6 +151,7 @@ export class Consignors {
     return {
       acceptanceRate: totalDecided ? Math.round((totalAccepted / totalDecided) * 100) : null,
       avgPayoutDays: payoutAvg,
+      merchantProfit: rows.reduce((sum, r) => sum + r.merchantProfit, 0),
       pendingAmount: rows.reduce((sum, r) => sum + r.pendingAmount, 0),
     };
   });
