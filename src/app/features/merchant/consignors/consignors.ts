@@ -62,6 +62,7 @@ type ConsignorsState =
                   <th class="px-4 py-3 font-medium">DNI</th>
                   <th class="px-4 py-3 font-medium">Contacto</th>
                   <th class="px-4 py-3 font-medium">Aceptación</th>
+                  <th class="px-4 py-3 font-medium">Tasa de venta</th>
                   <th class="px-4 py-3 font-medium">Liquidación (prom.)</th>
                   <th class="px-4 py-3 font-medium">En stock</th>
                   <th class="px-4 py-3 font-medium">Ganancia</th>
@@ -94,6 +95,14 @@ type ConsignorsState =
                     </td>
                     <td class="px-4 py-3 text-trama-dark/70">
                       {{ row.acceptanceRate === null ? '—' : row.acceptanceRate + '%' }}
+                    </td>
+                    <td class="px-4 py-3 text-trama-dark/70">
+                      @if (row.sellThroughRate === null) {
+                        —
+                      } @else {
+                        <div>{{ row.sellThroughRate }}%</div>
+                        <div class="text-trama-dark/50">{{ row.soldCount }} de {{ row.receivedCount }}</div>
+                      }
                     </td>
                     <td class="px-4 py-3 text-trama-dark/70">
                       {{ row.avgPayoutDays === null ? '—' : row.avgPayoutDays + ' días' }}
