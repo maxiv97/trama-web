@@ -1,36 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
-import { AuthService } from '../../../core/auth/auth.service';
-import { AgreementsService } from '../../../core/services/agreements.service';
-import { ConsignorsService } from '../../../core/services/consignors.service';
-import { GarmentsService } from '../../../core/services/garments.service';
-import { SalesService } from '../../../core/services/sales.service';
+import { BehaviorSubject, catchError, map, Observable, of, startWith, switchMap } from 'rxjs';
+import { ConsignorPerformance } from '../../../core/models/consignor-performance.model';
+import { ReportsService } from '../../../core/services/reports.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
+import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
-
-interface ConsignorRow {
-  id: string;
-  name: string;
-  dni: string;
-  email: string;
-  phone: string;
-  verified: boolean;
-  inStockCount: number;
-  pendingPayout: number;
-}
 
 type ConsignorsState =
   | { status: 'loading'; data: null }
   | { status: 'error'; data: null }
-  | { status: 'loaded'; data: ConsignorRow[] };
+  | { status: 'loaded'; data: ConsignorPerformance[] };
 
 @Component({
   selector: 'app-consignors',
-  imports: [RouterLink, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [RouterLink, StatCard, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
       <app-loading-spinner />
@@ -39,6 +26,23 @@ type ConsignorsState =
     } @else if (data(); as rows) {
       <div class="space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Mis cedentes</h1>
+
+        <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <app-stat-card title="Cedentes" [value]="rows.length" />
+          <app-stat-card
+            title="Aceptación promedio"
+            [value]="summary().acceptanceRate === null ? '—' : summary().acceptanceRate + '%'"
+          />
+          <app-stat-card
+            title="Liquidación promedio"
+            [value]="summary().avgPayoutDays === null ? '—' : summary().avgPayoutDays + ' días'"
+          />
+          <app-stat-card
+            title="Liquidación pendiente"
+            [value]="summary().pendingAmount | money"
+            [color]="summary().pendingAmount ? 'red' : 'default'"
+          />
+        </div>
 
         <input
           type="search"
@@ -56,15 +60,17 @@ type ConsignorsState =
                   <th class="px-4 py-3 font-medium">Cedente</th>
                   <th class="px-4 py-3 font-medium">DNI</th>
                   <th class="px-4 py-3 font-medium">Contacto</th>
+                  <th class="px-4 py-3 font-medium">Aceptación</th>
+                  <th class="px-4 py-3 font-medium">Liquidación (prom.)</th>
                   <th class="px-4 py-3 font-medium">En stock</th>
                   <th class="px-4 py-3 font-medium">Liquidación pendiente</th>
                 </tr>
               </thead>
               <tbody>
-                @for (row of filteredRows(); track row.id) {
+                @for (row of filteredRows(); track row.consignorId) {
                   <tr
                     [routerLink]="['/m/inventory']"
-                    [queryParams]="{ consignor: row.id }"
+                    [queryParams]="{ consignor: row.consignorId }"
                     class="cursor-pointer border-b border-trama-sand-100 last:border-0 hover:bg-trama-sand-50"
                   >
                     <td class="px-4 py-3">
@@ -84,8 +90,14 @@ type ConsignorsState =
                       <div>{{ row.email }}</div>
                       <div class="text-trama-dark/50">{{ row.phone }}</div>
                     </td>
+                    <td class="px-4 py-3 text-trama-dark/70">
+                      {{ row.acceptanceRate === null ? '—' : row.acceptanceRate + '%' }}
+                    </td>
+                    <td class="px-4 py-3 text-trama-dark/70">
+                      {{ row.avgPayoutDays === null ? '—' : row.avgPayoutDays + ' días' }}
+                    </td>
                     <td class="px-4 py-3 text-trama-dark/70">{{ row.inStockCount }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.pendingPayout | money }}</td>
+                    <td class="px-4 py-3 text-trama-dark/70">{{ row.pendingAmount | money }}</td>
                   </tr>
                 }
               </tbody>
@@ -99,11 +111,7 @@ type ConsignorsState =
   `,
 })
 export class Consignors {
-  private readonly auth = inject(AuthService);
-  private readonly garmentsService = inject(GarmentsService);
-  private readonly consignorsService = inject(ConsignorsService);
-  private readonly agreementsService = inject(AgreementsService);
-  private readonly salesService = inject(SalesService);
+  private readonly reportsService = inject(ReportsService);
 
   protected readonly search = signal('');
 
@@ -112,7 +120,7 @@ export class Consignors {
   private readonly state = toSignal(
     this.reload.pipe(
       switchMap(() =>
-        this.load().pipe(
+        this.reportsService.consignors().pipe(
           map((data): ConsignorsState => ({ status: 'loaded', data })),
           startWith<ConsignorsState>({ status: 'loading', data: null }),
           catchError((): Observable<ConsignorsState> => of({ status: 'error', data: null })),
@@ -127,6 +135,21 @@ export class Consignors {
   protected readonly data = computed(() => {
     const current = this.state();
     return current.status === 'loaded' ? current.data : null;
+  });
+
+  protected readonly summary = computed(() => {
+    const rows = this.data() ?? [];
+    const totalAccepted = rows.reduce((sum, r) => sum + r.accepted, 0);
+    const totalDecided = rows.reduce((sum, r) => sum + r.decided, 0);
+    const withPayout = rows.filter((r) => r.avgPayoutDays !== null);
+    const payoutAvg = withPayout.length
+      ? Math.round(withPayout.reduce((sum, r) => sum + (r.avgPayoutDays ?? 0), 0) / withPayout.length)
+      : null;
+    return {
+      acceptanceRate: totalDecided ? Math.round((totalAccepted / totalDecided) * 100) : null,
+      avgPayoutDays: payoutAvg,
+      pendingAmount: rows.reduce((sum, r) => sum + r.pendingAmount, 0),
+    };
   });
 
   protected readonly filteredRows = computed(() => {
@@ -144,55 +167,5 @@ export class Consignors {
 
   protected retry(): void {
     this.reload.next();
-  }
-
-  private load(): Observable<ConsignorRow[]> {
-    const merchantId = this.auth.user()?.id ?? '';
-    return forkJoin({
-      garments: this.garmentsService.byMerchant(merchantId),
-      consignors: this.consignorsService.byMerchant(merchantId),
-      agreements: this.agreementsService.list(),
-      sales: this.salesService.list(),
-    }).pipe(
-      map(({ garments, consignors, agreements, sales }): ConsignorRow[] => {
-        const consignorPriceByGarment = new Map(
-          agreements.map((agreement) => [agreement.garmentId, agreement.agreedConsignorPrice]),
-        );
-        const consignorAmountByGarment = new Map(
-          sales
-            .filter((sale) => !sale.paidAt)
-            .map((sale) => [sale.garmentId, sale.consignorAmount]),
-        );
-
-        return consignors
-          .map((consignor): ConsignorRow => {
-            const owned = garments.filter((garment) => garment.consignorId === consignor.id);
-            const inStockCount = owned.filter(
-              (garment) => garment.status === 'in_stock' || garment.status === 'with_remarks',
-            ).length;
-            const pendingPayout = owned
-              .filter((garment) => garment.status === 'sold')
-              .reduce(
-                (total, garment) =>
-                  total +
-                  (consignorAmountByGarment.get(garment.id) ??
-                    consignorPriceByGarment.get(garment.id) ??
-                    0),
-                0,
-              );
-            return {
-              id: consignor.id,
-              name: consignor.name,
-              dni: consignor.dni,
-              email: consignor.email,
-              phone: consignor.phone,
-              verified: consignor.verified,
-              inStockCount,
-              pendingPayout,
-            };
-          })
-          .sort((a, b) => a.name.localeCompare(b.name));
-      }),
-    );
   }
 }

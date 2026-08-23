@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CategorySales } from '../models/category-sales.model';
+import { ConsignorPerformance } from '../models/consignor-performance.model';
 import { ExpiringConsignment } from '../models/expiring-consignment.model';
 
 @Injectable({ providedIn: 'root' })
@@ -18,5 +19,9 @@ export class ReportsService {
 
   byCategory(): Observable<CategorySales[]> {
     return this.http.get<CategorySales[]>(`${this.base}/by-category`);
+  }
+
+  consignors(): Observable<ConsignorPerformance[]> {
+    return this.http.get<ConsignorPerformance[]>(`${this.base}/consignors`);
   }
 }
