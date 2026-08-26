@@ -14,7 +14,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { distanceKm } from '../../../core/utils/geo.util';
-import { CATEGORIES, SEASONS } from './garment-taxonomy';
+import { CATEGORIES, SEASONS } from '../../../core/models/garment-taxonomy';
 
 interface MerchantOption {
   merchantId: string;
