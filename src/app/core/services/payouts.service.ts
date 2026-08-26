@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MonthlyPayout, Payout } from '../models/payout.model';
+import { ReportFilters, toReportParams } from '../models/report-filters.model';
 import { PaymentMethod } from '../models/sale.model';
 
 interface SettlePayment {
@@ -19,16 +20,18 @@ export class PayoutsService {
     return this.http.get<Payout[]>(`${this.api}/payouts`);
   }
 
-  byMerchant(_merchantId: string): Observable<Payout[]> {
-    return this.http.get<Payout[]>(`${this.api}/payouts`);
+  byMerchant(_merchantId: string, filters?: ReportFilters): Observable<Payout[]> {
+    return this.http.get<Payout[]>(`${this.api}/payouts`, { params: toReportParams(filters) });
   }
 
   monthlyByConsignor(_consignorId: string): Observable<MonthlyPayout[]> {
     return this.http.get<MonthlyPayout[]>(`${this.api}/payouts/monthly`);
   }
 
-  monthlyByMerchant(_merchantId: string): Observable<MonthlyPayout[]> {
-    return this.http.get<MonthlyPayout[]>(`${this.api}/payouts/monthly`);
+  monthlyByMerchant(_merchantId: string, filters?: ReportFilters): Observable<MonthlyPayout[]> {
+    return this.http.get<MonthlyPayout[]>(`${this.api}/payouts/monthly`, {
+      params: toReportParams(filters),
+    });
   }
 
   settleMonthly(garmentIds: string[], payment: SettlePayment): Observable<unknown> {
