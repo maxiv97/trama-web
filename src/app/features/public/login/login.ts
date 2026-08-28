@@ -1,13 +1,47 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
-import { Role } from '../../../core/models/user.model';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 
-const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
-  consignor: { email: 'ana@example.com', password: 'trama1234' },
-  merchant: { email: 'contacto@tramaboutique.com', password: 'trama1234' },
-};
+interface DemoAccount {
+  label: string;
+  email: string;
+  password: string;
+}
+
+interface DemoGroup {
+  heading: string;
+  accounts: DemoAccount[];
+}
+
+const DEMO_GROUPS: DemoGroup[] = [
+  {
+    heading: 'Cuentas de ejemplo',
+    accounts: [
+      { label: 'Entrar como cedente (Ana)', email: 'ana@example.com', password: 'trama1234' },
+      {
+        label: 'Entrar como comercio (Trama Boutique)',
+        email: 'contacto@tramaboutique.com',
+        password: 'trama1234',
+      },
+    ],
+  },
+  {
+    heading: 'Comercio de prueba — Segunda Vuelta',
+    accounts: [
+      {
+        label: 'Entrar como cedente (Franco)',
+        email: 'franco.ledesma.demo@trama.app',
+        password: 'trama1234',
+      },
+      {
+        label: 'Entrar como comercio (Segunda Vuelta)',
+        email: 'comercio.demo@segundavuelta.app',
+        password: 'trama1234',
+      },
+    ],
+  },
+];
 
 @Component({
   selector: 'app-login',
@@ -22,24 +56,25 @@ const DEMO_CREDENTIALS: Record<Role, { email: string; password: string }> = {
           Trama
         </h1>
         <p class="mt-2 text-center text-sm text-trama-dark/60">Ingresá para continuar</p>
-        <div class="mt-8 space-y-3">
-          <button
-            type="button"
-            (click)="enter('consignor')"
-            [disabled]="loading()"
-            class="w-full rounded-lg bg-trama-brand px-4 py-2.5 font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
-          >
-            Entrar como cedente
-          </button>
-          <button
-            type="button"
-            (click)="enter('merchant')"
-            [disabled]="loading()"
-            class="w-full rounded-lg border border-trama-brand px-4 py-2.5 font-medium text-trama-brand hover:bg-trama-green-50 disabled:opacity-40"
-          >
-            Entrar como comercio
-          </button>
-        </div>
+        @for (group of demoGroups; track group.heading) {
+          <div class="mt-6 first:mt-8">
+            <p class="mb-2 text-xs font-medium tracking-wide text-trama-dark/40 uppercase">
+              {{ group.heading }}
+            </p>
+            <div class="space-y-2">
+              @for (account of group.accounts; track account.email) {
+                <button
+                  type="button"
+                  (click)="enter(account)"
+                  [disabled]="loading()"
+                  class="w-full rounded-lg border border-trama-brand px-4 py-2.5 font-medium text-trama-brand hover:bg-trama-green-50 disabled:opacity-40"
+                >
+                  {{ account.label }}
+                </button>
+              }
+            </div>
+          </div>
+        }
         @if (error()) {
           <p class="mt-4 text-center text-sm text-status-none">
             No pudimos iniciar sesión. Verificá que el servidor esté activo.
@@ -53,15 +88,15 @@ export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
+  protected readonly demoGroups = DEMO_GROUPS;
   protected readonly loading = signal(false);
   protected readonly error = signal(false);
 
-  enter(role: Role): void {
+  enter(account: DemoAccount): void {
     if (this.loading()) return;
-    const credentials = DEMO_CREDENTIALS[role];
     this.loading.set(true);
     this.error.set(false);
-    this.auth.login(credentials.email, credentials.password).subscribe({
+    this.auth.login(account.email, account.password).subscribe({
       next: (response) => {
         this.router.navigateByUrl(response.user.role === 'consignor' ? '/c' : '/m');
       },
