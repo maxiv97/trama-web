@@ -5,7 +5,6 @@ import { DISCREPANCY_LABELS } from '../../../../core/models/reception.labels';
 import { ReceptionDiscrepancyReport } from '../../../../core/models/reception-discrepancies.model';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
 import { ReportsService } from '../../../../core/services/reports.service';
-import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
@@ -23,7 +22,7 @@ type State =
 
 @Component({
   selector: 'app-discrepancias-card',
-  imports: [LoadingSpinner, ErrorState, EmptyState],
+  imports: [LoadingSpinner, ErrorState],
   template: `
     <div id="rep-discrepancias" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
       <div class="mb-4 flex items-start justify-between gap-3">

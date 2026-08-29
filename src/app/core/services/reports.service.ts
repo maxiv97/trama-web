@@ -9,6 +9,7 @@ import { PointSales } from '../models/point-sales.model';
 import { ReceptionDiscrepancyReport } from '../models/reception-discrepancies.model';
 import { ReportFilters, toReportParams } from '../models/report-filters.model';
 import { RotationReport } from '../models/rotation.model';
+import { SummaryReport, WeeklyPoint } from '../models/summary.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
@@ -49,5 +50,13 @@ export class ReportsService {
     return this.http.get<ReceptionDiscrepancyReport>(`${this.base}/discrepancies`, {
       params: toReportParams(filters),
     });
+  }
+
+  summary(filters?: ReportFilters): Observable<SummaryReport> {
+    return this.http.get<SummaryReport>(`${this.base}/summary`, { params: toReportParams(filters) });
+  }
+
+  weekly(filters?: ReportFilters): Observable<WeeklyPoint[]> {
+    return this.http.get<WeeklyPoint[]>(`${this.base}/weekly`, { params: toReportParams(filters) });
   }
 }
