@@ -1,4 +1,7 @@
 import { Component } from '@angular/core';
+import { ConvieneCard } from './cards/conviene-card';
+import { DeboCard } from './cards/debo-card';
+import { PlazosCard } from './cards/plazos-card';
 import { ReportsFilterBar } from './filter-bar/filter-bar';
 
 interface IndexEntry {
@@ -44,7 +47,7 @@ const INDEX: IndexEntry[] = [
 
 @Component({
   selector: 'app-reports',
-  imports: [ReportsFilterBar],
+  imports: [ReportsFilterBar, ConvieneCard, DeboCard, PlazosCard],
   template: `
     <div class="space-y-6">
       <div>
@@ -82,11 +85,9 @@ const INDEX: IndexEntry[] = [
         </nav>
 
         <div class="min-w-0 space-y-6">
-          <div
-            class="rounded-2xl border border-dashed border-trama-sand-300 bg-white px-6 py-12 text-center text-sm text-trama-dark/50"
-          >
-            Las tarjetas de reporte se conectan en los próximos slices.
-          </div>
+          <app-conviene-card />
+          <app-debo-card />
+          <app-plazos-card />
         </div>
       </div>
     </div>
