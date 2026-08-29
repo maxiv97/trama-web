@@ -2,13 +2,18 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { CategorySales } from '../../../../core/models/category-sales.model';
+import { GarmentStatus } from '../../../../core/models/garment.model';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
+import { GarmentsService } from '../../../../core/services/garments.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
+import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
+
+const RECEIVED: GarmentStatus[] = ['in_stock', 'with_remarks', 'sold', 'paid_out'];
 
 type SortKey = 'ganancia' | 'conversion' | 'dias';
 
@@ -19,7 +24,7 @@ type State =
 
 @Component({
   selector: 'app-conviene-card',
-  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState, DrillModal],
   template: `
     <div
       id="rep-conviene"
@@ -62,7 +67,14 @@ type State =
             <tbody>
               @for (row of rows(); track row.category) {
                 <tr class="border-b border-trama-sand-100 last:border-0">
-                  <td class="py-3 pr-4 font-medium text-trama-dark">{{ row.category }}</td>
+                  <td class="py-3 pr-4">
+                    <button
+                      (click)="openDrill(row.category)"
+                      class="font-medium text-trama-dark hover:text-trama-brand hover:underline"
+                    >
+                      {{ row.category }}
+                    </button>
+                  </td>
                   <td class="py-3 pr-4 font-medium text-trama-green-700">{{ row.merchantProfit | money }}</td>
                   <td class="py-3 pr-4 text-trama-dark/70">
                     {{ row.conversion === null ? '—' : row.conversion + '%' }}
@@ -79,14 +91,25 @@ type State =
       } @else {
         <app-empty-state message="No hay datos para este recorte." />
       }
+
+      @if (drill(); as d) {
+        <app-drill-modal
+          [title]="d.title"
+          [rows]="d.rows"
+          [csvName]="d.csvName"
+          (close)="drill.set(null)"
+        />
+      }
     </div>
   `,
 })
 export class ConvieneCard {
   private readonly filters = inject(DashboardFiltersService);
   private readonly reportsService = inject(ReportsService);
+  private readonly garmentsService = inject(GarmentsService);
 
   protected readonly sort = signal<SortKey>('ganancia');
+  protected readonly drill = signal<{ title: string; rows: DrillRow[]; csvName: string } | null>(null);
 
   private readonly filters$ = toObservable(this.filters.current);
   private readonly retry$ = new BehaviorSubject<void>(undefined);
@@ -135,6 +158,25 @@ export class ConvieneCard {
         r.inStockCount,
       ]),
     );
+  }
+
+  // Drill into a category: the received garments behind that row, honouring the recorte
+  // dimensions (the clicked category overrides the category filter).
+  protected openDrill(category: string): void {
+    const sp = this.filters.salesPointId();
+    const consignor = this.filters.consignorId();
+    this.garmentsService.list().subscribe((garments) => {
+      const rows: DrillRow[] = garments
+        .filter(
+          (g) =>
+            g.category === category &&
+            RECEIVED.includes(g.status) &&
+            (!sp || g.salesPointId === sp) &&
+            (!consignor || g.consignorId === consignor),
+        )
+        .map((g) => ({ name: g.name, meta: g.brand, status: g.status }));
+      this.drill.set({ title: `Prendas de ${category}`, rows, csvName: `prendas-${category}` });
+    });
   }
 
   protected sortBy(key: SortKey): void {
