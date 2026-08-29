@@ -1,0 +1,109 @@
+import { Component, computed, inject } from '@angular/core';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { RouterLink } from '@angular/router';
+import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
+import { ExpiringConsignment } from '../../../../core/models/expiring-consignment.model';
+import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
+import { ReportsService } from '../../../../core/services/reports.service';
+import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
+import { ErrorState } from '../../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
+import { ShortDatePipe } from '../../../../shared/pipes/short-date.pipe';
+
+const WINDOW_DAYS = 90;
+
+type State =
+  | { status: 'loading'; data: null }
+  | { status: 'error'; data: null }
+  | { status: 'loaded'; data: ExpiringConsignment[] };
+
+@Component({
+  selector: 'app-plazos-card',
+  imports: [RouterLink, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
+  template: `
+    <div id="rep-plazos" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+      <div class="mb-4">
+        <h2 class="font-display text-lg font-semibold text-trama-dark">
+          ¿Qué plazos están por vencer?
+        </h2>
+        <p class="mt-1 text-sm text-trama-dark/50">
+          Prendas en stock cuyo plazo de consignación vence en {{ windowDays }} días.
+        </p>
+      </div>
+
+      @if (isLoading()) {
+        <app-loading-spinner />
+      } @else if (isError()) {
+        <app-error-state message="No pudimos cargar los plazos." (retry)="reload()" />
+      } @else if (rows().length) {
+        <div class="divide-y divide-trama-sand-100">
+          @for (item of rows(); track item.garmentId) {
+            <a
+              [routerLink]="['/m/inventory', item.garmentId]"
+              class="flex items-center gap-3 py-3 text-sm hover:bg-trama-sand-50"
+            >
+              <span class="min-w-0 flex-1 truncate font-medium text-trama-dark">{{ item.name }}</span>
+              <span class="text-trama-dark/60">{{ item.consignorName }}</span>
+              <span class="text-trama-dark/60">{{ item.effectiveDeadline | shortDate }}</span>
+              <span
+                [class]="
+                  item.overdue
+                    ? 'rounded-full bg-status-none-soft px-2 py-0.5 text-xs font-semibold text-status-none'
+                    : 'text-trama-dark/70'
+                "
+              >
+                {{ daysLabel(item) }}
+              </span>
+              <span class="font-semibold text-trama-brand">→</span>
+            </a>
+          }
+        </div>
+      } @else {
+        <app-empty-state
+          [message]="'Ningún plazo vence en los próximos ' + windowDays + ' días con este recorte.'"
+        />
+      }
+    </div>
+  `,
+})
+export class PlazosCard {
+  private readonly filters = inject(DashboardFiltersService);
+  private readonly reportsService = inject(ReportsService);
+
+  protected readonly windowDays = WINDOW_DAYS;
+
+  private readonly filters$ = toObservable(this.filters.current);
+  private readonly retry$ = new BehaviorSubject<void>(undefined);
+
+  private readonly state = toSignal(
+    combineLatest([this.filters$, this.retry$]).pipe(
+      switchMap(([f]) =>
+        this.reportsService.expiring(WINDOW_DAYS, f).pipe(
+          map((data): State => ({ status: 'loaded', data })),
+          startWith<State>({ status: 'loading', data: null }),
+          catchError((): Observable<State> => of({ status: 'error', data: null })),
+        ),
+      ),
+    ),
+    { initialValue: { status: 'loading', data: null } as State },
+  );
+
+  protected readonly isLoading = computed(() => this.state().status === 'loading');
+  protected readonly isError = computed(() => this.state().status === 'error');
+  protected readonly rows = computed(() => {
+    const current = this.state();
+    return current.status === 'loaded' ? current.data : [];
+  });
+
+  protected daysLabel(item: ExpiringConsignment): string {
+    if (item.overdue) {
+      const days = Math.abs(item.daysLeft);
+      return `Vencido hace ${days} ${days === 1 ? 'día' : 'días'}`;
+    }
+    return `${item.daysLeft} ${item.daysLeft === 1 ? 'día' : 'días'}`;
+  }
+
+  protected reload(): void {
+    this.retry$.next();
+  }
+}
