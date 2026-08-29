@@ -8,6 +8,7 @@ import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
+import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 interface TypeRow {
   label: string;
@@ -25,13 +26,23 @@ type State =
   imports: [LoadingSpinner, ErrorState, EmptyState],
   template: `
     <div id="rep-discrepancias" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-      <div class="mb-4">
-        <h2 class="font-display text-lg font-semibold text-trama-dark">
-          ¿Cuántas prendas recibidas tuvieron observaciones?
-        </h2>
-        <p class="mt-1 text-sm text-trama-dark/50">
-          Prendas recibidas del período, tasa con observaciones y desglose por tipo.
-        </p>
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-lg font-semibold text-trama-dark">
+            ¿Cuántas prendas recibidas tuvieron observaciones?
+          </h2>
+          <p class="mt-1 text-sm text-trama-dark/50">
+            Prendas recibidas del período, tasa con observaciones y desglose por tipo.
+          </p>
+        </div>
+        @if (typeRows().length) {
+          <button
+            (click)="exportCsv()"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+          >
+            CSV
+          </button>
+        }
       </div>
 
       @if (isLoading()) {
@@ -119,6 +130,14 @@ export class DiscrepanciasCard {
       share: total ? Math.round((t.count / total) * 100) : 0,
     }));
   });
+
+  protected exportCsv(): void {
+    downloadCsv(
+      'observaciones-por-tipo',
+      ['Observación', 'Prendas', 'Del total %'],
+      this.typeRows().map((r) => [r.label, r.count, r.share]),
+    );
+  }
 
   protected reload(): void {
     this.retry$.next();

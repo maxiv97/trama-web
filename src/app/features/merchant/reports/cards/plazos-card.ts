@@ -9,6 +9,7 @@ import { EmptyState } from '../../../../shared/components/empty-state/empty-stat
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { ShortDatePipe } from '../../../../shared/pipes/short-date.pipe';
+import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 const WINDOW_DAYS = 90;
 
@@ -22,13 +23,23 @@ type State =
   imports: [RouterLink, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     <div id="rep-plazos" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-      <div class="mb-4">
-        <h2 class="font-display text-lg font-semibold text-trama-dark">
-          ¿Qué plazos están por vencer?
-        </h2>
-        <p class="mt-1 text-sm text-trama-dark/50">
-          Prendas en stock cuyo plazo de consignación vence en {{ windowDays }} días.
-        </p>
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-lg font-semibold text-trama-dark">
+            ¿Qué plazos están por vencer?
+          </h2>
+          <p class="mt-1 text-sm text-trama-dark/50">
+            Prendas en stock cuyo plazo de consignación vence en {{ windowDays }} días.
+          </p>
+        </div>
+        @if (rows().length) {
+          <button
+            (click)="exportCsv()"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+          >
+            CSV
+          </button>
+        }
       </div>
 
       @if (isLoading()) {
@@ -94,6 +105,19 @@ export class PlazosCard {
     const current = this.state();
     return current.status === 'loaded' ? current.data : [];
   });
+
+  protected exportCsv(): void {
+    downloadCsv(
+      'plazos-por-vencer',
+      ['Prenda', 'Cedente', 'Vence', 'Días restantes'],
+      this.rows().map((r) => [
+        r.name,
+        r.consignorName,
+        new Date(r.effectiveDeadline).toISOString().slice(0, 10),
+        r.daysLeft,
+      ]),
+    );
+  }
 
   protected daysLabel(item: ExpiringConsignment): string {
     if (item.overdue) {
