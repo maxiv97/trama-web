@@ -107,15 +107,12 @@ export const routes: Routes = [
           import('./features/merchant/payouts/merchant-payouts').then((m) => m.MerchantPayouts),
       },
       {
-        path: 'compliance',
+        path: 'reports',
         loadComponent: () =>
-          import('./features/merchant/compliance/compliance').then((m) => m.Compliance),
+          import('./features/merchant/reports/reports').then((m) => m.Reports),
       },
-      {
-        path: 'financials',
-        loadComponent: () =>
-          import('./features/merchant/financials/financials').then((m) => m.Financials),
-      },
+      { path: 'compliance', redirectTo: 'reports' },
+      { path: 'financials', redirectTo: 'reports' },
       {
         path: 'consignors',
         loadComponent: () =>
