@@ -8,6 +8,7 @@ import { EmptyState } from '../../../../shared/components/empty-state/empty-stat
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
+import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 type SortKey = 'ganancia' | 'rate';
 
@@ -21,13 +22,23 @@ type State =
   imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     <div id="rep-cedentes" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-      <div class="mb-4">
-        <h2 class="font-display text-lg font-semibold text-trama-dark">
-          {{ sort() === 'ganancia' ? '¿Quiénes me dan más ganancia?' : '¿Qué cedentes venden mejor lo que recibo?' }}
-        </h2>
-        <p class="mt-1 text-sm text-trama-dark/50">
-          Ganancia del período; la tasa de venta muestra, de todo lo recibido, cuánto se vendió.
-        </p>
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-lg font-semibold text-trama-dark">
+            {{ sort() === 'ganancia' ? '¿Quiénes me dan más ganancia?' : '¿Qué cedentes venden mejor lo que recibo?' }}
+          </h2>
+          <p class="mt-1 text-sm text-trama-dark/50">
+            Ganancia del período; la tasa de venta muestra, de todo lo recibido, cuánto se vendió.
+          </p>
+        </div>
+        @if (rows().length) {
+          <button
+            (click)="exportCsv()"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+          >
+            CSV
+          </button>
+        }
       </div>
 
       @if (isLoading()) {
@@ -106,6 +117,21 @@ export class CedentesCard {
       key === 'ganancia' ? row.merchantProfit : (row.sellThroughRate ?? -1);
     return [...current.data].sort((a, b) => value(b) - value(a));
   });
+
+  protected exportCsv(): void {
+    downloadCsv(
+      'cedentes',
+      ['Cedente', 'Recibidas', 'Vendidas', 'Tasa de venta %', 'Ganancia', 'Le debo'],
+      this.rows().map((r) => [
+        r.name,
+        r.receivedCount,
+        r.soldCount,
+        r.sellThroughRate ?? '',
+        r.merchantProfit,
+        r.pendingAmount,
+      ]),
+    );
+  }
 
   protected sortBy(key: SortKey): void {
     this.sort.set(key);

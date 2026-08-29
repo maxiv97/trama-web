@@ -8,6 +8,7 @@ import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
+import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 const TOP = 5;
 const SMALL_SAMPLE = 2;
@@ -22,11 +23,21 @@ type State =
   imports: [LoadingSpinner, ErrorState, EmptyState],
   template: `
     <div id="rep-tardo" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-      <div class="mb-4">
-        <h2 class="font-display text-lg font-semibold text-trama-dark">¿Cuánto tardo en liquidar?</h2>
-        <p class="mt-1 text-sm text-trama-dark/50">
-          Días promedio entre la venta y el pago al cedente · histórico, no depende del período.
-        </p>
+      <div class="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 class="font-display text-lg font-semibold text-trama-dark">¿Cuánto tardo en liquidar?</h2>
+          <p class="mt-1 text-sm text-trama-dark/50">
+            Días promedio entre la venta y el pago al cedente · histórico, no depende del período.
+          </p>
+        </div>
+        @if (ranked().length) {
+          <button
+            (click)="exportCsv()"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+          >
+            CSV
+          </button>
+        }
       </div>
 
       @if (isLoading()) {
@@ -126,6 +137,14 @@ export class TardoCard {
 
   protected liqsLabel(count: number): string {
     return `${count} ${count === 1 ? 'liquidación pagada' : 'liquidaciones pagadas'}`;
+  }
+
+  protected exportCsv(): void {
+    downloadCsv(
+      'tiempo-de-liquidacion',
+      ['Cedente', 'Días promedio', 'Liquidaciones pagadas'],
+      this.ranked().map((r) => [r.name, r.avgPayoutDays ?? '', r.paidCount]),
+    );
   }
 
   protected toggle(): void {
