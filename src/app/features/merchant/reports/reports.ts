@@ -1,7 +1,12 @@
 import { Component } from '@angular/core';
+import { CedentesCard } from './cards/cedentes-card';
 import { ConvieneCard } from './cards/conviene-card';
 import { DeboCard } from './cards/debo-card';
+import { DiscrepanciasCard } from './cards/discrepancias-card';
+import { PdvCard } from './cards/pdv-card';
 import { PlazosCard } from './cards/plazos-card';
+import { RotaCard } from './cards/rota-card';
+import { TardoCard } from './cards/tardo-card';
 import { ReportsFilterBar } from './filter-bar/filter-bar';
 
 interface IndexEntry {
@@ -47,7 +52,17 @@ const INDEX: IndexEntry[] = [
 
 @Component({
   selector: 'app-reports',
-  imports: [ReportsFilterBar, ConvieneCard, DeboCard, PlazosCard],
+  imports: [
+    ReportsFilterBar,
+    DeboCard,
+    PlazosCard,
+    TardoCard,
+    ConvieneCard,
+    PdvCard,
+    RotaCard,
+    CedentesCard,
+    DiscrepanciasCard,
+  ],
   template: `
     <div class="space-y-6">
       <div>
@@ -85,9 +100,14 @@ const INDEX: IndexEntry[] = [
         </nav>
 
         <div class="min-w-0 space-y-6">
-          <app-conviene-card />
           <app-debo-card />
           <app-plazos-card />
+          <app-tardo-card />
+          <app-conviene-card />
+          <app-pdv-card />
+          <app-rota-card />
+          <app-cedentes-card />
+          <app-discrepancias-card />
         </div>
       </div>
     </div>
