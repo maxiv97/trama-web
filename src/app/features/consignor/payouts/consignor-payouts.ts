@@ -92,6 +92,9 @@ type PayoutsState =
               </tbody>
             </table>
           </div>
+          <p class="mt-3 text-xs text-trama-dark/50">
+            Este detalle es informativo y no tiene validez como comprobante fiscal.
+          </p>
         } @else {
           <app-empty-state message="No tenés ventas en este mes." />
         }

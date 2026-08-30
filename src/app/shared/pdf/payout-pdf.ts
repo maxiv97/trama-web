@@ -87,5 +87,9 @@ export function downloadPayoutPdf(payout: MonthlyPayout, context: PayoutPdfConte
     doc.text(`Vencimiento: ${DATE_FORMATTER.format(payout.dueDate)}`, 20, y);
   }
 
+  doc.setFontSize(9);
+  doc.setTextColor(130);
+  doc.text('Este detalle es informativo y no tiene validez como comprobante fiscal.', 20, 285);
+
   doc.save(`liquidacion-${payout.month}-${slugify(context.consignorName)}.pdf`);
 }
