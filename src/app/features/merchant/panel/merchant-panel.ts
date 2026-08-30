@@ -147,13 +147,9 @@ const EXPIRY_URGENT_DAYS = 30;
             </div>
             <div class="flex h-32 items-end gap-2 border-b border-trama-sand-200">
               @for (w of d.weekly; track w.weekStart) {
-                <div class="flex flex-1 flex-col items-center justify-end gap-1">
+                <div class="flex h-full flex-1 flex-col items-center justify-end gap-1">
                   <span class="text-[10px] text-trama-dark/40">{{ w.profit ? shortMoney(w.profit) : '' }}</span>
-                  <span
-                    class="w-full rounded-t bg-trama-green-700"
-                    [style.height.%]="weekHeight(w)"
-                    [style.min-height.px]="w.profit ? 3 : 0"
-                  ></span>
+                  <span class="w-full rounded-t bg-trama-green-700" [style.height.px]="weekHeight(w)"></span>
                 </div>
               }
             </div>
@@ -219,9 +215,11 @@ export class MerchantPanel {
     return c.merchantProfit ? Math.max(4, Math.round((c.merchantProfit / max) * 100)) : 0;
   }
 
+  // Pixel height against the ~108px track, so the bars actually scale (a percentage would
+  // resolve against the column's own auto height and collapse).
   protected weekHeight(w: WeeklyPoint): number {
     const max = Math.max(1, ...(this.data()?.weekly ?? []).map((x) => x.profit));
-    return w.profit ? Math.max(4, Math.round((w.profit / max) * 100)) : 0;
+    return w.profit ? Math.max(4, Math.round((w.profit / max) * 108)) : 0;
   }
 
   protected weekLabel(weekStart: string): string {

@@ -72,6 +72,12 @@ type State =
             {{ showAll() ? 'Ver solo los ' + top + ' más lentos' : 'Ver todos (' + ranked().length + ')' }}
           </button>
         }
+        @if (hasSmallSample()) {
+          <p class="mt-4 border-t border-trama-sand-100 pt-3 text-xs text-trama-dark/50">
+            <b class="font-semibold text-trama-dark/70">Muestra chica:</b> cedentes con menos de
+            {{ smallSample }} liquidaciones pagadas — el promedio todavía no es representativo.
+          </p>
+        }
       } @else {
         <app-empty-state
           message="Todavía no registraste pagos. Cuando liquides vas a ver acá a quién le tardás más."
@@ -124,6 +130,9 @@ export class TardoCard {
 
   protected readonly visible = computed(() =>
     this.showAll() ? this.ranked() : this.ranked().slice(0, TOP),
+  );
+  protected readonly hasSmallSample = computed(() =>
+    this.visible().some((r) => r.paidCount < SMALL_SAMPLE),
   );
 
   // Weighted average over all paid liquidations, not an average of per-consignor averages.

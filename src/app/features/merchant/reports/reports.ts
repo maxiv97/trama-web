@@ -86,12 +86,13 @@ const INDEX: IndexEntry[] = [
                 <div class="mb-1 text-xs font-medium text-trama-dark/50">{{ entry.group }}</div>
                 <div class="space-y-0.5">
                   @for (q of entry.questions; track q.label) {
-                    <a
-                      [href]="'#' + q.card"
-                      class="block rounded-md px-2 py-1.5 text-sm text-trama-dark/70 hover:bg-trama-sand-100"
+                    <button
+                      type="button"
+                      (click)="jumpTo(q.card)"
+                      class="block w-full rounded-md px-2 py-1.5 text-left text-sm text-trama-dark/70 hover:bg-trama-sand-100"
                     >
                       {{ q.label }}
-                    </a>
+                    </button>
                   }
                 </div>
               </div>
@@ -115,4 +116,10 @@ const INDEX: IndexEntry[] = [
 })
 export class Reports {
   protected readonly index = INDEX;
+
+  // Scroll to the card instead of a fragment href — a `#anchor` link changes the route under
+  // hash-based routing (as in the prod deploy) and bounces to the landing.
+  protected jumpTo(cardId: string): void {
+    document.getElementById(cardId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }

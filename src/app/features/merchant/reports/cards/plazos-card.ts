@@ -12,6 +12,7 @@ import { ShortDatePipe } from '../../../../shared/pipes/short-date.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 const WINDOW_DAYS = 90;
+const TOP = 5;
 
 type State =
   | { status: 'loading'; data: null }
@@ -48,7 +49,7 @@ type State =
         <app-error-state message="No pudimos cargar los plazos." (retry)="reload()" />
       } @else if (rows().length) {
         <div class="divide-y divide-trama-sand-100">
-          @for (item of rows(); track item.garmentId) {
+          @for (item of visible(); track item.garmentId) {
             <a
               [routerLink]="['/m/inventory', item.garmentId]"
               class="flex items-center gap-3 py-3 text-sm hover:bg-trama-sand-50"
@@ -69,6 +70,11 @@ type State =
             </a>
           }
         </div>
+        @if (extra()) {
+          <p class="mt-3 text-xs text-trama-dark/50">
+            Mostrando los {{ top }} más urgentes · +{{ extra() }} prenda(s) más — descargá el CSV para verlas todas.
+          </p>
+        }
       } @else {
         <app-empty-state
           [message]="'Ningún plazo vence en los próximos ' + windowDays + ' días con este recorte.'"
@@ -105,6 +111,10 @@ export class PlazosCard {
     const current = this.state();
     return current.status === 'loaded' ? current.data : [];
   });
+  // The list can be long; show only the most urgent and send the rest to the CSV.
+  protected readonly top = TOP;
+  protected readonly visible = computed(() => this.rows().slice(0, TOP));
+  protected readonly extra = computed(() => Math.max(0, this.rows().length - TOP));
 
   protected exportCsv(): void {
     downloadCsv(
