@@ -1,13 +1,26 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { RotationReport } from '../../../../core/models/rotation.model';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
+import { GarmentsService } from '../../../../core/services/garments.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
+import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
+
+const DAY = 24 * 60 * 60 * 1000;
+const BUCKET_RANGE: Record<string, [number, number]> = {
+  '0-15': [0, 15],
+  '16-30': [16, 30],
+  '31-45': [31, 45],
+  '46-60': [46, 60],
+  '61-90': [61, 90],
+  '91-120': [91, 120],
+  '+120': [121, Infinity],
+};
 
 type State =
   | { status: 'loading'; data: null }
@@ -16,7 +29,7 @@ type State =
 
 @Component({
   selector: 'app-rota-card',
-  imports: [LoadingSpinner, ErrorState, EmptyState],
+  imports: [LoadingSpinner, ErrorState, EmptyState, DrillModal],
   template: `
     <div id="rep-rota" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
       <div class="mb-4 flex items-start justify-between gap-3">
@@ -42,7 +55,11 @@ type State =
         @if (totalStock()) {
           <div class="space-y-2">
             @for (bucket of r.stockAging; track bucket.bucket) {
-              <div class="flex items-center gap-3 text-sm">
+              <button
+                (click)="openDrill(bucket.bucket)"
+                [disabled]="!bucket.count"
+                class="flex w-full items-center gap-3 text-sm enabled:hover:opacity-80 disabled:cursor-default"
+              >
                 <span class="w-16 text-right text-trama-dark/60">{{ bucket.bucket }}</span>
                 <span class="h-5 flex-1 overflow-hidden rounded bg-trama-sand-100">
                   <span
@@ -52,7 +69,7 @@ type State =
                   ></span>
                 </span>
                 <span class="w-6 font-medium text-trama-dark">{{ bucket.count }}</span>
-              </div>
+              </button>
             }
           </div>
           <div class="mt-4 border-t border-trama-sand-100 pt-3 text-sm text-trama-dark/60">
@@ -65,12 +82,24 @@ type State =
           <app-empty-state message="No hay prendas en stock con este recorte." />
         }
       }
+
+      @if (drill(); as d) {
+        <app-drill-modal
+          [title]="d.title"
+          [rows]="d.rows"
+          [csvName]="d.csvName"
+          (close)="drill.set(null)"
+        />
+      }
     </div>
   `,
 })
 export class RotaCard {
   private readonly filters = inject(DashboardFiltersService);
   private readonly reportsService = inject(ReportsService);
+  private readonly garmentsService = inject(GarmentsService);
+
+  protected readonly drill = signal<{ title: string; rows: DrillRow[]; csvName: string } | null>(null);
 
   private readonly filters$ = toObservable(this.filters.current);
   private readonly retry$ = new BehaviorSubject<void>(undefined);
@@ -104,6 +133,29 @@ export class RotaCard {
       ['Antigüedad (días)', 'Prendas'],
       (this.report()?.stockAging ?? []).map((b) => [b.bucket, b.count]),
     );
+  }
+
+  // Drill into an aging bucket: the in-stock garments whose age falls in that day range,
+  // honouring the recorte dimensions.
+  protected openDrill(bucket: string): void {
+    const [min, max] = BUCKET_RANGE[bucket] ?? [0, Infinity];
+    const sp = this.filters.salesPointId();
+    const category = this.filters.category();
+    const consignor = this.filters.consignorId();
+    const now = Date.now();
+    this.garmentsService.list().subscribe((garments) => {
+      const rows: DrillRow[] = garments
+        .filter((g) => {
+          if (g.status !== 'in_stock' && g.status !== 'with_remarks') return false;
+          if (sp && g.salesPointId !== sp) return false;
+          if (category && g.category !== category) return false;
+          if (consignor && g.consignorId !== consignor) return false;
+          const age = Math.floor((now - new Date(g.createdAt).getTime()) / DAY);
+          return age >= min && age <= max;
+        })
+        .map((g) => ({ name: g.name, meta: `${g.category} · ${g.brand}`, status: g.status }));
+      this.drill.set({ title: `Stock de ${bucket} días`, rows, csvName: `stock-${bucket}` });
+    });
   }
 
   protected barWidth(count: number): number {
