@@ -1,7 +1,15 @@
 import { Component, computed, input } from '@angular/core';
 import { GarmentStatus } from '../../../core/models/garment.model';
 
-const STEPS = ['Cargada', 'En revisión', 'Acordada', 'En stock', 'Vendida', 'Liquidada'] as const;
+const STEPS = [
+  'Cargada',
+  'En revisión',
+  'Acordada',
+  'Recepcionada',
+  'En stock',
+  'Vendida',
+  'Liquidada',
+] as const;
 
 const STEP_INDEX: Record<GarmentStatus, number> = {
   submitted: 0,
@@ -9,12 +17,18 @@ const STEP_INDEX: Record<GarmentStatus, number> = {
   counteroffer: 1,
   no_agreement: 1,
   agreed: 2,
-  rejected: 2,
-  in_stock: 3,
-  with_remarks: 3,
-  sold: 4,
-  paid_out: 5,
+  rejected: 3,
+  in_stock: 4,
+  with_remarks: 4,
+  sold: 5,
+  paid_out: 6,
   cancelled: 1,
+};
+
+// Terminal-bad outcomes: the current step is painted red instead of green.
+const NEGATIVE: Partial<Record<GarmentStatus, boolean>> = {
+  no_agreement: true,
+  rejected: true,
 };
 
 @Component({
@@ -46,15 +60,21 @@ export class ProgressTracker {
   readonly currentStatus = input.required<GarmentStatus>();
   protected readonly steps = STEPS;
   protected readonly currentIndex = computed(() => STEP_INDEX[this.currentStatus()]);
+  protected readonly isNegative = computed(() => NEGATIVE[this.currentStatus()] ?? false);
 
   protected circleClass(i: number): string {
     const current = this.currentIndex();
     if (i < current) return 'bg-trama-brand text-white';
-    if (i === current) return 'bg-trama-brand text-white ring-4 ring-trama-green-100';
+    if (i === current) {
+      return this.isNegative()
+        ? 'bg-status-none text-white ring-4 ring-status-none-soft'
+        : 'bg-trama-brand text-white ring-4 ring-trama-green-100';
+    }
     return 'bg-trama-sand-200 text-trama-dark/50';
   }
 
   protected labelClass(i: number): string {
+    if (i === this.currentIndex() && this.isNegative()) return 'font-medium text-status-none';
     return i <= this.currentIndex() ? 'font-medium text-trama-dark' : 'text-trama-dark/40';
   }
 }
