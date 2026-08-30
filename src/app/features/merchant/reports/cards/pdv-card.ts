@@ -1,14 +1,28 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  combineLatest,
+  firstValueFrom,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { PointSales } from '../../../../core/models/point-sales.model';
+import { ConsignorsService } from '../../../../core/services/consignors.service';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
+import { GarmentsService } from '../../../../core/services/garments.service';
 import { ReportsService } from '../../../../core/services/reports.service';
+import { SalesService } from '../../../../core/services/sales.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
-import { downloadCsv } from '../../../../shared/csv/to-csv';
+import { downloadXlsx } from '../../../../shared/xlsx/to-xlsx';
 
 type State =
   | { status: 'loading'; data: null }
@@ -29,10 +43,11 @@ type State =
         </div>
         @if (rows().length) {
           <button
-            (click)="exportCsv()"
-            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+            (click)="exportXlsx()"
+            [disabled]="exporting()"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-50"
           >
-            CSV
+            {{ exporting() ? 'Generando…' : 'Excel' }}
           </button>
         }
       </div>
@@ -75,6 +90,11 @@ type State =
 export class PdvCard {
   private readonly filters = inject(DashboardFiltersService);
   private readonly reportsService = inject(ReportsService);
+  private readonly salesService = inject(SalesService);
+  private readonly garmentsService = inject(GarmentsService);
+  private readonly consignorsService = inject(ConsignorsService);
+
+  protected readonly exporting = signal(false);
 
   private readonly filters$ = toObservable(this.filters.current);
   private readonly retry$ = new BehaviorSubject<void>(undefined);
@@ -99,17 +119,68 @@ export class PdvCard {
     return current.status === 'loaded' ? current.data : [];
   });
 
-  protected exportCsv(): void {
-    downloadCsv(
-      'ganancia-por-punto',
-      ['Punto de venta', 'Ganancia', 'Ventas', 'Ticket promedio'],
-      this.rows().map((r) => [
-        r.name,
-        r.merchantProfit,
-        r.soldCount,
-        r.soldCount ? Math.round(r.revenue / r.soldCount) : '',
-      ]),
-    );
+  // Excel with a summary tab plus a per-garment detail of the sales in the current recorte,
+  // composed from the raw sales + garments (the aggregate report doesn't carry that detail).
+  protected async exportXlsx(): Promise<void> {
+    if (this.exporting()) return;
+    this.exporting.set(true);
+    try {
+      const f = this.filters.current();
+      const [sales, garments, consignors] = await firstValueFrom(
+        forkJoin([this.salesService.list(), this.garmentsService.list(), this.consignorsService.list()]),
+      );
+      const garmentById = new Map(garments.map((g) => [g.id, g]));
+      const consignorName = new Map(consignors.map((c) => [c.id, c.name]));
+      const pointName = new Map(this.rows().map((r) => [r.salesPointId, r.name]));
+      const from = f.from ? new Date(`${f.from}T00:00:00.000Z`) : null;
+      const to = f.to ? new Date(`${f.to}T23:59:59.999Z`) : null;
+
+      const detail: (string | number | null)[][] = [];
+      let totalRevenue = 0;
+      let totalProfit = 0;
+      for (const sale of sales) {
+        const g = garmentById.get(sale.garmentId);
+        if (!g) continue;
+        if (f.salesPointId && g.salesPointId !== f.salesPointId) continue;
+        if (f.category && g.category !== f.category) continue;
+        if (f.consignorId && g.consignorId !== f.consignorId) continue;
+        const soldAt = new Date(sale.soldAt);
+        if (from && soldAt < from) continue;
+        if (to && soldAt > to) continue;
+        detail.push([
+          pointName.get(g.salesPointId ?? '') ?? '—',
+          g.name,
+          g.category,
+          consignorName.get(g.consignorId) ?? '—',
+          sale.actualSalePrice,
+          sale.merchantCommission,
+          soldAt.toISOString().slice(0, 10),
+        ]);
+        totalRevenue += sale.actualSalePrice;
+        totalProfit += sale.merchantCommission;
+      }
+      detail.push(['Total', '', '', '', totalRevenue, totalProfit, '']);
+
+      await downloadXlsx('ganancia-por-punto', [
+        {
+          name: 'Resumen',
+          columns: ['Punto de venta', 'Ganancia', 'Ventas', 'Ticket promedio'],
+          rows: this.rows().map((r) => [
+            r.name,
+            r.merchantProfit,
+            r.soldCount,
+            r.soldCount ? Math.round(r.revenue / r.soldCount) : null,
+          ]),
+        },
+        {
+          name: 'Detalle de ventas',
+          columns: ['Punto de venta', 'Prenda', 'Categoría', 'Cedente', 'Monto vendido', 'Ganancia', 'Fecha'],
+          rows: detail,
+        },
+      ]);
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   protected reload(): void {
