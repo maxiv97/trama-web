@@ -12,6 +12,8 @@ import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 type SortKey = 'ganancia' | 'rate';
 
+const TOP = 5;
+
 type State =
   | { status: 'loading'; data: null }
   | { status: 'error'; data: null }
@@ -63,7 +65,7 @@ type State =
               </tr>
             </thead>
             <tbody>
-              @for (row of rows(); track row.consignorId) {
+              @for (row of visible(); track row.consignorId) {
                 <tr class="border-b border-trama-sand-100 last:border-0">
                   <td class="py-3 pr-4 font-medium text-trama-dark">{{ row.name }}</td>
                   <td class="py-3 pr-4 text-trama-dark/70">{{ row.receivedCount }}</td>
@@ -78,6 +80,11 @@ type State =
             </tbody>
           </table>
         </div>
+        @if (rows().length > top) {
+          <button (click)="toggle()" class="mt-3 text-sm font-semibold text-trama-brand">
+            {{ showAll() ? 'Ver solo los ' + top : 'Ver todos (' + rows().length + ')' }}
+          </button>
+        }
       } @else {
         <app-empty-state message="No hay cedentes para este recorte." />
       }
@@ -117,6 +124,16 @@ export class CedentesCard {
       key === 'ganancia' ? row.merchantProfit : (row.sellThroughRate ?? -1);
     return [...current.data].sort((a, b) => value(b) - value(a));
   });
+  // The list grows with every consignor; show the top of the current sort, rest via CSV / toggle.
+  protected readonly top = TOP;
+  protected readonly showAll = signal(false);
+  protected readonly visible = computed(() =>
+    this.showAll() ? this.rows() : this.rows().slice(0, TOP),
+  );
+
+  protected toggle(): void {
+    this.showAll.update((v) => !v);
+  }
 
   protected exportCsv(): void {
     downloadCsv(
