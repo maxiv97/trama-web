@@ -22,8 +22,11 @@ export async function downloadXlsx(fileName: string, sheets: XlsxSheet[]): Promi
       ? null
       : { value, type: typeof value === 'number' ? Number : String };
 
+  // Excel sheet names can't contain : \ / ? * [ ] and cap at 31 chars.
+  const sheetName = (name: string) => name.replace(/[:\\/?*[\]]/g, '-').slice(0, 31);
+
   const sheetObjects = sheets.map((sheet) => ({
-    sheet: sheet.name,
+    sheet: sheetName(sheet.name),
     data: [
       sheet.columns.map((column) => ({ value: column, fontWeight: 'bold' as const })),
       ...sheet.rows.map((row) => row.map(toCell)),

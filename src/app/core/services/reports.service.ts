@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CategorySales } from '../models/category-sales.model';
 import { ConsignorPerformance } from '../models/consignor-performance.model';
+import { DiscrepancyDetailRow } from '../models/discrepancy-detail.model';
 import { ExpiringConsignment } from '../models/expiring-consignment.model';
 import { PointSales } from '../models/point-sales.model';
 import { ReceptionDiscrepancyReport } from '../models/reception-discrepancies.model';
@@ -48,6 +49,12 @@ export class ReportsService {
 
   discrepancies(filters?: ReportFilters): Observable<ReceptionDiscrepancyReport> {
     return this.http.get<ReceptionDiscrepancyReport>(`${this.base}/discrepancies`, {
+      params: toReportParams(filters),
+    });
+  }
+
+  discrepanciesDetail(filters?: ReportFilters): Observable<DiscrepancyDetailRow[]> {
+    return this.http.get<DiscrepancyDetailRow[]>(`${this.base}/discrepancies/detail`, {
       params: toReportParams(filters),
     });
   }

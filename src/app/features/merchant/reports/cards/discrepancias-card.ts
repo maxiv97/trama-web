@@ -1,13 +1,23 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
-import { DISCREPANCY_LABELS } from '../../../../core/models/reception.labels';
+import {
+  BehaviorSubject,
+  catchError,
+  combineLatest,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
+import { DISCREPANCY_OPTIONS, DISCREPANCY_LABELS } from '../../../../core/models/reception.labels';
 import { ReceptionDiscrepancyReport } from '../../../../core/models/reception-discrepancies.model';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
-import { downloadCsv } from '../../../../shared/csv/to-csv';
+import { XlsxSheet, downloadXlsx } from '../../../../shared/xlsx/to-xlsx';
 
 interface TypeRow {
   label: string;
@@ -36,10 +46,11 @@ type State =
         </div>
         @if (typeRows().length) {
           <button
-            (click)="exportCsv()"
-            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+            (click)="exportXlsx()"
+            [disabled]="exporting()"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-50"
           >
-            CSV
+            {{ exporting() ? 'Generando…' : 'Excel' }}
           </button>
         }
       </div>
@@ -130,12 +141,43 @@ export class DiscrepanciasCard {
     }));
   });
 
-  protected exportCsv(): void {
-    downloadCsv(
-      'observaciones-por-tipo',
-      ['Observación', 'Prendas', 'Del total %'],
-      this.typeRows().map((r) => [r.label, r.count, r.share]),
-    );
+  protected readonly exporting = signal(false);
+
+  // Excel with a summary tab plus one tab per observation type listing the garments that had it,
+  // pulled from the detail endpoint (the aggregate report only carries counts).
+  protected async exportXlsx(): Promise<void> {
+    if (this.exporting()) return;
+    this.exporting.set(true);
+    try {
+      const detail = await firstValueFrom(
+        this.reportsService.discrepanciesDetail(this.filters.current()),
+      );
+      const sheets: XlsxSheet[] = [
+        {
+          name: 'Resumen',
+          columns: ['Observación', 'Prendas', 'Del total %'],
+          rows: this.typeRows().map((r) => [r.label, r.count, r.share]),
+        },
+      ];
+      for (const option of DISCREPANCY_OPTIONS) {
+        const rows = detail.filter((d) => d.discrepancies.includes(option.value));
+        if (!rows.length) continue;
+        sheets.push({
+          name: option.label,
+          columns: ['Prenda', 'Cedente', 'Categoría', 'Días en stock', 'Fecha recepción'],
+          rows: rows.map((d) => [
+            d.garmentName,
+            d.consignorName,
+            d.category,
+            d.daysInStock,
+            new Date(d.receivedAt).toISOString().slice(0, 10),
+          ]),
+        });
+      }
+      await downloadXlsx('observaciones', sheets);
+    } finally {
+      this.exporting.set(false);
+    }
   }
 
   protected reload(): void {
