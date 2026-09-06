@@ -136,7 +136,7 @@ export class Shell {
 
   protected readonly isPublic = computed(() => {
     const url = this.url();
-    return url === '/' || url.startsWith('/login');
+    return url === '/' || url.startsWith('/login') || url.startsWith('/register');
   });
 
   protected readonly currentRole = computed(() => this.auth.role());
