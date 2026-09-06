@@ -3,6 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Role } from '../models/user.model';
+import {
+  RegisterConsignorRequest,
+  RegisterMerchantRequest,
+} from '../models/register.model';
 
 export interface SessionUser {
   id: string;
@@ -30,6 +34,18 @@ export class AuthService {
   login(email: string, password: string): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${environment.apiUrl}/auth/login`, { email, password })
+      .pipe(tap((response) => this.setSession(response)));
+  }
+
+  registerConsignor(payload: RegisterConsignorRequest): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/auth/register/consignor`, payload)
+      .pipe(tap((response) => this.setSession(response)));
+  }
+
+  registerMerchant(payload: RegisterMerchantRequest): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${environment.apiUrl}/auth/register/merchant`, payload)
       .pipe(tap((response) => this.setSession(response)));
   }
 

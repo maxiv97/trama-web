@@ -13,14 +13,14 @@ import { RouterLink } from '@angular/router';
         </p>
         <div class="mt-10 flex gap-4">
           <a
-            routerLink="/login"
+            routerLink="/register"
             class="rounded-lg bg-white px-6 py-3 font-medium text-trama-brand hover:bg-trama-sand-100"
-            >Soy cedente</a
+            >Registrarme</a
           >
           <a
             routerLink="/login"
             class="rounded-lg border border-white px-6 py-3 font-medium text-white hover:bg-white/10"
-            >Soy comercio</a
+            >Ya tengo cuenta</a
           >
         </div>
       </section>

@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 
@@ -45,7 +45,7 @@ const DEMO_GROUPS: DemoGroup[] = [
 
 @Component({
   selector: 'app-login',
-  imports: [LogoIcon],
+  imports: [LogoIcon, RouterLink],
   template: `
     <div class="flex min-h-screen items-center justify-center bg-trama-sand-50 p-6">
       <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm">
@@ -80,6 +80,10 @@ const DEMO_GROUPS: DemoGroup[] = [
             No pudimos iniciar sesión. Verificá que el servidor esté activo.
           </p>
         }
+        <p class="mt-6 text-center text-sm text-trama-dark/60">
+          ¿No tenés cuenta?
+          <a routerLink="/register" class="font-medium text-trama-brand hover:underline">Registrarme</a>
+        </p>
       </div>
     </div>
   `,
