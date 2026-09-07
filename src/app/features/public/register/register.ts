@@ -9,6 +9,7 @@ import {
 } from '../../../core/models/register.model';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
+import { Coords, MapPickerDirective } from '../../../shared/directives/map-picker.directive';
 
 interface StepDef {
   id: string;
@@ -147,7 +148,7 @@ interface SummaryRow {
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink, LogoIcon],
+  imports: [ReactiveFormsModule, RouterLink, LogoIcon, MapPickerDirective],
   template: `
     <div class="min-h-screen bg-trama-sand-50 px-4 py-8">
       <div class="mx-auto max-w-3xl">
@@ -294,6 +295,20 @@ interface SummaryRow {
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
                       </div>
+                      <div class="sm:col-span-2">
+                        <div class="mb-1 flex items-baseline justify-between">
+                          <span class="text-sm font-medium text-trama-dark">Ubicación aproximada</span>
+                          <span class="text-xs text-trama-dark/50">{{ coordsLabel(consignorGeo()) }}</span>
+                        </div>
+                        <div
+                          appMapPicker
+                          (coordsChange)="consignorGeo.set($event)"
+                          class="h-56 w-full overflow-hidden rounded-xl border border-trama-sand-200"
+                        ></div>
+                        <p class="mt-1 text-xs text-trama-dark/50">
+                          Arrastrá el pin o tocá el mapa para marcar tu zona. No publicamos tu dirección exacta.
+                        </p>
+                      </div>
                     </form>
                   }
                   @case ('business') {
@@ -377,6 +392,20 @@ interface SummaryRow {
                         @if (!hoursValid()) {
                           <p class="mt-1 text-xs text-status-none">El cierre debe ser posterior a la apertura.</p>
                         }
+                      </div>
+                      <div class="sm:col-span-2">
+                        <div class="mb-1 flex items-baseline justify-between">
+                          <span class="text-sm font-medium text-trama-dark">Ubicación exacta del local</span>
+                          <span class="text-xs text-trama-dark/50">{{ coordsLabel(merchantGeo()) }}</span>
+                        </div>
+                        <div
+                          appMapPicker
+                          (coordsChange)="merchantGeo.set($event)"
+                          class="h-56 w-full overflow-hidden rounded-xl border border-trama-sand-200"
+                        ></div>
+                        <p class="mt-1 text-xs text-trama-dark/50">
+                          Arrastrá el pin o tocá el mapa para ubicar la puerta del local.
+                        </p>
                       </div>
                     </form>
                   }
@@ -558,6 +587,8 @@ export class Register {
   protected readonly consignorPct = signal(70);
   protected readonly code = signal('');
   protected readonly accepted = signal(false);
+  protected readonly consignorGeo = signal<Coords>(CORDOBA_CENTER);
+  protected readonly merchantGeo = signal<Coords>(CORDOBA_CENTER);
 
   protected readonly accountForm = this.fb.group({
     name: ['', Validators.required],
@@ -659,6 +690,10 @@ export class Register {
     return '$' + Math.round((20000 * pct) / 100).toLocaleString('es-AR');
   }
 
+  protected coordsLabel(coords: Coords): string {
+    return `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+  }
+
   protected toggleDay(index: number): void {
     this.daysSel.update((sel) => sel.map((on, i) => (i === index ? !on : on)));
   }
@@ -756,7 +791,12 @@ export class Register {
       phone: account.phone!,
       password: account.password!,
       dni: this.dniForm.controls.dni.value!,
-      location: { neighborhood: location.neighborhood!, city: location.city! },
+      location: {
+        neighborhood: location.neighborhood!,
+        city: location.city!,
+        lat: this.consignorGeo().lat,
+        lng: this.consignorGeo().lng,
+      },
     };
   }
 
@@ -772,7 +812,12 @@ export class Register {
       password: account.password!,
       businessName: business.businessName!,
       cuit: business.cuit!,
-      location: { neighborhood: business.neighborhood!, city: business.city! },
+      location: {
+        neighborhood: business.neighborhood!,
+        city: business.city!,
+        lat: this.merchantGeo().lat,
+        lng: this.merchantGeo().lng,
+      },
       commissionConfig: {
         consignorPercentage: this.consignorPct(),
         merchantPercentage: this.merchantPct(),
@@ -786,7 +831,7 @@ export class Register {
         name: pdv.spName!,
         address: pdv.spAddress!,
         phone: pdv.spPhone!,
-        geo: CORDOBA_CENTER,
+        geo: this.merchantGeo(),
         receptionSchedule: {
           days: daysLabel(this.daysSel()),
           hours: `${this.fromTime()} a ${this.toTime()}`,
@@ -815,6 +860,7 @@ export class Register {
           key: 'Recepción',
           value: `${daysLabel(this.daysSel()) || '—'} · ${this.fromTime()} a ${this.toTime()}`,
         },
+        { key: 'Geolocalización del local', value: this.coordsLabel(this.merchantGeo()) },
         {
           key: 'Comisión',
           value: `${this.consignorPct()} % cedente / ${this.merchantPct()} % comercio`,
@@ -835,6 +881,7 @@ export class Register {
         key: 'Zona',
         value: location.neighborhood ? `${location.neighborhood}, ${location.city}` : '—',
       },
+      { key: 'Geolocalización', value: this.coordsLabel(this.consignorGeo()) },
     ];
   }
 }
