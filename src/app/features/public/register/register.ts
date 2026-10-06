@@ -18,13 +18,7 @@ interface StepDef {
   sub: string;
 }
 
-// The verification email is mocked for the demo: no message is actually sent and this fixed
-// code stands in for whatever would arrive in the inbox. The verified flag stays false until
-// the deferred "Verificado" slice wires a real check.
-const DEMO_CODE = '204815';
-
-// Geo is captured on a map in a later slice; until then the sales point lands on the city centre
-// so the merchant registration produces a valid request end to end.
+// Fallback geolocation when the user never drags the pin: the city centre, so the request is valid.
 const CORDOBA_CENTER = { lat: -31.4201, lng: -64.1888 };
 
 const DAYS = [
@@ -65,12 +59,6 @@ const CONSIGNOR_STEPS: StepDef[] = [
     sub: 'Usamos la zona para mostrarte los comercios más cercanos. No publicamos tu dirección exacta.',
   },
   {
-    id: 'code',
-    label: 'Verificar email',
-    title: 'Confirmá tu email',
-    sub: 'Enviamos un código de 6 dígitos al email de la cuenta.',
-  },
-  {
     id: 'terms',
     label: 'Términos',
     title: 'Revisá y confirmá',
@@ -108,12 +96,6 @@ const MERCHANT_STEPS: StepDef[] = [
     label: 'Condiciones',
     title: 'Plazos y día de pago',
     sub: 'Las condiciones que acepta el cedente cuando consigna con vos.',
-  },
-  {
-    id: 'code',
-    label: 'Verificar email',
-    title: 'Confirmá tu email',
-    sub: 'Enviamos un código de 6 dígitos al email de la cuenta.',
   },
   {
     id: 'terms',
@@ -469,27 +451,6 @@ interface SummaryRow {
                       </div>
                     </form>
                   }
-                  @case ('code') {
-                    <div class="max-w-xs space-y-3">
-                      <label class="mb-1 block text-sm font-medium text-trama-dark">Código de verificación</label>
-                      <input
-                        [value]="code()"
-                        (input)="setCode($any($event.target).value)"
-                        inputmode="numeric"
-                        maxlength="6"
-                        placeholder="123456"
-                        class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-center text-2xl font-semibold tracking-[0.3em] text-trama-dark"
-                      />
-                      <p class="text-xs text-trama-dark/50">
-                        Enviado a {{ accountForm.controls.email.value || 'tu email' }}. En esta demo el código es
-                        <span class="font-semibold">{{ demoCode }}</span
-                        >.
-                      </p>
-                      @if (code() && !codeValid()) {
-                        <p class="text-xs text-status-none">El código no coincide.</p>
-                      }
-                    </div>
-                  }
                   @case ('terms') {
                     <div class="space-y-4">
                       <div class="grid gap-3 rounded-xl border border-trama-sand-200 bg-trama-sand-50 p-4 sm:grid-cols-2">
@@ -546,14 +507,71 @@ interface SummaryRow {
             </div>
           }
 
+          @case ('verify') {
+            <div class="rounded-2xl border border-trama-sand-200 bg-white p-6 sm:p-8">
+              <span class="text-xs font-semibold tracking-wide text-trama-brand uppercase">Cuenta creada</span>
+              <h2 class="mt-1 font-display text-2xl font-semibold text-trama-dark">Confirmá tu email</h2>
+              <p class="mt-1 text-sm text-trama-dark/60">
+                Te enviamos un código de 6 dígitos a
+                <span class="font-medium text-trama-dark">{{ accountForm.controls.email.value }}</span
+                >. Ingresalo para verificar tu cuenta.
+              </p>
+
+              <div class="mt-6 max-w-xs space-y-3">
+                <input
+                  [value]="code()"
+                  (input)="setCode($any($event.target).value)"
+                  inputmode="numeric"
+                  maxlength="6"
+                  placeholder="123456"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-center text-2xl font-semibold tracking-[0.3em] text-trama-dark"
+                />
+                @if (codeError()) {
+                  <p class="text-xs text-status-none">{{ codeError() }}</p>
+                }
+                <div class="flex items-center gap-3">
+                  <button
+                    type="button"
+                    (click)="verify()"
+                    [disabled]="code().length < 6 || verifying()"
+                    class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                  >
+                    {{ verifying() ? 'Verificando…' : 'Verificar' }}
+                  </button>
+                  <button
+                    type="button"
+                    (click)="resend()"
+                    [disabled]="resending()"
+                    class="text-sm font-medium text-trama-brand hover:underline disabled:opacity-40"
+                  >
+                    {{ resending() ? 'Enviando…' : 'Reenviar código' }}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                (click)="finish()"
+                class="mt-6 block text-sm text-trama-dark/50 hover:text-trama-dark hover:underline"
+              >
+                Verificar más tarde
+              </button>
+            </div>
+          }
+
           @case ('done') {
             <div class="rounded-2xl bg-trama-sidebar p-8 text-white sm:p-10">
               <span class="text-xs font-semibold tracking-wide text-trama-gold uppercase">Cuenta creada</span>
               <h1 class="mt-3 font-display text-3xl font-semibold sm:text-4xl">{{ doneTitle() }}</h1>
               <p class="mt-3 max-w-xl text-white/70">{{ doneSub() }}</p>
+              @if (verified()) {
+                <p class="mt-3 inline-flex items-center gap-2 rounded-full bg-trama-green-700 px-3 py-1 text-sm font-medium text-white">
+                  ✓ Email verificado
+                </p>
+              }
               <a
                 [routerLink]="panelHref()"
-                class="mt-6 inline-block rounded-lg bg-trama-brand px-5 py-3 font-medium text-white hover:bg-trama-green-700"
+                class="mt-6 block w-fit rounded-lg bg-trama-brand px-5 py-3 font-medium text-white hover:bg-trama-green-700"
               >
                 {{ panelLabel() }}
               </a>
@@ -572,11 +590,10 @@ export class Register {
 
   protected readonly days = DAYS;
   protected readonly timeSlots = TIME_SLOTS;
-  protected readonly demoCode = DEMO_CODE;
   protected readonly inputClass =
     'w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm text-trama-dark';
 
-  protected readonly view = signal<'role' | 'wizard' | 'done'>('role');
+  protected readonly view = signal<'role' | 'wizard' | 'verify' | 'done'>('role');
   protected readonly role = signal<Role | null>(null);
   protected readonly step = signal(0);
   protected readonly submitting = signal(false);
@@ -587,6 +604,10 @@ export class Register {
   protected readonly consignorPct = signal(70);
   protected readonly code = signal('');
   protected readonly accepted = signal(false);
+  protected readonly verifying = signal(false);
+  protected readonly resending = signal(false);
+  protected readonly codeError = signal('');
+  protected readonly verified = signal(false);
   protected readonly consignorGeo = signal<Coords>(CORDOBA_CENTER);
   protected readonly merchantGeo = signal<Coords>(CORDOBA_CENTER);
 
@@ -682,10 +703,6 @@ export class Register {
     return p >= 40 && p <= 95;
   }
 
-  protected codeValid(): boolean {
-    return this.code() === DEMO_CODE;
-  }
-
   protected example(pct: number): string {
     return '$' + Math.round((20000 * pct) / 100).toLocaleString('es-AR');
   }
@@ -735,8 +752,6 @@ export class Register {
         return this.commissionValid();
       case 'conditions':
         return this.conditionsForm.valid;
-      case 'code':
-        return this.codeValid();
       case 'terms':
         return this.accepted();
       default:
@@ -769,7 +784,10 @@ export class Register {
 
     request$.subscribe({
       next: () => {
-        this.view.set('done');
+        // Account created and session started; the backend has emailed the verification code.
+        this.code.set('');
+        this.codeError.set('');
+        this.view.set('verify');
         this.submitting.set(false);
       },
       error: (err: { status?: number }) => {
@@ -780,6 +798,44 @@ export class Register {
         );
       },
     });
+  }
+
+  protected verify(): void {
+    if (this.code().length < 6 || this.verifying()) return;
+    this.verifying.set(true);
+    this.codeError.set('');
+    this.auth.verifyEmail(this.code()).subscribe({
+      next: () => {
+        this.verified.set(true);
+        this.verifying.set(false);
+        this.view.set('done');
+      },
+      error: (err: { error?: { message?: string } }) => {
+        this.verifying.set(false);
+        this.codeError.set(err.error?.message ?? 'El código no coincide o venció.');
+      },
+    });
+  }
+
+  protected resend(): void {
+    if (this.resending()) return;
+    this.resending.set(true);
+    this.codeError.set('');
+    this.auth.resendCode().subscribe({
+      next: () => {
+        this.resending.set(false);
+        this.toast.show('Te enviamos un nuevo código', 'success');
+      },
+      error: () => {
+        this.resending.set(false);
+        this.toast.show('No pudimos reenviar el código', 'error');
+      },
+    });
+  }
+
+  // Lets the user reach their panel without verifying now; the account stays unverified.
+  protected finish(): void {
+    this.view.set('done');
   }
 
   private buildConsignorRequest(): RegisterConsignorRequest {

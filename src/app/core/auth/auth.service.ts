@@ -49,6 +49,16 @@ export class AuthService {
       .pipe(tap((response) => this.setSession(response)));
   }
 
+  verifyEmail(code: string): Observable<{ verified: boolean }> {
+    return this.http.post<{ verified: boolean }>(`${environment.apiUrl}/auth/verify-email`, {
+      code,
+    });
+  }
+
+  resendCode(): Observable<{ sent: boolean }> {
+    return this.http.post<{ sent: boolean }>(`${environment.apiUrl}/auth/resend-code`, {});
+  }
+
   logout(): void {
     this.currentUser.set(null);
     localStorage.removeItem(AuthService.SESSION_KEY);
