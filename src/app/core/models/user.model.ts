@@ -5,6 +5,9 @@ export type Role = 'consignor' | 'merchant';
 export type AccountStatus = 'active' | 'pending' | 'suspended';
 
 export interface UserLocation {
+  street?: string;
+  number?: string;
+  unit?: string;
   neighborhood: string;
   city: string;
   lat?: number;
