@@ -235,10 +235,21 @@ interface SummaryRow {
                 @switch (current().id) {
                   @case ('account') {
                     <form [formGroup]="accountForm" class="grid gap-4 sm:grid-cols-2">
-                      <div class="sm:col-span-2">
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre y apellido</label>
-                        <input formControlName="name" placeholder="María Vega" [class]="inputClass" />
-                      </div>
+                      @if (role() === 'merchant') {
+                        <div class="sm:col-span-2">
+                          <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre y apellido</label>
+                          <input formControlName="name" placeholder="María Vega" [class]="inputClass" />
+                        </div>
+                      } @else {
+                        <div>
+                          <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+                          <input formControlName="firstName" placeholder="María" [class]="inputClass" />
+                        </div>
+                        <div>
+                          <label class="mb-1 block text-sm font-medium text-trama-dark">Apellido</label>
+                          <input formControlName="lastName" placeholder="Vega" [class]="inputClass" />
+                        </div>
+                      }
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Email</label>
                         <input formControlName="email" type="email" placeholder="maria@email.com" [class]="inputClass" />
@@ -270,6 +281,20 @@ interface SummaryRow {
                   @case ('location') {
                     <form [formGroup]="consignorLocationForm" class="grid gap-4 sm:grid-cols-2">
                       <div>
+                        <label class="mb-1 block text-sm font-medium text-trama-dark">Calle</label>
+                        <input formControlName="street" placeholder="Independencia" [class]="inputClass" />
+                      </div>
+                      <div class="grid grid-cols-2 gap-4">
+                        <div>
+                          <label class="mb-1 block text-sm font-medium text-trama-dark">Número</label>
+                          <input formControlName="number" placeholder="742" [class]="inputClass" />
+                        </div>
+                        <div>
+                          <label class="mb-1 block text-sm font-medium text-trama-dark">Depto / Piso <span class="text-trama-dark/40">(opcional)</span></label>
+                          <input formControlName="unit" placeholder="3B" [class]="inputClass" />
+                        </div>
+                      </div>
+                      <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Nueva Córdoba" [class]="inputClass" />
                       </div>
@@ -278,17 +303,14 @@ interface SummaryRow {
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
                       </div>
                       <div class="sm:col-span-2">
-                        <div class="mb-1 flex items-baseline justify-between">
-                          <span class="text-sm font-medium text-trama-dark">Ubicación aproximada</span>
-                          <span class="text-xs text-trama-dark/50">{{ coordsLabel(consignorGeo()) }}</span>
-                        </div>
+                        <span class="mb-1 block text-sm font-medium text-trama-dark">Marcá tu ubicación en el mapa</span>
                         <div
                           appMapPicker
                           (coordsChange)="consignorGeo.set($event)"
                           class="h-56 w-full overflow-hidden rounded-xl border border-trama-sand-200"
                         ></div>
                         <p class="mt-1 text-xs text-trama-dark/50">
-                          Arrastrá el pin o tocá el mapa para marcar tu zona. No publicamos tu dirección exacta.
+                          Arrastrá el pin o tocá el mapa para ajustar el punto. No publicamos tu dirección exacta.
                         </p>
                       </div>
                     </form>
@@ -612,7 +634,9 @@ export class Register {
   protected readonly merchantGeo = signal<Coords>(CORDOBA_CENTER);
 
   protected readonly accountForm = this.fb.group({
-    name: ['', Validators.required],
+    name: [''], // used by the merchant flow; consignor uses firstName/lastName
+    firstName: [''],
+    lastName: [''],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
     password: ['', [Validators.required, Validators.minLength(8)]],
@@ -624,6 +648,9 @@ export class Register {
   });
 
   protected readonly consignorLocationForm = this.fb.group({
+    street: ['', Validators.required],
+    number: ['', Validators.required],
+    unit: [''],
     neighborhood: ['', Validators.required],
     city: ['', Validators.required],
   });
@@ -743,10 +770,19 @@ export class Register {
     this.code.set(value.replace(/\D/g, '').slice(0, 6));
   }
 
+  // The consignor uses first/last name, the merchant a single name; names have no form validators
+  // (they differ by role), so check the right ones here.
+  private accountNamesValid(): boolean {
+    const { name, firstName, lastName } = this.accountForm.controls;
+    return this.role() === 'merchant'
+      ? !!name.value?.trim()
+      : !!firstName.value?.trim() && !!lastName.value?.trim();
+  }
+
   protected canAdvance(): boolean {
     switch (this.current().id) {
       case 'account':
-        return this.accountForm.valid && !this.passwordMismatch();
+        return this.accountForm.valid && this.accountNamesValid() && !this.passwordMismatch();
       case 'dni':
         return this.dniForm.valid;
       case 'location':
@@ -849,12 +885,16 @@ export class Register {
     const account = this.accountForm.getRawValue();
     const location = this.consignorLocationForm.getRawValue();
     return {
-      name: account.name!,
+      firstName: account.firstName!.trim(),
+      lastName: account.lastName!.trim(),
       email: account.email!,
       phone: account.phone!,
       password: account.password!,
       dni: this.dniForm.controls.dni.value!,
       location: {
+        street: location.street!,
+        number: location.number!,
+        unit: location.unit?.trim() || undefined,
         neighborhood: location.neighborhood!,
         city: location.city!,
         lat: this.consignorGeo().lat,
@@ -935,16 +975,21 @@ export class Register {
       ];
     }
     const location = this.consignorLocationForm.getRawValue();
+    const street = [location.street, location.number].filter(Boolean).join(' ');
+    const address = [street, location.unit].filter(Boolean).join(', ');
     return [
-      { key: 'Nombre', value: account.name || '—' },
+      {
+        key: 'Nombre',
+        value: [account.firstName, account.lastName].filter(Boolean).join(' ') || '—',
+      },
       { key: 'Email', value: account.email || '—' },
       { key: 'Teléfono', value: account.phone || '—' },
       { key: 'DNI', value: this.dniForm.controls.dni.value || '—' },
+      { key: 'Dirección', value: address || '—' },
       {
         key: 'Zona',
         value: location.neighborhood ? `${location.neighborhood}, ${location.city}` : '—',
       },
-      { key: 'Geolocalización', value: this.coordsLabel(this.consignorGeo()) },
     ];
   }
 }
