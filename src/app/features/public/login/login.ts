@@ -1,89 +1,89 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 
-interface DemoAccount {
-  label: string;
-  email: string;
-  password: string;
-}
-
-interface DemoGroup {
-  heading: string;
-  accounts: DemoAccount[];
-}
-
-const DEMO_GROUPS: DemoGroup[] = [
-  {
-    heading: 'Cuentas de ejemplo',
-    accounts: [
-      { label: 'Entrar como cedente (Ana)', email: 'ana@example.com', password: 'trama1234' },
-      {
-        label: 'Entrar como comercio (Trama Boutique)',
-        email: 'contacto@tramaboutique.com',
-        password: 'trama1234',
-      },
-    ],
-  },
-  {
-    heading: 'Comercio de prueba — Segunda Vuelta',
-    accounts: [
-      {
-        label: 'Entrar como cedente (Franco)',
-        email: 'franco.ledesma.demo@trama.app',
-        password: 'trama1234',
-      },
-      {
-        label: 'Entrar como comercio (Segunda Vuelta)',
-        email: 'comercio.demo@segundavuelta.app',
-        password: 'trama1234',
-      },
-    ],
-  },
-];
-
 @Component({
   selector: 'app-login',
-  imports: [LogoIcon, RouterLink],
+  imports: [LogoIcon, RouterLink, ReactiveFormsModule],
   template: `
-    <div class="flex min-h-screen items-center justify-center bg-trama-sand-50 p-6">
-      <div class="w-full max-w-sm rounded-2xl bg-white p-8 shadow-sm">
-        <div class="flex justify-center">
-          <app-logo-icon [size]="48" />
+    <div class="flex min-h-screen items-center justify-center bg-trama-sand-50 px-5 py-10">
+      <div class="w-full max-w-[400px]">
+        <div class="mb-7 flex flex-col items-center">
+          <a routerLink="/" aria-label="Volver al inicio"><app-logo-icon [size]="46" /></a>
+          <h1 class="mt-3.5 font-display text-2xl font-semibold text-trama-dark">Ingresá a Trama</h1>
+          <p class="mt-1.5 text-sm text-trama-muted">Cedentes y comercios</p>
         </div>
-        <h1 class="mt-3 text-center font-display text-3xl font-semibold text-trama-brand">
-          Trama
-        </h1>
-        <p class="mt-2 text-center text-sm text-trama-dark/60">Ingresá para continuar</p>
-        @for (group of demoGroups; track group.heading) {
-          <div class="mt-6 first:mt-8">
-            <p class="mb-2 text-xs font-medium tracking-wide text-trama-dark/40 uppercase">
-              {{ group.heading }}
+
+        <form
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+          novalidate
+          class="rounded-[18px] border border-black/[.07] bg-white p-7 shadow-[0_12px_40px_rgba(0,0,0,.06)]"
+        >
+          <label for="email" class="mb-1.5 block text-[13px] font-semibold text-trama-dark/80">Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            autocomplete="email"
+            placeholder="tu@email.com"
+            [class]="inputClass"
+          />
+          @if (showError('email')) {
+            <p class="mt-1 text-xs text-status-none">Ingresá un email válido.</p>
+          }
+
+          <label for="password" class="mt-4 mb-1.5 block text-[13px] font-semibold text-trama-dark/80"
+            >Contraseña</label
+          >
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            autocomplete="current-password"
+            [class]="inputClass"
+          />
+          @if (showError('password')) {
+            <p class="mt-1 text-xs text-status-none">Ingresá tu contraseña.</p>
+          }
+
+          @if (error()) {
+            <p class="mt-4 rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+              {{ error() }}
             </p>
-            <div class="space-y-2">
-              @for (account of group.accounts; track account.email) {
-                <button
-                  type="button"
-                  (click)="enter(account)"
-                  [disabled]="loading()"
-                  class="w-full rounded-lg border border-trama-brand px-4 py-2.5 font-medium text-trama-brand hover:bg-trama-green-50 disabled:opacity-40"
-                >
-                  {{ account.label }}
-                </button>
-              }
-            </div>
-          </div>
-        }
-        @if (error()) {
-          <p class="mt-4 text-center text-sm text-status-none">
-            No pudimos iniciar sesión. Verificá que el servidor esté activo.
-          </p>
-        }
-        <p class="mt-6 text-center text-sm text-trama-dark/60">
-          ¿No tenés cuenta?
-          <a routerLink="/register" class="font-medium text-trama-brand hover:underline">Registrarme</a>
-        </p>
+          }
+
+          <button
+            type="submit"
+            [disabled]="loading()"
+            class="mt-5 w-full rounded-[11px] bg-trama-brand py-3 text-[15.5px] font-semibold text-white hover:bg-trama-green-700 disabled:opacity-50"
+          >
+            {{ loading() ? 'Ingresando…' : 'Ingresar' }}
+          </button>
+        </form>
+
+        <div class="my-5 flex items-center gap-3">
+          <div class="h-px flex-1 bg-black/10"></div>
+          <span class="text-[13px] text-trama-muted">¿No tenés cuenta?</span>
+          <div class="h-px flex-1 bg-black/10"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-2.5">
+          <a
+            routerLink="/register"
+            [queryParams]="{ rol: 'cedente' }"
+            class="rounded-[10px] border border-trama-dark/20 bg-white py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
+            >Soy cedente</a
+          >
+          <a
+            routerLink="/register"
+            [queryParams]="{ rol: 'comercio' }"
+            class="rounded-[10px] border border-trama-dark/20 bg-white py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
+            >Soy comercio</a
+          >
+        </div>
       </div>
     </div>
   `,
@@ -91,22 +91,46 @@ const DEMO_GROUPS: DemoGroup[] = [
 export class Login {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly fb = inject(FormBuilder);
 
-  protected readonly demoGroups = DEMO_GROUPS;
+  protected readonly inputClass =
+    'w-full rounded-[10px] border border-black/[.14] bg-trama-sand-100 px-3.5 py-3 text-[15px] text-trama-dark outline-none focus:border-trama-brand focus:ring-2 focus:ring-trama-green-100';
+
+  protected readonly form = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', Validators.required],
+  });
+
   protected readonly loading = signal(false);
-  protected readonly error = signal(false);
+  protected readonly error = signal<string | null>(null);
 
-  enter(account: DemoAccount): void {
+  protected showError(field: 'email' | 'password'): boolean {
+    const control = this.form.controls[field];
+    return control.invalid && (control.touched || control.dirty);
+  }
+
+  submit(): void {
     if (this.loading()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.loading.set(true);
-    this.error.set(false);
-    this.auth.login(account.email, account.password).subscribe({
+    this.error.set(null);
+    const { email, password } = this.form.getRawValue();
+    this.auth.login(email.trim(), password).subscribe({
       next: (response) => {
         this.router.navigateByUrl(response.user.role === 'consignor' ? '/c' : '/m');
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        this.error.set(true);
+        this.error.set(
+          err.status === 0
+            ? 'No pudimos conectarnos con el servidor. Probá de nuevo en unos minutos.'
+            : err.status === 400 || err.status === 401
+              ? 'El email o la contraseña no son correctos.'
+              : 'No pudimos iniciar sesión. Probá de nuevo.',
+        );
       },
     });
   }
