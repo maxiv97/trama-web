@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
 import {
@@ -671,6 +671,13 @@ export class Register {
   protected readonly panelLabel = computed(() =>
     this.role() === 'merchant' ? 'Ir al panel del comercio' : 'Ir al panel del cedente',
   );
+
+  constructor() {
+    // Permite entrar directo al formulario desde la landing/login: /register?rol=cedente|comercio
+    const rol = inject(ActivatedRoute).snapshot.queryParamMap.get('rol');
+    if (rol === 'cedente') this.pick('consignor');
+    else if (rol === 'comercio') this.pick('merchant');
+  }
 
   protected pick(role: Role): void {
     this.role.set(role);
