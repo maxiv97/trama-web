@@ -75,7 +75,10 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
         @switch (step()) {
           @case (1) {
             <div class="space-y-4">
-              <p class="text-sm text-trama-dark/70">Subí al menos 3 fotos de tu prenda.</p>
+              <p class="text-sm text-trama-dark/70">
+                Subí al menos una foto de tu prenda. Cuantas más subas, mejor podrá evaluarla el
+                comercio.
+              </p>
               <label
                 (dragover)="$event.preventDefault()"
                 (drop)="onDrop($event)"
@@ -487,7 +490,7 @@ export class UploadGarment {
   protected canAdvance(): boolean {
     switch (this.step()) {
       case 1:
-        return this.photos().length >= 3;
+        return this.photos().length >= 1;
       case 2:
         return this.step2Valid();
       case 3:
