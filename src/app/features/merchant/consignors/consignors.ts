@@ -94,7 +94,19 @@ type ConsignorsState =
                       <div class="text-trama-dark/50">{{ row.phone }}</div>
                     </td>
                     <td class="px-4 py-3 text-trama-dark/70">
-                      {{ row.acceptanceRate === null ? '—' : row.acceptanceRate + '%' }}
+                      @if (row.acceptanceRate === null) {
+                        —
+                      } @else {
+                        <a
+                          [routerLink]="['/m/proposals']"
+                          [queryParams]="{ consignor: row.consignorId }"
+                          (click)="$event.stopPropagation()"
+                          title="Ver sus propuestas"
+                          class="font-medium text-trama-brand hover:underline"
+                        >
+                          {{ row.acceptanceRate }}%
+                        </a>
+                      }
                     </td>
                     <td class="px-4 py-3 text-trama-dark/70">
                       @if (row.sellThroughRate === null) {

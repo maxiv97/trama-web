@@ -65,6 +65,13 @@ export const routes: Routes = [
           import('./features/merchant/panel/merchant-panel').then((m) => m.MerchantPanel),
       },
       {
+        path: 'proposals',
+        loadComponent: () =>
+          import('./features/merchant/proposals/merchant-proposals').then(
+            (m) => m.MerchantProposals,
+          ),
+      },
+      {
         path: 'proposal/:id',
         loadComponent: () =>
           import('./features/merchant/review-proposal/review-proposal').then(
