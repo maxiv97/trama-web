@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
@@ -11,12 +11,14 @@ import { GarmentsService } from '../../../core/services/garments.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ConsignorsService } from '../../../core/services/consignors.service';
+import { CategoriesService } from '../../../core/services/categories.service';
+import { Category } from '../../../core/models/category.model';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { distanceKm } from '../../../core/utils/geo.util';
 import { compressImage } from '../../../core/utils/image.util';
-import { CATEGORIES, SEASONS } from '../../../core/models/garment-taxonomy';
+import { SEASONS } from '../../../core/models/garment-taxonomy';
 
 interface MerchantOption {
   merchantId: string;
@@ -41,7 +43,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'fair', label: 'Regular' },
 ];
 
-const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
+const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
 
 @Component({
   selector: 'app-upload-garment',
@@ -95,6 +97,9 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
                   (change)="onFilesSelected($event)"
                 />
               </label>
+              @if (showErrors() && !photos().length) {
+                <p class="text-xs text-status-none">Subí al menos una foto para continuar.</p>
+              }
 
               @if (photos().length) {
                 <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
@@ -147,94 +152,6 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
             </div>
           }
           @case (2) {
-            <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
-                <input
-                  formControlName="name"
-                  placeholder="Ej: Campera de jean azul"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
-                <select
-                  formControlName="category"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una categoría</option>
-                  @for (category of categories; track category.label) {
-                    <option [value]="category.label">{{ category.label }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
-                <select
-                  formControlName="subcategory"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una subcategoría</option>
-                  @for (subcategory of subcategories(); track subcategory) {
-                    <option [value]="subcategory">{{ subcategory }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
-                <input
-                  formControlName="brand"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
-                <input
-                  formControlName="size"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
-                <input
-                  formControlName="color"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
-                <select
-                  formControlName="season"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una temporada</option>
-                  @for (season of seasons; track season) {
-                    <option [value]="season">{{ season }}</option>
-                  }
-                </select>
-              </div>
-              <div class="sm:col-span-2">
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
-                <div class="flex flex-wrap gap-3">
-                  @for (condition of conditions; track condition.value) {
-                    <label class="flex items-center gap-2 text-sm text-trama-dark/80">
-                      <input type="radio" formControlName="condition" [value]="condition.value" />
-                      {{ condition.label }}
-                    </label>
-                  }
-                </div>
-              </div>
-              <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Descripción</label>
-                <textarea
-                  formControlName="description"
-                  rows="3"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                ></textarea>
-              </div>
-            </form>
-          }
-          @case (3) {
             <div class="space-y-4">
               <input
                 type="search"
@@ -277,7 +194,122 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
                   No encontramos comercios para tu búsqueda.
                 </p>
               }
+              @if (showErrors() && !selection()) {
+                <p class="text-xs text-status-none">Elegí un comercio para continuar.</p>
+              }
             </div>
+          }
+          @case (3) {
+            <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="sm:col-span-2">
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+                <input
+                  formControlName="name"
+                  placeholder="Ej: Campera de jean azul"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                />
+                @if (showError('name')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('name') }}</p>
+                }
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
+                <select
+                  formControlName="category"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                >
+                  <option value="">Elegí una categoría</option>
+                  @for (category of categories(); track category.id) {
+                    <option [value]="category.label">{{ category.label }}</option>
+                  }
+                </select>
+                @if (showError('category')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('category') }}</p>
+                }
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
+                <select
+                  formControlName="subcategory"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                >
+                  <option value="">Elegí una subcategoría</option>
+                  @for (subcategory of subcategories(); track subcategory) {
+                    <option [value]="subcategory">{{ subcategory }}</option>
+                  }
+                </select>
+                @if (showError('subcategory')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('subcategory') }}</p>
+                }
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
+                <input
+                  formControlName="brand"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                />
+                @if (showError('brand')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('brand') }}</p>
+                }
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
+                <input
+                  formControlName="size"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                />
+                @if (showError('size')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('size') }}</p>
+                }
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
+                <input
+                  formControlName="color"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                />
+                @if (showError('color')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('color') }}</p>
+                }
+              </div>
+              <div>
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
+                <select
+                  formControlName="season"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                >
+                  <option value="">Elegí una temporada</option>
+                  @for (season of seasons; track season) {
+                    <option [value]="season">{{ season }}</option>
+                  }
+                </select>
+                @if (showError('season')) {
+                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('season') }}</p>
+                }
+              </div>
+              <div class="sm:col-span-2">
+                <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
+                <div class="flex flex-wrap gap-3">
+                  @for (condition of conditions; track condition.value) {
+                    <label class="flex items-center gap-2 text-sm text-trama-dark/80">
+                      <input type="radio" formControlName="condition" [value]="condition.value" />
+                      {{ condition.label }}
+                    </label>
+                  }
+                </div>
+                @if (showError('condition')) {
+                  <p class="mt-1 text-xs text-status-none">Elegí la condición de la prenda.</p>
+                }
+              </div>
+              <div class="sm:col-span-2">
+                <label class="mb-1 block text-sm font-medium text-trama-dark">Descripción</label>
+                <textarea
+                  formControlName="description"
+                  rows="3"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                ></textarea>
+              </div>
+            </form>
           }
           @case (4) {
             <form [formGroup]="form" class="space-y-4">
@@ -291,6 +323,9 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
                   min="1"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (showError('consignorPrice')) {
+                  <p class="mt-1 text-xs text-status-none">Ingresá un monto mayor a cero.</p>
+                }
               </div>
               @if (salePrice() !== null) {
                 <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
@@ -302,6 +337,17 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
           }
         }
       </div>
+
+      @if (showErrors() && !canAdvance()) {
+        <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+          Revisá los campos marcados antes de continuar.
+        </p>
+      }
+      @if (submitError()) {
+        <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+          {{ submitError() }}
+        </p>
+      }
 
       <div class="flex items-center justify-between">
         <button
@@ -316,8 +362,7 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
           <button
             type="button"
             (click)="next()"
-            [disabled]="!canAdvance()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
           >
             Siguiente
           </button>
@@ -325,7 +370,7 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
           <button
             type="button"
             (click)="submit()"
-            [disabled]="!canAdvance() || submitting()"
+            [disabled]="submitting()"
             class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
           >
             {{ submitting() ? 'Enviando…' : 'Enviar propuesta' }}
@@ -342,11 +387,14 @@ export class UploadGarment {
   private readonly proposalsService = inject(ProposalsService);
   private readonly merchantsService = inject(MerchantsService);
   private readonly consignorsService = inject(ConsignorsService);
+  private readonly categoriesService = inject(CategoriesService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly steps = STEPS;
-  protected readonly categories = CATEGORIES;
+  // Catálogo del comercio elegido (base − ocultas + propias), traído de la API.
+  protected readonly categories = signal<Category[]>([]);
   protected readonly seasons = SEASONS;
   protected readonly conditions = CONDITIONS;
 
@@ -356,6 +404,8 @@ export class UploadGarment {
   protected readonly selection = signal<Selection | null>(null);
   protected readonly search = signal('');
   protected readonly submitting = signal(false);
+  protected readonly showErrors = signal(false);
+  protected readonly submitError = signal('');
 
   protected readonly form = this.fb.group({
     name: ['', Validators.required],
@@ -386,7 +436,9 @@ export class UploadGarment {
   });
 
   protected readonly subcategories = computed(
-    () => CATEGORIES.find((category) => category.label === this.categoryValue())?.subcategories ?? [],
+    () =>
+      this.categories().find((category) => category.label === this.categoryValue())
+        ?.subcategories ?? [],
   );
 
   protected readonly merchantOptions = computed<MerchantOption[]>(() => {
@@ -486,7 +538,25 @@ export class UploadGarment {
   }
 
   protected select(option: MerchantOption): void {
+    const current = this.selection();
     this.selection.set({ merchantId: option.merchantId, salesPointId: option.salesPointId });
+    // El catálogo depende del comercio: al cambiarlo, recargo categorías y limpio
+    // la selección previa de categoría/subcategoría que podría no existir en el nuevo.
+    if (current?.merchantId !== option.merchantId) {
+      this.form.controls.category.setValue('');
+      this.form.controls.subcategory.setValue('');
+      this.loadCategories(option.merchantId);
+    }
+  }
+
+  private loadCategories(merchantId: string): void {
+    this.categoriesService
+      .forMerchant(merchantId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (categories) => this.categories.set(categories),
+        error: () => this.toast.show('No pudimos cargar las categorías del comercio', 'error'),
+      });
   }
 
   protected canAdvance(): boolean {
@@ -494,9 +564,9 @@ export class UploadGarment {
       case 1:
         return this.photos().length >= 1;
       case 2:
-        return this.step2Valid();
-      case 3:
         return this.selection() !== null;
+      case 3:
+        return this.descriptionValid();
       case 4:
         return this.form.controls.consignorPrice.valid;
       default:
@@ -504,18 +574,50 @@ export class UploadGarment {
     }
   }
 
+  // Muestra el error de un campo del paso de descripción cuando fue tocado o
+  // cuando el usuario ya intentó avanzar.
+  protected showError(name: string): boolean {
+    const control = this.form.get(name);
+    return !!control && control.invalid && (control.touched || this.showErrors());
+  }
+
+  protected errorMessage(name: string): string {
+    const errors = this.form.get(name)?.errors;
+    if (!errors) return '';
+    if (errors['required']) return 'Este campo es obligatorio.';
+    if (errors['min']) return `El mínimo es ${errors['min'].min}.`;
+    return 'Revisá este dato.';
+  }
+
   protected next(): void {
-    if (this.canAdvance() && this.step() < 4) this.step.update((value) => value + 1);
+    if (!this.canAdvance()) {
+      this.revealErrors();
+      return;
+    }
+    this.showErrors.set(false);
+    if (this.step() < 4) this.step.update((value) => value + 1);
   }
 
   protected back(): void {
+    this.showErrors.set(false);
+    this.submitError.set('');
     if (this.step() > 1) this.step.update((value) => value - 1);
   }
 
+  private revealErrors(): void {
+    if (this.step() === 3) this.form.markAllAsTouched();
+    this.showErrors.set(true);
+  }
+
   protected submit(): void {
+    if (this.submitting()) return;
     const selection = this.selection();
     const merchant = this.selectedMerchant();
-    if (!selection || !merchant || !this.canAdvance() || this.submitting()) return;
+    if (!selection || !merchant || !this.canAdvance()) {
+      this.revealErrors();
+      return;
+    }
+    this.submitError.set('');
 
     const raw = this.form.getRawValue();
     const consignorPrice = Number(raw.consignorPrice);
@@ -560,7 +662,9 @@ export class UploadGarment {
         },
         error: (err: HttpErrorResponse) => {
           this.submitting.set(false);
-          this.toast.show(this.submitErrorMessage(err), 'error');
+          const message = this.submitErrorMessage(err);
+          this.submitError.set(message);
+          this.toast.show(message, 'error');
         },
       });
   }
@@ -579,7 +683,7 @@ export class UploadGarment {
       : 'No pudimos enviar la propuesta. Revisá los datos e intentá de nuevo.';
   }
 
-  private step2Valid(): boolean {
+  private descriptionValid(): boolean {
     return (
       ['name', 'category', 'subcategory', 'brand', 'size', 'color', 'season', 'condition'] as const
     ).every((control) => this.form.controls[control].valid);

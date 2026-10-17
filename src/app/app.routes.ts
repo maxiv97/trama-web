@@ -123,6 +123,13 @@ export const routes: Routes = [
           import('./features/merchant/consignors/consignors').then((m) => m.Consignors),
       },
       {
+        path: 'categories',
+        loadComponent: () =>
+          import('./features/merchant/categories/manage-categories').then(
+            (m) => m.ManageCategories,
+          ),
+      },
+      {
         path: 'settings',
         loadComponent: () =>
           import('./features/merchant/settings/settings').then((m) => m.Settings),
