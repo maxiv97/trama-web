@@ -52,6 +52,44 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
     <div class="mx-auto max-w-2xl space-y-6">
       <h1 class="text-2xl font-semibold text-trama-dark">Cargar artículo</h1>
 
+      @if (submitted()) {
+        <div class="rounded-2xl border border-trama-sand-200 bg-white p-8 text-center">
+          <div
+            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-trama-green-50 text-3xl text-trama-brand"
+          >
+            ✓
+          </div>
+          <h2 class="mt-4 font-display text-xl font-semibold text-trama-dark">¡Propuesta enviada!</h2>
+          <p class="mx-auto mt-2 max-w-sm text-sm text-trama-dark/70">
+            Le llegó a <span class="font-medium text-trama-dark">{{ sentMerchantName() }}</span> para
+            revisar. Te avisamos apenas responda.
+          </p>
+          <div class="mt-7 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              (click)="reset()"
+              class="rounded-lg bg-trama-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-trama-green-700"
+            >
+              Cargar otra prenda
+            </button>
+            <button
+              type="button"
+              (click)="viewGarment()"
+              class="rounded-lg border border-trama-sand-200 px-5 py-2.5 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
+            >
+              Ver la propuesta
+            </button>
+            <button
+              type="button"
+              (click)="goHome()"
+              class="rounded-lg px-5 py-2.5 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+            >
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+      } @else {
+
       <ol class="flex items-center">
         @for (label of steps; track label; let i = $index; let last = $last) {
           <li class="flex items-center" [class.flex-1]="!last">
@@ -302,7 +340,9 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                 }
               </div>
               <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Descripción</label>
+                <label class="mb-1 block text-sm font-medium text-trama-dark"
+                  >Descripción <span class="text-trama-dark/40">(opcional)</span></label
+                >
                 <textarea
                   formControlName="description"
                   rows="3"
@@ -377,6 +417,7 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
           </button>
         }
       </div>
+      }
     </div>
   `,
 })
@@ -406,6 +447,10 @@ export class UploadGarment {
   protected readonly submitting = signal(false);
   protected readonly showErrors = signal(false);
   protected readonly submitError = signal('');
+  // Pantalla de confirmación tras enviar la propuesta.
+  protected readonly submitted = signal(false);
+  protected readonly sentGarmentId = signal<string | null>(null);
+  protected readonly sentMerchantName = signal('');
 
   protected readonly form = this.fb.group({
     name: ['', Validators.required],
@@ -657,8 +702,10 @@ export class UploadGarment {
       )
       .subscribe({
         next: (garment) => {
-          this.toast.show('Propuesta enviada', 'success');
-          this.router.navigate(['/c/garment', garment.id]);
+          this.submitting.set(false);
+          this.sentGarmentId.set(garment.id);
+          this.sentMerchantName.set(merchant.businessName);
+          this.submitted.set(true);
         },
         error: (err: HttpErrorResponse) => {
           this.submitting.set(false);
@@ -667,6 +714,29 @@ export class UploadGarment {
           this.toast.show(message, 'error');
         },
       });
+  }
+
+  protected reset(): void {
+    this.form.reset({ consignorPrice: null });
+    this.photos.set([]);
+    this.videoName.set(null);
+    this.selection.set(null);
+    this.categories.set([]);
+    this.search.set('');
+    this.showErrors.set(false);
+    this.submitError.set('');
+    this.sentGarmentId.set(null);
+    this.submitted.set(false);
+    this.step.set(1);
+  }
+
+  protected viewGarment(): void {
+    const id = this.sentGarmentId();
+    if (id) this.router.navigate(['/c/garment', id]);
+  }
+
+  protected goHome(): void {
+    this.router.navigate(['/c']);
   }
 
   private submitErrorMessage(err: HttpErrorResponse): string {
