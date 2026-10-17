@@ -1,5 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
@@ -239,28 +240,46 @@ interface SummaryRow {
                         <div class="sm:col-span-2">
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre y apellido</label>
                           <input formControlName="name" placeholder="María Vega" [class]="inputClass" />
+                          @if (showErrors() && !accountForm.controls.name.value?.trim()) {
+                            <p class="mt-1 text-xs text-status-none">Ingresá el nombre y apellido.</p>
+                          }
                         </div>
                       } @else {
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
                           <input formControlName="firstName" placeholder="María" [class]="inputClass" />
+                          @if (showErrors() && !accountForm.controls.firstName.value?.trim()) {
+                            <p class="mt-1 text-xs text-status-none">Ingresá tu nombre.</p>
+                          }
                         </div>
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Apellido</label>
                           <input formControlName="lastName" placeholder="Vega" [class]="inputClass" />
+                          @if (showErrors() && !accountForm.controls.lastName.value?.trim()) {
+                            <p class="mt-1 text-xs text-status-none">Ingresá tu apellido.</p>
+                          }
                         </div>
                       }
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Email</label>
                         <input formControlName="email" type="email" placeholder="maria@email.com" [class]="inputClass" />
+                        @if (showError(accountForm, 'email')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(accountForm, 'email') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Teléfono</label>
                         <input formControlName="phone" type="tel" placeholder="+54 9 351 555 1234" [class]="inputClass" />
+                        @if (showError(accountForm, 'phone')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(accountForm, 'phone') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Contraseña</label>
                         <input formControlName="password" type="password" placeholder="Mínimo 8 caracteres" [class]="inputClass" />
+                        @if (showError(accountForm, 'password')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(accountForm, 'password') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Repetir contraseña</label>
@@ -275,7 +294,11 @@ interface SummaryRow {
                     <form [formGroup]="dniForm" class="max-w-xs">
                       <label class="mb-1 block text-sm font-medium text-trama-dark">Número de DNI</label>
                       <input formControlName="dni" placeholder="30123456" [class]="inputClass" />
-                      <p class="mt-1 text-xs text-trama-dark/50">Sin puntos ni espacios.</p>
+                      @if (showError(dniForm, 'dni')) {
+                        <p class="mt-1 text-xs text-status-none">{{ errorMessage(dniForm, 'dni') }}</p>
+                      } @else {
+                        <p class="mt-1 text-xs text-trama-dark/50">Sin puntos ni espacios.</p>
+                      }
                     </form>
                   }
                   @case ('location') {
@@ -283,11 +306,17 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Calle</label>
                         <input formControlName="street" placeholder="Independencia" [class]="inputClass" />
+                        @if (showError(consignorLocationForm, 'street')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'street') }}</p>
+                        }
                       </div>
                       <div class="grid grid-cols-2 gap-4">
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Número</label>
                           <input formControlName="number" placeholder="742" [class]="inputClass" />
+                          @if (showError(consignorLocationForm, 'number')) {
+                            <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'number') }}</p>
+                          }
                         </div>
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Depto / Piso <span class="text-trama-dark/40">(opcional)</span></label>
@@ -297,10 +326,16 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Nueva Córdoba" [class]="inputClass" />
+                        @if (showError(consignorLocationForm, 'neighborhood')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'neighborhood') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
+                        @if (showError(consignorLocationForm, 'city')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'city') }}</p>
+                        }
                       </div>
                       <div class="sm:col-span-2">
                         <span class="mb-1 block text-sm font-medium text-trama-dark">Marcá tu ubicación en el mapa</span>
@@ -320,19 +355,32 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre del comercio</label>
                         <input formControlName="businessName" placeholder="Vuelta Showroom" [class]="inputClass" />
+                        @if (showError(businessForm, 'businessName')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'businessName') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">CUIT</label>
                         <input formControlName="cuit" placeholder="30712345678" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">11 dígitos, sin guiones.</p>
+                        @if (showError(businessForm, 'cuit')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'cuit') }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">11 dígitos, sin guiones.</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Güemes" [class]="inputClass" />
+                        @if (showError(businessForm, 'neighborhood')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'neighborhood') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
+                        @if (showError(businessForm, 'city')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'city') }}</p>
+                        }
                       </div>
                     </form>
                   }
@@ -341,14 +389,23 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre del punto de venta</label>
                         <input formControlName="spName" placeholder="Local Güemes" [class]="inputClass" />
+                        @if (showError(pdvForm, 'spName')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(pdvForm, 'spName') }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Teléfono del local</label>
                         <input formControlName="spPhone" type="tel" placeholder="351 444 2020" [class]="inputClass" />
+                        @if (showError(pdvForm, 'spPhone')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(pdvForm, 'spPhone') }}</p>
+                        }
                       </div>
                       <div class="sm:col-span-2">
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Dirección</label>
                         <input formControlName="spAddress" placeholder="Belgrano 800" [class]="inputClass" />
+                        @if (showError(pdvForm, 'spAddress')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(pdvForm, 'spAddress') }}</p>
+                        }
                       </div>
                       <div class="sm:col-span-2">
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Instrucciones para el cedente</label>
@@ -377,6 +434,9 @@ interface SummaryRow {
                             </button>
                           }
                         </div>
+                        @if (showErrors() && !daysSel().includes(true)) {
+                          <p class="mt-1 text-xs text-status-none">Elegí al menos un día de recepción.</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Abre</label>
@@ -459,17 +519,29 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Plazo de venta</label>
                         <input formControlName="saleWindowMonths" type="number" min="1" max="12" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">Meses en góndola (1 a 12).</p>
+                        @if (showError(conditionsForm, 'saleWindowMonths')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(conditionsForm, 'saleWindowMonths') }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">Meses en góndola (1 a 12).</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Período de gracia</label>
                         <input formControlName="graceMonths" type="number" min="0" max="6" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">Meses extra (0 a 6).</p>
+                        @if (showError(conditionsForm, 'graceMonths')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(conditionsForm, 'graceMonths') }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">Meses extra (0 a 6).</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Día de pago</label>
                         <input formControlName="payoutDay" type="number" min="1" max="28" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">Del mes (1 a 28).</p>
+                        @if (showError(conditionsForm, 'payoutDay')) {
+                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(conditionsForm, 'payoutDay') }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">Del mes (1 a 28).</p>
+                        }
                       </div>
                     </form>
                   }
@@ -493,11 +565,25 @@ interface SummaryRow {
                         <input type="checkbox" [checked]="accepted()" (change)="accepted.set($any($event.target).checked)" class="mt-0.5 h-4 w-4 accent-trama-brand" />
                         <span>Leí y acepto los términos de consignación y la política de datos de Trama.</span>
                       </label>
+                      @if (showErrors() && !accepted()) {
+                        <p class="text-xs text-status-none">Tenés que aceptar los términos para crear la cuenta.</p>
+                      }
                     </div>
                   }
                 }
               </div>
             </div>
+
+            @if (showErrors() && !canAdvance()) {
+              <p class="mt-4 rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+                Revisá los campos marcados antes de continuar.
+              </p>
+            }
+            @if (submitError()) {
+              <p class="mt-4 rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+                {{ submitError() }}
+              </p>
+            }
 
             <div class="mt-6 flex items-center justify-between">
               <button
@@ -511,8 +597,7 @@ interface SummaryRow {
                 <button
                   type="button"
                   (click)="next()"
-                  [disabled]="!canAdvance()"
-                  class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                  class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
                 >
                   Siguiente
                 </button>
@@ -520,7 +605,7 @@ interface SummaryRow {
                 <button
                   type="button"
                   (click)="submit()"
-                  [disabled]="!canAdvance() || submitting()"
+                  [disabled]="submitting()"
                   class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                 >
                   {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
@@ -619,6 +704,10 @@ export class Register {
   protected readonly role = signal<Role | null>(null);
   protected readonly step = signal(0);
   protected readonly submitting = signal(false);
+  // Pasa a true cuando el usuario intenta avanzar con el paso incompleto, para
+  // revelar los mensajes de validación de ese paso.
+  protected readonly showErrors = signal(false);
+  protected readonly submitError = signal('');
 
   protected readonly daysSel = signal<boolean[]>([true, true, true, true, true, false, false]);
   protected readonly fromTime = signal('10:00');
@@ -802,13 +891,74 @@ export class Register {
     }
   }
 
+  // Muestra el error de un campo del formulario reactivo cuando fue tocado o
+  // cuando el usuario ya intentó avanzar.
+  protected showError(form: FormGroup, name: string): boolean {
+    const control = form.get(name);
+    return !!control && control.invalid && (control.touched || this.showErrors());
+  }
+
+  protected errorMessage(form: FormGroup, name: string): string {
+    const control = form.get(name);
+    const errors = control?.errors;
+    if (!errors) return '';
+    if (errors['required']) return 'Este campo es obligatorio.';
+    if (errors['email']) return 'Ingresá un email válido.';
+    if (errors['minlength']) return `Mínimo ${errors['minlength'].requiredLength} caracteres.`;
+    if (errors['min']) return `El mínimo es ${errors['min'].min}.`;
+    if (errors['max']) return `El máximo es ${errors['max'].max}.`;
+    if (errors['pattern']) {
+      if (name === 'dni') return 'El DNI debe tener 7 u 8 dígitos, sin puntos.';
+      if (name === 'cuit') return 'El CUIT debe tener 11 dígitos, sin guiones.';
+      return 'El formato no es válido.';
+    }
+    return 'Revisá este dato.';
+  }
+
+  private backendMessage(err: HttpErrorResponse): string {
+    const detail = err.error?.message;
+    return Array.isArray(detail) ? detail[0] : typeof detail === 'string' ? detail : '';
+  }
+
+  // Formulario reactivo del paso actual (los pasos custom devuelven null).
+  private stepForm(): FormGroup | null {
+    switch (this.current().id) {
+      case 'account':
+        return this.accountForm;
+      case 'dni':
+        return this.dniForm;
+      case 'location':
+        return this.consignorLocationForm;
+      case 'business':
+        return this.businessForm;
+      case 'pdv':
+        return this.pdvForm;
+      case 'conditions':
+        return this.conditionsForm;
+      default:
+        return null;
+    }
+  }
+
+  private revealErrors(): void {
+    this.stepForm()?.markAllAsTouched();
+    this.showErrors.set(true);
+  }
+
   protected next(): void {
-    if (this.canAdvance() && this.step() < this.steps().length - 1) {
+    if (!this.canAdvance()) {
+      this.revealErrors();
+      return;
+    }
+    this.showErrors.set(false);
+    if (this.step() < this.steps().length - 1) {
       this.step.update((v) => v + 1);
     }
   }
 
   protected back(): void {
+    this.showErrors.set(false);
+    this.submitError.set('');
     if (this.step() === 0) {
       this.view.set('role');
       this.role.set(null);
@@ -818,7 +968,12 @@ export class Register {
   }
 
   protected submit(): void {
-    if (!this.canAdvance() || this.submitting()) return;
+    if (this.submitting()) return;
+    if (!this.canAdvance()) {
+      this.revealErrors();
+      return;
+    }
+    this.submitError.set('');
     this.submitting.set(true);
     const request$ =
       this.role() === 'merchant'
@@ -833,12 +988,16 @@ export class Register {
         this.view.set('verify');
         this.submitting.set(false);
       },
-      error: (err: { status?: number }) => {
+      error: (err: HttpErrorResponse) => {
         this.submitting.set(false);
-        this.toast.show(
-          err.status === 409 ? 'Ese email ya está registrado' : 'No pudimos crear la cuenta',
-          'error',
-        );
+        const message =
+          err.status === 409
+            ? 'Ese email ya está registrado. Probá con otro o ingresá a tu cuenta.'
+            : err.status === 0
+              ? 'No pudimos conectarnos con el servidor. Probá de nuevo en unos minutos.'
+              : this.backendMessage(err) || 'No pudimos crear la cuenta. Revisá los datos e intentá de nuevo.';
+        this.submitError.set(message);
+        this.toast.show(message, 'error');
       },
     });
   }
