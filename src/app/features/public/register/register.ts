@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
+import { PlatformConfigService } from '../../../core/services/platform-config.service';
 import { Role } from '../../../core/models/user.model';
 import {
   RegisterConsignorRequest,
@@ -183,6 +184,12 @@ interface SummaryRow {
                 <p class="text-sm text-trama-dark/70">
                   Configurás tu comisión, tus condiciones de venta y el punto de venta donde recibís.
                 </p>
+                @if (monetization()) {
+                  <p class="rounded-lg bg-trama-green-50 px-3 py-2 text-xs font-medium text-trama-green-700">
+                    Servicio pago para comercios: tu suscripción te posiciona ante los cedentes que
+                    buscan dónde consignar.
+                  </p>
+                }
                 <ul class="mt-1 space-y-1 text-sm text-trama-dark/60">
                   <li>Datos del comercio y CUIT</li>
                   <li>Punto de venta y horarios</li>
@@ -222,6 +229,19 @@ interface SummaryRow {
                 </li>
               }
             </ol>
+
+            @if (role() === 'merchant' && monetization()) {
+              <div class="mb-4 rounded-2xl border border-trama-gold/30 bg-trama-gold/10 p-4">
+                <p class="text-sm font-semibold text-trama-dark">
+                  Trama es un servicio pago para comercios
+                </p>
+                <p class="mt-1 text-sm text-trama-dark/70">
+                  Con tu suscripción aparecés ante los cedentes de tu zona que buscan dónde consignar,
+                  además de todas las herramientas para gestionar el ciclo. Cuanto mejor tu plan, mejor
+                  tu posicionamiento en la plataforma.
+                </p>
+              </div>
+            }
 
             <div class="rounded-2xl border border-trama-sand-200 bg-white p-6 sm:p-8">
               <p class="text-xs font-semibold tracking-wide text-trama-brand uppercase">
@@ -694,6 +714,10 @@ export class Register {
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly platformConfig = inject(PlatformConfigService);
+
+  // Flag de cobro a comercios: comunica en el registro que el servicio es pago.
+  protected readonly monetization = this.platformConfig.monetization;
 
   protected readonly days = DAYS;
   protected readonly timeSlots = TIME_SLOTS;
