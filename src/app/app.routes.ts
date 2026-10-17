@@ -40,6 +40,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'garment/:id/edit',
+        loadComponent: () =>
+          import('./features/consignor/edit-garment/edit-garment').then((m) => m.EditGarment),
+      },
+      {
         path: 'payouts',
         loadComponent: () =>
           import('./features/consignor/payouts/consignor-payouts').then((m) => m.ConsignorPayouts),

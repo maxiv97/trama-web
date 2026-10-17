@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   BehaviorSubject,
   catchError,
@@ -68,6 +68,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
     ShortDatePipe,
     LoadingSpinner,
     ErrorState,
+    RouterLink,
   ],
   template: `
     @if (isLoading()) {
@@ -111,10 +112,16 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
             @switch (d.garment.status) {
               @case ('under_review') {
-                <div class="rounded-2xl bg-trama-sand-50 p-5">
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-trama-sand-50 p-5">
                   <p class="text-sm text-trama-dark/80">
-                    Tu propuesta está siendo evaluada por el comercio.
+                    Tu propuesta está siendo evaluada por el comercio. Podés editarla mientras tanto.
                   </p>
+                  <a
+                    [routerLink]="['/c/garment', d.garment.id, 'edit']"
+                    class="shrink-0 rounded-lg border border-trama-brand px-4 py-2 text-sm font-medium text-trama-brand hover:bg-trama-green-50"
+                  >
+                    Editar consignación
+                  </a>
                 </div>
               }
               @case ('counteroffer') {

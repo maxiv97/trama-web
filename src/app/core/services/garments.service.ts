@@ -7,6 +7,21 @@ import { GarmentAction } from '../state-machine/garment.state-machine';
 
 export type NewGarment = Omit<Garment, 'id' | 'status' | 'createdAt' | 'timeline'>;
 
+export interface EditDraftPayload {
+  name: string;
+  category: string;
+  subcategory?: string;
+  brand: string;
+  size: string;
+  color: string;
+  season: string;
+  condition: string;
+  description?: string;
+  photos: string[];
+  video?: string;
+  requestedConsignorPrice: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class GarmentsService {
   private readonly http = inject(HttpClient);
@@ -22,6 +37,11 @@ export class GarmentsService {
 
   getById(id: string): Observable<Garment> {
     return this.http.get<Garment>(`${this.base}/${id}`);
+  }
+
+  // Editar una consignación en revisión (prenda + precio pedido).
+  updateDraft(id: string, payload: EditDraftPayload): Observable<unknown> {
+    return this.http.patch(`${this.base}/${id}/draft`, payload);
   }
 
   byConsignor(_consignorId: string): Observable<Garment[]> {
