@@ -24,6 +24,7 @@ import { Merchant } from '../../../core/models/user.model';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
+import { compressImage } from '../../../core/utils/image.util';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -251,9 +252,9 @@ export class RegisterReception {
     Array.from(input.files ?? [])
       .filter((file) => file.type.startsWith('image/'))
       .forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => this.evidence.update((list) => [...list, reader.result as string]);
-        reader.readAsDataURL(file);
+        compressImage(file)
+          .then((image) => this.evidence.update((list) => [...list, image]))
+          .catch(() => this.toast.show('No pudimos procesar una de las imágenes', 'error'));
       });
     input.value = '';
   }

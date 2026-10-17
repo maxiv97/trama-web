@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -14,6 +15,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { distanceKm } from '../../../core/utils/geo.util';
+import { compressImage } from '../../../core/utils/image.util';
 import { CATEGORIES, SEASONS } from '../../../core/models/garment-taxonomy';
 
 interface MerchantOption {
@@ -477,9 +479,9 @@ export class UploadGarment {
     Array.from(files)
       .filter((file) => file.type.startsWith('image/'))
       .forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => this.photos.update((list) => [...list, reader.result as string]);
-        reader.readAsDataURL(file);
+        compressImage(file)
+          .then((photo) => this.photos.update((list) => [...list, photo]))
+          .catch(() => this.toast.show('No pudimos procesar una de las fotos', 'error'));
       });
   }
 
@@ -556,11 +558,25 @@ export class UploadGarment {
           this.toast.show('Propuesta enviada', 'success');
           this.router.navigate(['/c/garment', garment.id]);
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           this.submitting.set(false);
-          this.toast.show('No pudimos enviar la propuesta', 'error');
+          this.toast.show(this.submitErrorMessage(err), 'error');
         },
       });
+  }
+
+  private submitErrorMessage(err: HttpErrorResponse): string {
+    if (err.status === 0) {
+      return 'No pudimos conectarnos con el servidor. Probá de nuevo en unos minutos.';
+    }
+    if (err.status === 413) {
+      return 'Las fotos son demasiado pesadas. Probá con menos fotos o imágenes más livianas.';
+    }
+    const detail = err.error?.message;
+    const message = Array.isArray(detail) ? detail[0] : detail;
+    return typeof message === 'string' && message
+      ? message
+      : 'No pudimos enviar la propuesta. Revisá los datos e intentá de nuevo.';
   }
 
   private step2Valid(): boolean {
