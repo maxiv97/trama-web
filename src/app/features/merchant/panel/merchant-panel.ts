@@ -21,6 +21,7 @@ interface Urgencia {
   actionLabel: string;
   link: unknown[];
   fragment?: string;
+  queryParams?: Record<string, string>;
 }
 
 interface ResumenData {
@@ -72,6 +73,7 @@ const EXPIRY_URGENT_DAYS = 30;
                   <a
                     [routerLink]="u.link"
                     [fragment]="u.fragment"
+                    [queryParams]="u.queryParams"
                     class="shrink-0 rounded-lg bg-trama-brand px-4 py-1.5 text-sm font-semibold text-white"
                   >
                     {{ u.actionLabel }}
@@ -258,7 +260,8 @@ export class MerchantPanel {
             title: `${proposals.length} ${proposals.length === 1 ? 'propuesta para revisar' : 'propuestas para revisar'}`,
             meta: 'Cedentes esperando tu respuesta',
             actionLabel: 'Revisar',
-            link: ['/m/proposal', proposals[0].id],
+            link: ['/m/proposals'],
+            queryParams: { status: 'under_review' },
           });
         }
         if (overdue.length) {

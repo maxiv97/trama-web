@@ -5,6 +5,7 @@ import { catchError, filter, map, of, switchMap } from 'rxjs';
 import {
   BarChart3,
   Bell,
+  Inbox,
   LayoutDashboard,
   LucideAngularModule,
   LucideIconData,
@@ -37,6 +38,7 @@ const MENUS: Record<Role, NavItem[]> = {
   ],
   merchant: [
     { label: 'Panel', link: '/m', icon: LayoutDashboard, exact: true },
+    { label: 'Propuestas', link: '/m/proposals', icon: Inbox },
     { label: 'Inventario', link: '/m/inventory', icon: Package },
     { label: 'Liquidaciones', link: '/m/payouts', icon: Receipt },
     { label: 'Reportes', link: '/m/reports', icon: BarChart3 },
