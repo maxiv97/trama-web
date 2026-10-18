@@ -477,6 +477,57 @@
       center / contain no-repeat;
   }
 
+  /* Modal con pespunte interior (handoff §4.11) */
+  .t-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(31, 58, 43, 0.28);
+    animation: t-fade var(--duration-base) var(--ease-out) both;
+  }
+  .t-modal {
+    position: relative;
+    background: var(--color-trama-paper);
+    border-radius: var(--radius-modal);
+    padding: 28px;
+    box-shadow: var(--shadow-card);
+  }
+  .t-modal::before {
+    content: '';
+    position: absolute;
+    inset: 9px;
+    border: 2.5px dashed var(--color-trama-thread-faint);
+    border-radius: 13px;
+    pointer-events: none;
+  }
+  .t-modal > * {
+    position: relative;
+  }
+  /* Alerta en línea (rojo solo para alertas) */
+  .t-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-radius: 12px;
+    background: var(--color-status-none-soft);
+    color: #8f2a1f;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .t-alert::before {
+    content: '';
+    width: 20px;
+    height: 20px;
+    flex: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23C0392B' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M2 8h3.5M10.5 8H14M6.5 5.5l3 5M9.5 5.5l-3 5'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
   /* Encabezado de tabla con pespunte (handoff §4.12) */
   .t-thead th {
     font-size: 12px;
@@ -515,6 +566,139 @@
   .t-row-link:hover td:last-child {
     border-top-right-radius: 14px;
     border-bottom-right-radius: 14px;
+  }
+
+  /* Tabla compartida (handoff §4.12) — se usa dentro de app-data-table */
+  .t-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 15px;
+    color: var(--color-trama-dark);
+  }
+  .t-table thead th {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-trama-muted);
+    text-align: left;
+    padding: 10px 12px 14px;
+    background-image: linear-gradient(to right, var(--color-trama-dark) 9px, transparent 9px);
+    background-size: 16px 2.5px;
+    background-repeat: repeat-x;
+    background-position: left bottom;
+    white-space: nowrap;
+  }
+  .t-table tbody td {
+    padding: 14px 12px;
+    border-bottom: 1px solid var(--color-trama-sand-100);
+    vertical-align: middle;
+  }
+  .t-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .t-table .t-num {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .t-table .t-amount {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+  }
+  .t-table .t-meta {
+    display: block;
+    font-size: 13px;
+    color: var(--color-trama-muted);
+  }
+  .t-table .t-muted {
+    color: var(--color-trama-body);
+  }
+  .t-table tbody tr.t-row-link {
+    cursor: pointer;
+  }
+  .t-table tbody tr.t-row-link td {
+    transition: background-color var(--duration-fast) var(--ease-out);
+  }
+  .t-table tbody tr.t-row-link:hover td {
+    background: var(--color-trama-sand-50);
+  }
+  .t-table tbody tr.t-row-link:hover td:first-child {
+    border-radius: 14px 0 0 14px;
+  }
+  .t-table tbody tr.t-row-link:hover td:last-child {
+    border-radius: 0 14px 14px 0;
+  }
+  .t-table .t-cell-action {
+    width: 1%;
+    white-space: nowrap;
+  }
+  .t-table .t-chev {
+    width: 36px;
+    padding-left: 0;
+    color: var(--color-trama-thread-faint);
+    text-align: right;
+  }
+  .t-table tr.t-row-link:hover .t-chev {
+    color: var(--color-trama-dark);
+  }
+  @media (min-width: 640px) {
+    .t-table {
+      min-width: 900px;
+    }
+    .t-table.t-table-narrow {
+      min-width: 640px;
+    }
+  }
+  /* En el celular cada fila es una tarjeta crema */
+  @media (max-width: 639.98px) {
+    .t-table thead {
+      display: none;
+    }
+    .t-table,
+    .t-table tbody {
+      display: block;
+    }
+    .t-table tbody tr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      margin-bottom: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--color-trama-sand-50);
+    }
+    .t-table tbody td {
+      display: block;
+      padding: 0;
+      border: 0;
+      min-width: 0;
+    }
+    .t-table tbody td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-trama-muted);
+    }
+    .t-table tbody td.t-cell-main,
+    .t-table tbody td.t-cell-action {
+      grid-column: 1 / -1;
+    }
+    .t-table tbody td.t-num {
+      text-align: left;
+    }
+    .t-table tbody td.t-chev {
+      display: none;
+    }
+    .t-table tbody tr.t-row-link:hover td {
+      background: transparent;
+    }
   }
 
   /* Botones de la pantalla de resultado: a lo ancho en el celular */

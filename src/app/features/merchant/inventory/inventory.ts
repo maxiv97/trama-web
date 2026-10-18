@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { ChevronRight, LucideAngularModule } from 'lucide-angular';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -16,6 +17,8 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 import { Hanger } from '../../../shared/icons/trama-icons';
+import { ChipOption, DataTable, FilterChips, pageOf, PersonCell, SearchField, TableThumb } from '../../../shared/components/data-table/data-table';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 type StatusFilter = 'all' | GarmentStatus;
 
@@ -42,6 +45,8 @@ interface InventoryRow {
   photo?: string;
   consignorId: string;
   consignorName: string;
+  consignorVerified: boolean;
+  meta: string;
   salesPointId?: string;
   salesPointName: string;
   status: GarmentStatus;
@@ -70,7 +75,7 @@ type InventoryState =
 
 @Component({
   selector: 'app-inventory',
-  imports: [PageSkeleton, PageHeader, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
+  imports: [LucideAngularModule, Dropdown, PersonCell, TableThumb, SearchField, FilterChips, DataTable, PageSkeleton, PageHeader, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
       <app-page-skeleton layout="table" />
@@ -80,101 +85,60 @@ type InventoryState =
       <div class="space-y-6">
         <app-page-header title="Inventario" section="Inventario" [icon]="headerIcon" lead="Las prendas que aceptaste, desde que las recibís hasta que se venden." />
 
-        @if (toReceive() > 0) {
-          <button
-            type="button"
-            (click)="statusFilter.set('agreed')"
-            class="flex w-full items-center justify-between rounded-2xl border border-status-pending/20 bg-status-pending-soft px-5 py-3 text-left hover:brightness-95"
-          >
-            <span class="text-sm font-medium text-trama-dark">
-              {{ toReceive() }}
-              {{ toReceive() === 1 ? 'prenda por recibir' : 'prendas por recibir' }}
+        @if (toReceive() > 0 && statusFilter() !== 'agreed') {
+          <button type="button" (click)="statusFilter.set('agreed')" class="t-notice w-full text-left hover:brightness-[.98]">
+            <span class="flex-1">
+              <strong class="font-bold">{{ toReceive() }} {{ toReceive() === 1 ? 'prenda espera' : 'prendas esperan' }} que la recibas.</strong>
+              Cuando llegue al local, registrá la recepción para ponerla en stock.
             </span>
-            <span class="text-sm font-medium text-trama-brand">Ver</span>
+            <span class="font-bold underline underline-offset-2">Ver</span>
           </button>
         }
 
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <app-stat-card title="Artículos en stock" [value]="d.stockCount" />
+        <div class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
+          <app-stat-card title="Artículos en stock" [value]="d.stockCount" [highlight]="true" />
           <app-stat-card title="Valor a precio de venta" [value]="d.stockValue | money" />
           <app-stat-card title="Comprometido con cedentes" [value]="d.committed | money" />
         </div>
 
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <input
-            type="search"
-            [value]="search()"
-            (input)="search.set($any($event.target).value)"
-            placeholder="Buscar por nombre"
-            class="t-input"
-          />
-          <select
-            [value]="statusFilter()"
-            (change)="statusFilter.set($any($event.target).value)"
-            class="t-input"
-          >
-            @for (option of statusFilters; track option.value) {
-              <option [value]="option.value">{{ option.label }}</option>
-            }
-          </select>
-          <select
-            [value]="consignorFilter()"
-            (change)="consignorFilter.set($any($event.target).value)"
-            class="t-input"
-          >
-            <option value="all" [selected]="consignorFilter() === 'all'">Todos los cedentes</option>
-            @for (option of d.consignors; track option.id) {
-              <option [value]="option.id" [selected]="consignorFilter() === option.id">
-                {{ option.name }}
-              </option>
-            }
-          </select>
-          <select
-            [value]="salesPointFilter()"
-            (change)="salesPointFilter.set($any($event.target).value)"
-            class="t-input"
-          >
-            <option value="all">Todos los puntos</option>
-            @for (option of d.salesPoints; track option.id) {
-              <option [value]="option.id">{{ option.name }}</option>
-            }
-          </select>
-        </div>
+        <app-data-table [total]="filteredRows().length" [shown]="pageRows().length" noun="prendas" [(page)]="page">
+          <app-filter-chips toolbar [options]="statusChips()" [(value)]="statusFilter" />
+          <div toolbar class="flex w-full flex-wrap gap-3">
+            <app-dropdown class="w-full sm:w-56" size="sm" ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
+            <app-dropdown class="w-full sm:w-56" size="sm" ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
+            <app-search-field [(value)]="search" placeholder="Buscar por nombre" />
+          </div>
 
-        @if (filteredRows().length) {
-          <div class="t-card overflow-x-auto">
-            <table class="w-full text-left text-sm">
-              <thead class="border-b border-trama-sand-200 text-trama-dark/60">
+          @if (filteredRows().length) {
+            <table class="t-table">
+              <thead>
                 <tr>
-                  <th class="px-4 py-3 font-medium">Prenda</th>
-                  <th class="px-4 py-3 font-medium">Cedente</th>
-                  <th class="px-4 py-3 font-medium">Punto de venta</th>
-                  <th class="px-4 py-3 font-medium">Estado</th>
-                  <th class="px-4 py-3 font-medium">Precio venta</th>
-                  <th class="px-4 py-3"></th>
+                  <th>Prenda</th>
+                  <th>Cedente</th>
+                  <th>Punto de venta</th>
+                  <th>Estado</th>
+                  <th class="t-num">Precio</th>
+                  <th></th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                @for (row of filteredRows(); track row.id) {
-                  <tr
-                    [routerLink]="['/m/inventory', row.id]"
-                    class="cursor-pointer border-b border-trama-sand-100 last:border-0 hover:bg-trama-sand-50"
-                  >
-                    <td class="px-4 py-3">
+                @for (row of pageRows(); track row.id) {
+                  <tr class="t-row-link" [routerLink]="['/m/inventory', row.id]">
+                    <td class="t-cell-main">
                       <div class="flex items-center gap-3">
-                        @if (row.photo) {
-                          <img [src]="row.photo" alt="" class="h-10 w-10 rounded-lg object-cover" />
-                        } @else {
-                          <div class="h-10 w-10 rounded-lg bg-trama-sand-100"></div>
-                        }
-                        <span class="font-medium text-trama-dark">{{ row.name }}</span>
+                        <app-table-thumb [photo]="row.photo" [seed]="row.id" />
+                        <span class="min-w-0 max-w-[260px]">
+                          <span class="block truncate font-bold">{{ row.name }}</span>
+                          <span class="t-meta">{{ row.meta }}</span>
+                        </span>
                       </div>
                     </td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.consignorName }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.salesPointName }}</td>
-                    <td class="px-4 py-3"><app-status-badge [status]="row.status" /></td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.salePrice | money }}</td>
-                    <td class="px-4 py-3 text-right">
+                    <td data-label="Cedente"><app-person-cell [name]="row.consignorName" [verified]="row.consignorVerified" /></td>
+                    <td data-label="Punto de venta" class="t-muted">{{ row.salesPointName }}</td>
+                    <td data-label="Estado"><app-status-badge [status]="row.status" /></td>
+                    <td data-label="Precio" class="t-num t-amount">{{ row.salePrice | money }}</td>
+                    <td class="t-cell-action text-right">
                       @if (row.status === 'agreed') {
                         <a
                           [routerLink]="['/m/garment', row.id, 'reception']"
@@ -185,19 +149,21 @@ type InventoryState =
                         </a>
                       }
                     </td>
+                    <td class="t-chev"><lucide-angular [img]="chevIcon" [size]="18" /></td>
                   </tr>
                 }
               </tbody>
             </table>
-          </div>
-        } @else {
-          <app-empty-state message="No hay artículos que coincidan con los filtros." />
-        }
+          } @else {
+            <app-empty-state [compact]="true" [icon]="headerIcon" title="No hay prendas acá" message="Probá con otro estado, cedente o punto de venta." />
+          }
+        </app-data-table>
       </div>
     }
   `,
 })
 export class Inventory {
+  protected readonly chevIcon = ChevronRight;
   protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
@@ -214,6 +180,31 @@ export class Inventory {
     this.route.snapshot.queryParamMap.get('consignor') ?? 'all',
   );
   protected readonly salesPointFilter = signal('all');
+  /** Vuelve a la primera página cuando cambia algún filtro. */
+  protected readonly page = linkedSignal({
+    source: () => [this.search(), this.statusFilter(), this.consignorFilter(), this.salesPointFilter()],
+    computation: () => 0,
+  });
+
+  protected readonly statusChips = computed<ChipOption<StatusFilter>[]>(() => {
+    const rows = this.data()?.rows ?? [];
+    return STATUS_FILTERS.map((o) => ({
+      ...o,
+      count: o.value === 'all' ? rows.length : rows.filter((r) => r.status === o.value).length,
+    }));
+  });
+
+  protected readonly consignorOptions = computed<DropdownOption[]>(() => [
+    { value: 'all', label: 'Todos los cedentes' },
+    ...(this.data()?.consignors ?? []).map((c) => ({ value: c.id, label: c.name })),
+  ]);
+
+  protected readonly salesPointOptions = computed<DropdownOption[]>(() => [
+    { value: 'all', label: 'Todos los puntos' },
+    ...(this.data()?.salesPoints ?? []).map((p) => ({ value: p.id, label: p.name })),
+  ]);
+
+  protected readonly pageRows = computed(() => pageOf(this.filteredRows(), this.page()));
 
   private readonly reload = new BehaviorSubject<void>(undefined);
 
@@ -271,6 +262,7 @@ export class Inventory {
     }).pipe(
       map(({ garments, consignors, merchant, agreements }): InventoryData => {
         const consignorName = new Map(consignors.map((consignor) => [consignor.id, consignor.name]));
+        const consignorVerified = new Map(consignors.map((consignor) => [consignor.id, consignor.verified]));
         const salesPointName = new Map(
           (merchant?.salesPoints ?? []).map((point) => [point.id, point.name]),
         );
@@ -292,6 +284,8 @@ export class Inventory {
               photo: garment.photos[0],
               consignorId: garment.consignorId,
               consignorName: consignorName.get(garment.consignorId) ?? '—',
+              consignorVerified: consignorVerified.get(garment.consignorId) ?? false,
+              meta: [garment.category, garment.size].filter(Boolean).join(' · '),
               salesPointId: garment.salesPointId,
               salesPointName: garment.salesPointId
                 ? (salesPointName.get(garment.salesPointId) ?? '—')

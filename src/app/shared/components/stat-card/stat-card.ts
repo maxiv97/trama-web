@@ -18,9 +18,7 @@ type StatColor = 'default' | 'green' | 'red';
       [class]="
         dark()
           ? 'bg-trama-dark text-trama-sand-50'
-          : highlight()
-            ? 'bg-trama-sand-50'
-            : 'border border-trama-sand-100 bg-trama-paper'
+          : 'border border-trama-sand-100 bg-trama-paper'
       "
     >
       <p
