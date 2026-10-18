@@ -887,3 +887,30 @@ input[type='number'] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Controles de Leaflet sin azul (handoff: no se usa azul en ningún lado) */
+.leaflet-control-attribution {
+  background: rgba(255, 253, 247, 0.85) !important;
+  color: var(--color-trama-body) !important;
+  font-size: 11px !important;
+}
+.leaflet-control-attribution a {
+  color: var(--color-trama-body) !important;
+}
+.leaflet-attribution-flag {
+  display: none !important;
+}
+.leaflet-bar {
+  border: 0 !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-popover) !important;
+}
+.leaflet-bar a {
+  background: var(--color-trama-paper) !important;
+  color: var(--color-trama-dark) !important;
+  border-bottom-color: var(--color-trama-sand-100) !important;
+}
+.leaflet-bar a:hover {
+  background: var(--color-trama-sand-50) !important;
+}
