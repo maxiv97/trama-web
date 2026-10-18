@@ -1,14 +1,23 @@
 import { Injectable, signal } from '@angular/core';
 
-export type ToastType = 'success' | 'error';
+export type ToastType = 'success' | 'error' | 'warning';
 
 export interface ToastMessage {
   id: number;
-  text: string;
+  title: string;
+  body: string;
   type: ToastType;
 }
 
-const DISMISS_MS = 3000;
+/** Tiempo visible; el hilo de abajo se descose en este lapso (handoff §4.10). */
+export const TOAST_DISMISS_MS = 5000;
+
+/** Los errores siempre dicen qué hacer después, aunque el llamador no lo indique. */
+const DEFAULT_BODY: Record<ToastType, string> = {
+  success: '',
+  error: 'Revisá tu conexión e intentá de nuevo.',
+  warning: '',
+};
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
@@ -17,10 +26,11 @@ export class ToastService {
 
   readonly messages = this.toasts.asReadonly();
 
-  show(text: string, type: ToastType = 'success'): void {
+  show(title: string, type: ToastType = 'success', body?: string): void {
     const id = ++this.sequence;
-    this.toasts.update((list) => [...list, { id, text, type }]);
-    setTimeout(() => this.dismiss(id), DISMISS_MS);
+    const message: ToastMessage = { id, title, type, body: body ?? DEFAULT_BODY[type] };
+    this.toasts.update((list) => [...list, message]);
+    setTimeout(() => this.dismiss(id), TOAST_DISMISS_MS);
   }
 
   dismiss(id: number): void {

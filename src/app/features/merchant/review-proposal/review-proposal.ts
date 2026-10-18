@@ -264,7 +264,7 @@ export class ReviewProposal {
   protected readonly modalConfirmLabel = computed(() =>
     this.activeModal() === 'reject' ? 'Rechazar' : 'Aceptar',
   );
-  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
+  protected readonly modalColor = computed<'green' | 'red'>(() =>
     this.activeModal() === 'reject' ? 'red' : 'green',
   );
   protected readonly modalField = computed(() =>

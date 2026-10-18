@@ -517,6 +517,16 @@
     border-bottom-right-radius: 14px;
   }
 
+  /* Botones de la pantalla de resultado: a lo ancho en el celular */
+  .t-result-actions > * {
+    width: 100%;
+  }
+  @media (min-width: 640px) {
+    .t-result-actions > * {
+      width: auto;
+    }
+  }
+
   /* Esqueleto hilvanado (handoff §5) */
   .t-skeleton {
     border: 2px dashed #cfc6a9;

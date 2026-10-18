@@ -404,7 +404,7 @@ export class ConsignorGarmentTracking {
     }
   });
 
-  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
+  protected readonly modalColor = computed<'green' | 'red'>(() =>
     this.activeModal() === 'reject' || this.activeModal() === 'cancel' ? 'red' : 'green',
   );
 
