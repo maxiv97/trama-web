@@ -1,3 +1,4 @@
+import { Receipt } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -8,7 +9,6 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { PayoutStatusBadge } from '../../../shared/components/payout-status-badge/payout-status-badge';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -16,6 +16,8 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { monthLabel } from '../../../core/utils/month.util';
 import { downloadPayoutPdf } from '../../../shared/pdf/payout-pdf';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface PayoutsData {
   rows: MonthlyPayout[];
@@ -29,16 +31,16 @@ type PayoutsState =
 
 @Component({
   selector: 'app-merchant-payouts',
-  imports: [StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [PageSkeleton, PageHeader, StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las liquidaciones." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">Liquidaciones</h1>
+        <app-page-header title="Liquidaciones" section="Liquidaciones" [icon]="headerIcon" lead="Lo que le debés a cada cedente por las prendas vendidas, mes a mes.">
+          <div actions>
           @if (months().length) {
             <select
               [value]="activeMonth()"
@@ -52,7 +54,8 @@ type PayoutsState =
               }
             </select>
           }
-        </div>
+          </div>
+        </app-page-header>
 
         @if (monthRows().length) {
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -197,6 +200,7 @@ type PayoutsState =
   `,
 })
 export class MerchantPayouts {
+  protected readonly headerIcon = Receipt;
   private readonly auth = inject(AuthService);
   private readonly payoutsService = inject(PayoutsService);
   private readonly merchantsService = inject(MerchantsService);

@@ -1,3 +1,4 @@
+import { Inbox } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,11 +24,12 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface ReviewData {
   proposal: Proposal;
@@ -43,15 +45,15 @@ type ReviewState =
 
 @Component({
   selector: 'app-review-proposal',
-  imports: [PhotoGallery, ConfirmModal, MoneyPipe, LoadingSpinner, ErrorState],
+  imports: [PageSkeleton, PageHeader, PhotoGallery, ConfirmModal, MoneyPipe, ErrorState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="detail" />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta propuesta." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Revisar propuesta</h1>
+        <app-page-header title="Revisar propuesta" section="Propuestas" [icon]="headerIcon" lead="Mirá las fotos y el precio que pide el cedente. Podés aceptarla, mandar una contraoferta o rechazarla." />
 
         <div class="grid gap-6 md:grid-cols-2">
           <div class="space-y-4">
@@ -203,6 +205,7 @@ type ReviewState =
   `,
 })
 export class ReviewProposal {
+  protected readonly headerIcon = Inbox;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly proposalsService = inject(ProposalsService);

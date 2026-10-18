@@ -1,3 +1,4 @@
+import { Shirt } from 'lucide-angular';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -14,9 +15,10 @@ import { SEASONS } from '../../../core/models/garment-taxonomy';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { compressImage } from '../../../core/utils/image.util';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
@@ -27,15 +29,15 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
 
 @Component({
   selector: 'app-edit-garment',
-  imports: [ReactiveFormsModule, RouterLink, MoneyPipe, LoadingSpinner, ErrorState],
+  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, MoneyPipe, ErrorState],
   template: `
     @if (loading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="form" />
     } @else if (error()) {
       <app-error-state message="No pudimos cargar la consignación." link="/c" linkLabel="Volver al panel" />
     } @else {
       <div class="mx-auto max-w-2xl space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Editar consignación</h1>
+        <app-page-header title="Editar consignación" section="Mis prendas" [icon]="headerIcon" lead="Mientras está en revisión podés corregir las fotos, los datos y el precio." />
 
         <div class="t-card space-y-5 p-6">
           <!-- Fotos -->
@@ -199,6 +201,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   `,
 })
 export class EditGarment {
+  protected readonly headerIcon = Shirt;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);

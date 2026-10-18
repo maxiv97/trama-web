@@ -1,3 +1,4 @@
+import { Tags } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -7,8 +8,9 @@ import { Category } from '../../../core/models/category.model';
 import { CategoriesService } from '../../../core/services/categories.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface BaseRow {
   label: string;
@@ -29,29 +31,23 @@ type CategoriesState =
 
 @Component({
   selector: 'app-manage-categories',
-  imports: [LoadingSpinner, ErrorState, EmptyState],
+  imports: [PageSkeleton, PageHeader, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="list" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las categorías." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 class="text-2xl font-semibold text-trama-dark">Categorías</h1>
-            <p class="mt-1 text-sm text-trama-dark/60">
-              Elegí qué categorías base ofrecés y sumá las tuyas propias.
-            </p>
-          </div>
-          <button
+        <app-page-header title="Categorías" section="Categorías" [icon]="headerIcon" lead="Elegí qué categorías base ofrecés y sumá las tuyas propias.">
+          <button actions
             type="button"
             (click)="openCreate()"
             class="t-btn t-btn-primary"
           >
             Agregar categoría
           </button>
-        </div>
+        </app-page-header>
 
         <!-- Categorías propias -->
         <section class="space-y-3">
@@ -244,6 +240,7 @@ type CategoriesState =
   `,
 })
 export class ManageCategories {
+  protected readonly headerIcon = Tags;
   private readonly auth = inject(AuthService);
   private readonly categoriesService = inject(CategoriesService);
   private readonly toast = inject(ToastService);

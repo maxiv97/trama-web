@@ -1,3 +1,4 @@
+import { Route } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -30,7 +31,6 @@ import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
@@ -39,6 +39,8 @@ import { Timeline } from '../../../shared/components/timeline/timeline';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface TrackingData {
   garment: Garment;
@@ -58,7 +60,7 @@ type TrackingState =
 
 @Component({
   selector: 'app-merchant-garment-tracking',
-  imports: [
+  imports: [PageSkeleton, PageHeader, 
     RouterLink,
     PhotoGallery,
     ProgressTracker,
@@ -68,23 +70,21 @@ type TrackingState =
     ConfirmModal,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="detail" />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
-          <app-status-badge [status]="d.garment.status" />
-          <span class="text-sm text-trama-dark/50"
-            >Cargada el {{ d.garment.createdAt | shortDate }}</span
-          >
-        </div>
+        <app-page-header [title]="d.garment.name" section="Seguimiento" [icon]="headerIcon">
+          <div lead class="mt-3 flex flex-wrap items-center gap-3">
+            <app-status-badge [status]="d.garment.status" />
+            <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
+          </div>
+        </app-page-header>
 
         <div class="grid gap-6 md:grid-cols-3">
           <div class="md:col-span-1">
@@ -310,6 +310,7 @@ type TrackingState =
   `,
 })
 export class MerchantGarmentTracking {
+  protected readonly headerIcon = Route;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly proposalsService = inject(ProposalsService);

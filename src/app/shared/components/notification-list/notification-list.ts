@@ -9,15 +9,15 @@ import {
   LucideIconData,
   PackageCheck,
   Receipt,
-  ShoppingBag,
-} from 'lucide-angular';
+  ShoppingBag, Bell } from 'lucide-angular';
 import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { Notification, NotificationType } from '../../../core/models/notification.model';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { EmptyState } from '../empty-state/empty-state';
 import { ErrorState } from '../error-state/error-state';
-import { LoadingSpinner } from '../loading-spinner/loading-spinner';
 import { ShortDatePipe } from '../../pipes/short-date.pipe';
+import { PageHeader } from '../page-header/page-header';
+import { PageSkeleton } from '../page-skeleton/page-skeleton';
 
 type ListState =
   | { status: 'loading'; data: null }
@@ -35,18 +35,17 @@ const TYPE_ICON: Record<NotificationType, LucideIconData> = {
 
 @Component({
   selector: 'app-notification-list',
-  imports: [LucideAngularModule, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [PageSkeleton, PageHeader, LucideAngularModule, ShortDatePipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="list" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las notificaciones." (retry)="retry()" />
     } @else if (data(); as notifications) {
       <div class="space-y-6">
-        <div class="flex items-center justify-between gap-4">
-          <h1 class="text-2xl font-semibold text-trama-dark">Notificaciones</h1>
+        <app-page-header title="Notificaciones" section="Notificaciones" [icon]="headerIcon" lead="Lo que pasó con tus prendas, propuestas y pagos.">
           @if (hasUnread()) {
-            <button
+            <button actions
               type="button"
               (click)="markAll()"
               class="text-sm font-medium text-trama-brand hover:underline"
@@ -54,7 +53,7 @@ const TYPE_ICON: Record<NotificationType, LucideIconData> = {
               Marcar todas como leídas
             </button>
           }
-        </div>
+        </app-page-header>
 
         @if (notifications.length) {
           <div class="space-y-2">
@@ -94,6 +93,7 @@ const TYPE_ICON: Record<NotificationType, LucideIconData> = {
   `,
 })
 export class NotificationList {
+  protected readonly headerIcon = Bell;
   private readonly notifications = inject(NotificationsService);
   private readonly router = inject(Router);
 

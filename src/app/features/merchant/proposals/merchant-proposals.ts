@@ -1,3 +1,4 @@
+import { Inbox } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -20,12 +21,13 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { buildProposalRows, PROPOSAL_STATUSES, ProposalRow } from './proposal-rows';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 type StatusFilter = 'all' | GarmentStatus;
 
@@ -58,24 +60,23 @@ type ProposalsState =
 
 @Component({
   selector: 'app-merchant-proposals',
-  imports: [
+  imports: [PageSkeleton, PageHeader, 
     RouterLink,
     StatCard,
     StatusBadge,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
     EmptyState,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las propuestas." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Propuestas</h1>
+        <app-page-header title="Propuestas" section="Propuestas" [icon]="headerIcon" lead="Lo que te ofrecen los cedentes. Aceptá, contraofertá o rechazá cada prenda." />
 
         @if (d.toReviewCount > 0 && statusFilter() !== 'under_review') {
           <button
@@ -205,6 +206,7 @@ type ProposalsState =
   `,
 })
 export class MerchantProposals {
+  protected readonly headerIcon = Inbox;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);

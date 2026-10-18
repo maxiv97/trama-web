@@ -1,3 +1,4 @@
+import { Receipt } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -6,13 +7,14 @@ import { MonthlyPayout } from '../../../core/models/payout.model';
 import { PayoutsService } from '../../../core/services/payouts.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { PayoutStatusBadge } from '../../../shared/components/payout-status-badge/payout-status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { monthLabel } from '../../../core/utils/month.util';
 import { downloadPayoutPdf } from '../../../shared/pdf/payout-pdf';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface PayoutsData {
   rows: MonthlyPayout[];
@@ -26,15 +28,15 @@ type PayoutsState =
 
 @Component({
   selector: 'app-consignor-payouts',
-  imports: [StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [PageSkeleton, PageHeader, StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar tus liquidaciones." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Mis liquidaciones</h1>
+        <app-page-header title="Mis liquidaciones" section="Liquidaciones" [icon]="headerIcon" lead="Lo que cobraste y lo que te deben los comercios por tus prendas vendidas." />
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <app-stat-card title="A cobrar pendiente" [value]="pendingTotal() | money" color="red" />
@@ -103,6 +105,7 @@ type PayoutsState =
   `,
 })
 export class ConsignorPayouts {
+  protected readonly headerIcon = Receipt;
   private readonly auth = inject(AuthService);
   private readonly payoutsService = inject(PayoutsService);
 

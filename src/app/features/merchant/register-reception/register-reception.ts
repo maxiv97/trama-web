@@ -26,8 +26,10 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { compressImage } from '../../../core/utils/image.util';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Hanger } from '../../../shared/icons/trama-icons';
 
 interface ReviewData {
   garment: Garment;
@@ -53,15 +55,15 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
 
 @Component({
   selector: 'app-register-reception',
-  imports: [LoadingSpinner, ErrorState],
+  imports: [PageSkeleton, PageHeader, ErrorState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="form" />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="mx-auto max-w-2xl space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Registrar recepción</h1>
+        <app-page-header title="Registrar recepción" section="Inventario" [icon]="headerIcon" lead="Revisá la prenda que te trajeron y confirmá en qué estado llegó." />
 
         <div class="t-card p-4">
           <p class="font-medium text-trama-dark">{{ d.garment.name }}</p>
@@ -182,6 +184,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
   `,
 })
 export class RegisterReception {
+  protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly garmentsService = inject(GarmentsService);

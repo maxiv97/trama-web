@@ -27,7 +27,6 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
@@ -35,6 +34,9 @@ import { StatusBadge } from '../../../shared/components/status-badge/status-badg
 import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Hanger } from '../../../shared/icons/trama-icons';
 
 interface DetailData {
   garment: Garment;
@@ -53,7 +55,7 @@ type DetailState =
 
 @Component({
   selector: 'app-garment-detail',
-  imports: [
+  imports: [PageSkeleton, PageHeader, 
     RouterLink,
     PhotoGallery,
     ProgressTracker,
@@ -62,12 +64,11 @@ type DetailState =
     StatusBadge,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="detail" />
     } @else if (isError()) {
       <app-error-state
         message="No encontramos este artículo."
@@ -77,14 +78,13 @@ type DetailState =
     } @else if (data(); as d) {
       <div class="space-y-6">
         <div>
-          <a routerLink="/m/inventory" class="text-sm text-trama-brand">← Inventario</a>
-          <div class="mt-2 flex flex-wrap items-center gap-3">
-            <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
-            <app-status-badge [status]="d.garment.status" />
-            <span class="text-sm text-trama-dark/50"
-              >Cargada el {{ d.garment.createdAt | shortDate }}</span
-            >
-          </div>
+          <a routerLink="/m/inventory" class="t-link inline-flex items-center gap-1 no-underline hover:underline">← Inventario</a>
+          <app-page-header class="mt-4" [title]="d.garment.name" section="Inventario" [icon]="headerIcon">
+            <div lead class="mt-3 flex flex-wrap items-center gap-3">
+              <app-status-badge [status]="d.garment.status" />
+              <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
+            </div>
+          </app-page-header>
         </div>
 
         <div class="grid gap-6 md:grid-cols-3">
@@ -247,6 +247,7 @@ type DetailState =
   `,
 })
 export class GarmentDetail {
+  protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly consignorsService = inject(ConsignorsService);

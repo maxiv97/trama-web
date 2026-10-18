@@ -1,3 +1,4 @@
+import { Users } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -6,9 +7,10 @@ import { ConsignorPerformance } from '../../../core/models/consignor-performance
 import { ReportsService } from '../../../core/services/reports.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 type ConsignorsState =
   | { status: 'loading'; data: null }
@@ -17,15 +19,15 @@ type ConsignorsState =
 
 @Component({
   selector: 'app-consignors',
-  imports: [RouterLink, StatCard, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [PageSkeleton, PageHeader, RouterLink, StatCard, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar los cedentes." (retry)="retry()" />
     } @else if (data(); as rows) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Mis cedentes</h1>
+        <app-page-header title="Mis cedentes" section="Mis cedentes" [icon]="headerIcon" lead="Quiénes te consignan prendas, cuánto venden y cuánto tardás en pagarles." />
 
         <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
           <app-stat-card title="Cedentes" [value]="rows.length" />
@@ -135,6 +137,7 @@ type ConsignorsState =
   `,
 })
 export class Consignors {
+  protected readonly headerIcon = Users;
   private readonly reportsService = inject(ReportsService);
 
   protected readonly search = signal('');

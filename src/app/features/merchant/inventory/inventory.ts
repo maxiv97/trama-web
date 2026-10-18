@@ -10,10 +10,12 @@ import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Hanger } from '../../../shared/icons/trama-icons';
 
 type StatusFilter = 'all' | GarmentStatus;
 
@@ -68,15 +70,15 @@ type InventoryState =
 
 @Component({
   selector: 'app-inventory',
-  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [PageSkeleton, PageHeader, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar el inventario." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Inventario</h1>
+        <app-page-header title="Inventario" section="Inventario" [icon]="headerIcon" lead="Las prendas que aceptaste, desde que las recibís hasta que se venden." />
 
         @if (toReceive() > 0) {
           <button
@@ -196,6 +198,7 @@ type InventoryState =
   `,
 })
 export class Inventory {
+  protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly garmentsService = inject(GarmentsService);

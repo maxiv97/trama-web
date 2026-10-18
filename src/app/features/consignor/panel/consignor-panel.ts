@@ -10,10 +10,12 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { Greeting } from '../../../shared/components/greeting/greeting';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { EnterDirective } from '../../../shared/directives/enter.directive';
 
 interface GarmentRow {
   id: string;
@@ -27,6 +29,7 @@ interface GarmentRow {
 interface PanelData {
   activeCount: number;
   pendingCount: number;
+  counterCount: number;
   pendingPayout: number;
   totalPaidOut: number;
   rows: GarmentRow[];
@@ -39,25 +42,21 @@ type PanelState =
 
 @Component({
   selector: 'app-consignor-panel',
-  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [EnterDirective, PageSkeleton, Greeting, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="dashboard" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar tu panel." (retry)="retry()" />
     } @else if (data(); as data) {
-      <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h1 class="font-display text-2xl font-semibold text-trama-dark">Mi panel</h1>
-          <a
-            routerLink="/c/upload"
-            class="t-btn t-btn-primary"
-            >Cargar artículo</a
-          >
+      <div class="space-y-8">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <app-greeting eyebrow="Cedente · Mi panel" [name]="firstName()" [summary]="greetingSummary()" />
+          <a routerLink="/c/upload" class="t-btn t-btn-primary" [appEnter]="2">Cargar artículo</a>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <app-stat-card title="Artículos activos" [value]="data.activeCount" />
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4" [appEnter]="3">
+          <app-stat-card title="Artículos activos" [value]="data.activeCount" [dark]="true" />
           <app-stat-card title="Pendientes de acuerdo" [value]="data.pendingCount" />
           <app-stat-card title="Liquidación pendiente" [value]="data.pendingPayout | money" />
           <app-stat-card title="Total liquidado" [value]="data.totalPaidOut | money" />
@@ -131,6 +130,24 @@ export class ConsignorPanel {
     return current.status === 'loaded' ? current.data : null;
   });
 
+  protected readonly firstName = computed(() => (this.auth.user()?.name ?? '').split(' ')[0]);
+
+  protected readonly greetingSummary = computed(() => {
+    const d = this.data();
+    if (!d) return '';
+    if (d.counterCount) {
+      return d.counterCount === 1
+        ? 'Tenés 1 contraoferta para responder.'
+        : `Tenés ${d.counterCount} contraofertas para responder.`;
+    }
+    if (d.pendingCount) {
+      return d.pendingCount === 1
+        ? '1 prenda está esperando la respuesta del comercio.'
+        : `${d.pendingCount} prendas están esperando la respuesta del comercio.`;
+    }
+    return d.rows.length ? 'Todo al día: no hay nada pendiente de tu lado.' : 'Cargá tu primera prenda para empezar.';
+  });
+
   protected retry(): void {
     this.reload.next();
   }
@@ -162,6 +179,7 @@ export class ConsignorPanel {
           pendingCount: garments.filter(
             (garment) => garment.status === 'under_review' || garment.status === 'counteroffer',
           ).length,
+          counterCount: garments.filter((garment) => garment.status === 'counteroffer').length,
           pendingPayout: payouts
             .filter((payout) => payout.status !== 'paid')
             .reduce((total, payout) => total + payout.totalAmount, 0),

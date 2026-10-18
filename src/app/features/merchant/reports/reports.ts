@@ -1,3 +1,4 @@
+import { BarChart3 } from 'lucide-angular';
 import { Component } from '@angular/core';
 import { CedentesCard } from './cards/cedentes-card';
 import { ConvieneCard } from './cards/conviene-card';
@@ -8,6 +9,7 @@ import { PlazosCard } from './cards/plazos-card';
 import { RotaCard } from './cards/rota-card';
 import { TardoCard } from './cards/tardo-card';
 import { ReportsFilterBar } from './filter-bar/filter-bar';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
 
 interface IndexEntry {
   group: string;
@@ -52,7 +54,7 @@ const INDEX: IndexEntry[] = [
 
 @Component({
   selector: 'app-reports',
-  imports: [
+  imports: [PageHeader, 
     ReportsFilterBar,
     DeboCard,
     PlazosCard,
@@ -65,13 +67,12 @@ const INDEX: IndexEntry[] = [
   ],
   template: `
     <div class="space-y-6">
-      <div>
-        <h1 class="text-2xl font-semibold text-trama-dark">Reportes</h1>
-        <p class="mt-1 text-sm text-trama-dark/50">
-          Elegí un recorte y respondé las preguntas del negocio. Tocá una pregunta para saltar a su
-          tarjeta.
-        </p>
-      </div>
+      <app-page-header
+        title="Reportes"
+        section="Reportes"
+        [icon]="headerIcon"
+        lead="Elegí un recorte y respondé las preguntas del negocio. Tocá una pregunta para saltar a su tarjeta."
+      />
 
       <app-reports-filter-bar />
 
@@ -115,6 +116,7 @@ const INDEX: IndexEntry[] = [
   `,
 })
 export class Reports {
+  protected readonly headerIcon = BarChart3;
   protected readonly index = INDEX;
 
   // Scroll to the card instead of a fragment href — a `#anchor` link changes the route under

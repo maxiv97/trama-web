@@ -1,3 +1,4 @@
+import { Settings as SettingsIcon } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,22 +8,22 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Merchant } from '../../../core/models/user.model';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 @Component({
   selector: 'app-settings',
-  imports: [ReactiveFormsModule, RouterLink, LoadingSpinner, ErrorState],
+  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, ErrorState],
   template: `
     @if (loading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="form" />
     } @else if (error()) {
       <app-error-state message="No pudimos cargar la configuración." (retry)="retry()" />
     } @else {
       <form [formGroup]="form" (ngSubmit)="save()" class="mx-auto max-w-2xl space-y-6">
-        <div class="flex items-center justify-between gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">Configuración</h1>
-          <div class="flex gap-3">
+        <app-page-header title="Configuración" section="Configuración" [icon]="headerIcon" lead="Los datos de tu comercio y las condiciones que ven los cedentes.">
+          <div actions class="flex gap-3">
             @if (form.dirty) {
               <button
                 type="button"
@@ -40,7 +41,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               {{ saving() ? 'Guardando…' : 'Guardar' }}
             </button>
           </div>
-        </div>
+        </app-page-header>
 
         <section formGroupName="profile" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Datos del comercio</h2>
@@ -197,6 +198,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   `,
 })
 export class Settings {
+  protected readonly headerIcon = SettingsIcon;
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly merchantsService = inject(MerchantsService);
