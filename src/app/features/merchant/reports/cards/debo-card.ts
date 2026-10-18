@@ -19,7 +19,7 @@ type State =
   selector: 'app-debo-card',
   imports: [RouterLink, MoneyPipe, LoadingSpinner, ErrorState],
   template: `
-    <div id="rep-debo" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+    <div id="rep-debo" class="t-card scroll-mt-4 p-5">
       <div class="mb-4">
         <h2 class="font-display text-lg font-semibold text-trama-dark">
           ¿Cuánto debo y qué está vencido?

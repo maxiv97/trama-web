@@ -18,7 +18,7 @@ export interface DrillRow {
       (click)="close.emit()"
     >
       <div
-        class="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
+        class="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-trama-paper shadow-xl"
         (click)="$event.stopPropagation()"
       >
         <div class="flex items-start justify-between gap-3 border-b border-trama-sand-200 px-5 py-4">
@@ -32,7 +32,7 @@ export interface DrillRow {
             @if (rows().length) {
               <button
                 (click)="exportCsv()"
-                class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
+                class="t-btn t-btn-secondary t-btn-sm"
               >
                 CSV
               </button>

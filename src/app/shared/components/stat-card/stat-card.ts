@@ -5,7 +5,7 @@ type StatColor = 'default' | 'green' | 'red';
 @Component({
   selector: 'app-stat-card',
   template: `
-    <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+    <div class="t-card p-5">
       <p class="text-sm text-trama-dark/60">{{ title() }}</p>
       <p class="mt-1 font-display text-2xl font-semibold" [class]="valueClass()">{{ value() }}</p>
       @if (subtitle()) {

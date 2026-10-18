@@ -10,14 +10,14 @@ import { RouterLink } from '@angular/router';
       @if (link(); as target) {
         <a
           [routerLink]="target"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+          class="t-btn t-btn-primary"
           >{{ linkLabel() }}</a
         >
       } @else {
         <button
           type="button"
           (click)="retry.emit()"
-          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+          class="t-btn t-btn-primary"
         >
           Reintentar
         </button>

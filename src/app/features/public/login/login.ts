@@ -21,7 +21,7 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
           [formGroup]="form"
           (ngSubmit)="submit()"
           novalidate
-          class="rounded-[18px] border border-black/[.07] bg-white p-7 shadow-[0_12px_40px_rgba(0,0,0,.06)]"
+          class="rounded-[18px] border border-black/[.07] bg-trama-paper p-7 shadow-[0_12px_40px_rgba(0,0,0,.06)]"
         >
           <label for="email" class="mb-1.5 block text-[13px] font-semibold text-trama-dark/80">Email</label>
           <input
@@ -59,7 +59,7 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
           <button
             type="submit"
             [disabled]="loading()"
-            class="mt-5 w-full rounded-[11px] bg-trama-brand py-3 text-[15.5px] font-semibold text-white hover:bg-trama-green-700 disabled:opacity-50"
+            class="mt-5 w-full t-btn t-btn-primary"
           >
             {{ loading() ? 'Ingresando…' : 'Ingresar' }}
           </button>
@@ -74,13 +74,13 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
           <a
             routerLink="/register"
             [queryParams]="{ rol: 'cedente' }"
-            class="rounded-[10px] border border-trama-dark/20 bg-white py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
+            class="rounded-[10px] border border-trama-dark/20 bg-trama-paper py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
             >Soy cedente</a
           >
           <a
             routerLink="/register"
             [queryParams]="{ rol: 'comercio' }"
-            class="rounded-[10px] border border-trama-dark/20 bg-white py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
+            class="rounded-[10px] border border-trama-dark/20 bg-trama-paper py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
             >Soy comercio</a
           >
         </div>

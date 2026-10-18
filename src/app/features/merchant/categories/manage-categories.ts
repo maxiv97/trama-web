@@ -47,7 +47,7 @@ type CategoriesState =
           <button
             type="button"
             (click)="openCreate()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+            class="t-btn t-btn-primary"
           >
             Agregar categoría
           </button>
@@ -61,7 +61,7 @@ type CategoriesState =
           @if (d.custom.length) {
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
               @for (category of d.custom; track category.id) {
-                <div class="space-y-2 rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <div class="t-card space-y-2 p-4">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <p class="font-medium text-trama-dark">{{ category.label }}</p>
@@ -73,14 +73,14 @@ type CategoriesState =
                       <button
                         type="button"
                         (click)="openEdit(category)"
-                        class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                        class="t-btn t-btn-secondary t-btn-sm"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         (click)="askDelete(category)"
-                        class="rounded-lg border border-status-none/30 px-3 py-1.5 text-xs font-medium text-status-none hover:bg-status-none-soft"
+                        class="t-btn t-btn-sm border-status-none/40 text-status-none hover:bg-status-none-soft"
                       >
                         Dar de baja
                       </button>
@@ -107,7 +107,7 @@ type CategoriesState =
           <p class="text-sm text-trama-dark/60">
             Las que no ofrecés no aparecen cuando un cedente te elige. No afecta a otros comercios.
           </p>
-          <div class="divide-y divide-trama-sand-100 overflow-hidden rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card divide-y divide-trama-sand-100 overflow-hidden">
             @for (row of d.base; track row.label) {
               <div class="flex items-center justify-between gap-3 px-4 py-3">
                 <span [class]="row.shown ? 'text-trama-dark' : 'text-trama-dark/40 line-through'">
@@ -134,9 +134,9 @@ type CategoriesState =
 
       <!-- Alta / edición -->
       @if (formOpen()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="close()">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4" (click)="close()">
           <div
-            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-lg"
+            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-trama-paper p-6 shadow-lg"
             (click)="$event.stopPropagation()"
           >
             <h2 class="text-lg font-semibold text-trama-dark">
@@ -150,7 +150,7 @@ type CategoriesState =
                   [value]="fLabel()"
                   (input)="fLabel.set($any($event.target).value)"
                   placeholder="Ej: Ropa de bebé"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 />
               </label>
 
@@ -162,7 +162,7 @@ type CategoriesState =
                   (input)="fSubcategories.set($any($event.target).value)"
                   rows="4"
                   placeholder="Bodys&#10;Enteritos&#10;Camperitas"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 ></textarea>
               </label>
 
@@ -174,7 +174,7 @@ type CategoriesState =
                 <select
                   [value]="fParent()"
                   (change)="fParent.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 >
                   <option value="">Ninguna</option>
                   @for (label of parentOptions(); track label) {
@@ -194,7 +194,7 @@ type CategoriesState =
               <button
                 type="button"
                 (click)="close()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -202,7 +202,7 @@ type CategoriesState =
                 type="button"
                 (click)="save()"
                 [disabled]="!fLabel().trim() || saving()"
-                class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                class="t-btn t-btn-primary"
               >
                 {{ saving() ? 'Guardando…' : 'Guardar' }}
               </button>
@@ -213,8 +213,8 @@ type CategoriesState =
 
       <!-- Confirmación de baja -->
       @if (deleting(); as target) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="deleting.set(null)">
-          <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4" (click)="deleting.set(null)">
+          <div class="w-full max-w-sm rounded-2xl bg-trama-paper p-6 shadow-lg" (click)="$event.stopPropagation()">
             <h2 class="text-lg font-semibold text-trama-dark">Dar de baja la categoría</h2>
             <p class="mt-2 text-sm text-trama-dark/70">
               "{{ target.label }}" dejará de ofrecerse a los cedentes. Las prendas que ya la usan no
@@ -224,7 +224,7 @@ type CategoriesState =
               <button
                 type="button"
                 (click)="deleting.set(null)"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -232,7 +232,7 @@ type CategoriesState =
                 type="button"
                 (click)="confirmDelete(target)"
                 [disabled]="saving()"
-                class="rounded-lg bg-status-none px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+                class="t-btn t-btn-danger"
               >
                 {{ saving() ? 'Dando de baja…' : 'Dar de baja' }}
               </button>

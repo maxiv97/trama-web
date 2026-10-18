@@ -93,7 +93,7 @@ type DetailState =
           </div>
 
           <div class="space-y-6 md:col-span-2">
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+            <div class="t-card p-5">
               <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Datos de la prenda</h2>
               <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <div>
@@ -136,7 +136,7 @@ type DetailState =
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-xs text-trama-dark/50">Cedente</p>
                 @if (d.consignor; as consignor) {
                   <p class="mt-1 text-sm text-trama-dark">{{ consignor.name }}</p>
@@ -147,7 +147,7 @@ type DetailState =
                   <p class="mt-1 text-sm text-trama-dark">—</p>
                 }
               </div>
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-xs text-trama-dark/50">Punto de venta</p>
                 @if (d.salesPoint; as salesPoint) {
                   <p class="mt-1 text-sm text-trama-dark">{{ salesPoint.name }}</p>
@@ -161,7 +161,7 @@ type DetailState =
             </div>
 
             @if (d.agreement; as agreement) {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+              <div class="t-card p-5">
                 <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Precios acordados</h2>
                 <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
                   <div>
@@ -187,7 +187,7 @@ type DetailState =
             }
 
             @if (d.reception; as reception) {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+              <div class="t-card p-5">
                 <h2 class="mb-3 text-sm font-medium text-trama-dark/60">Recepción</h2>
                 <p class="text-sm text-trama-dark/80">
                   Comprobante {{ reception.receiptNumber }} ·
@@ -197,30 +197,30 @@ type DetailState =
               </div>
             }
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
             @if (d.garment.status === 'agreed') {
               <a
                 [routerLink]="['/m/garment', d.garment.id, 'reception']"
-                class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                class="t-btn t-btn-primary"
                 >Registrar recepción</a
               >
             } @else if (d.garment.status === 'in_stock' || d.garment.status === 'with_remarks') {
               <a
                 [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                class="t-btn t-btn-primary"
                 >Registrar venta</a
               >
             } @else if (d.garment.status === 'sold') {
               <a
                 [routerLink]="['/m/garment', d.garment.id]"
-                class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                class="t-btn t-btn-primary"
                 >Ver liquidación</a
               >
             } @else if (d.garment.status === 'paid_out') {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+              <div class="t-card p-5">
                 <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
                 @if (d.sale; as sale) {
                   @if (sale.paidAt) {
@@ -238,7 +238,7 @@ type DetailState =
           </div>
         </div>
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <div class="t-card p-5">
           <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>

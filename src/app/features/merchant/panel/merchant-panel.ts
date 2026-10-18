@@ -62,7 +62,7 @@ const EXPIRY_URGENT_DAYS = 30;
         <section class="space-y-3">
           @if (d.urgencias.length) {
             <h2 class="font-display text-lg font-semibold text-trama-dark">Qué hacer hoy</h2>
-            <div class="overflow-hidden rounded-2xl border border-trama-sand-200 bg-white">
+            <div class="t-card overflow-hidden">
               @for (u of d.urgencias; track u.key) {
                 <div class="flex items-center gap-3 border-b border-trama-sand-100 px-4 py-3 last:border-0">
                   <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-trama-gold"></span>
@@ -74,7 +74,7 @@ const EXPIRY_URGENT_DAYS = 30;
                     [routerLink]="u.link"
                     [fragment]="u.fragment"
                     [queryParams]="u.queryParams"
-                    class="shrink-0 rounded-lg bg-trama-brand px-4 py-1.5 text-sm font-semibold text-white"
+                    class="shrink-0 t-btn t-btn-primary t-btn-sm"
                   >
                     {{ u.actionLabel }}
                   </a>
@@ -100,7 +100,7 @@ const EXPIRY_URGENT_DAYS = 30;
           <h2 class="text-xs font-semibold uppercase tracking-wide text-trama-dark/40">El mes en números</h2>
           <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             @for (kpi of kpis(); track kpi.label) {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-sm text-trama-dark/50">{{ kpi.label }}</p>
                 <p class="mt-1 font-display text-2xl font-semibold text-trama-dark">{{ kpi.value }}</p>
                 @if (kpi.delta) {
@@ -117,7 +117,7 @@ const EXPIRY_URGENT_DAYS = 30;
 
         <div class="grid gap-6 lg:grid-cols-2">
           <!-- Ganancia por categoría -->
-          <section class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <section class="t-card p-5">
             <div class="mb-4 flex items-baseline justify-between">
               <h2 class="font-display text-base font-semibold text-trama-dark">Ganancia por categoría</h2>
               <a routerLink="/m/reports" class="text-xs font-semibold text-trama-brand">Ver reporte</a>
@@ -142,7 +142,7 @@ const EXPIRY_URGENT_DAYS = 30;
           </section>
 
           <!-- Ganancia por semana -->
-          <section class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <section class="t-card p-5">
             <div class="mb-4 flex items-baseline justify-between">
               <h2 class="font-display text-base font-semibold text-trama-dark">Ganancia por semana</h2>
               <span class="text-xs text-trama-dark/40">últimas 6</span>

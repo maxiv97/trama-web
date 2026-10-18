@@ -74,7 +74,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
         </a>
         <a
           routerLink="/login"
-          class="rounded-[9px] border border-trama-dark/20 px-[18px] py-2 text-sm font-semibold hover:bg-white"
+          class="rounded-[9px] border border-trama-dark/20 px-[18px] py-2 text-sm font-semibold hover:bg-trama-paper"
           >Ingresar</a
         >
       </header>
@@ -115,7 +115,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
           class="relative overflow-hidden rounded-[20px] border border-black/[.08] bg-[repeating-linear-gradient(135deg,#dceddf_0_14px,#d4e7d8_14px_28px)] p-6 sm:p-8"
           aria-hidden="true"
         >
-          <div class="ml-auto w-full max-w-[340px] rounded-2xl bg-white p-5 shadow-[0_10px_30px_rgba(0,0,0,.12)]">
+          <div class="ml-auto w-full max-w-[340px] rounded-2xl bg-trama-paper p-5 shadow-[0_10px_30px_rgba(0,0,0,.12)]">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-[11px] font-semibold tracking-wide text-trama-muted uppercase">Artículo</p>
@@ -168,7 +168,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
       </section>
 
       <!-- cómo funciona -->
-      <section class="border-t border-black/[.06] bg-white">
+      <section class="border-t border-black/[.06] bg-trama-paper">
         <div class="mx-auto max-w-[1240px] px-5 py-16 md:px-[7vw]">
           <p class="mb-2.5 text-[13px] font-bold tracking-[.08em] text-trama-brand uppercase">
             ¿Cómo funciona?
@@ -196,7 +196,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
       <section class="mx-auto max-w-[1240px] px-5 py-16 md:px-[7vw]">
         <div class="grid gap-6 md:grid-cols-2">
           @for (a of audiences; track a.rol) {
-            <div class="flex flex-col rounded-2xl border border-black/[.06] bg-white p-7 md:p-8">
+            <div class="flex flex-col rounded-2xl border border-black/[.06] bg-trama-paper p-7 md:p-8">
               <p class="mb-2.5 text-[13px] font-bold tracking-[.08em] text-trama-brand uppercase">{{ a.tag }}</p>
               <h3 class="mb-5 font-display text-2xl leading-tight font-semibold tracking-[-.015em]">
                 {{ a.title }}
@@ -232,7 +232,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
           </div>
           <a
             routerLink="/login"
-            class="rounded-[11px] bg-white px-[26px] py-3.5 text-[15.5px] font-semibold text-trama-brand hover:bg-trama-sand-100"
+            class="rounded-[11px] bg-trama-paper px-[26px] py-3.5 text-[15.5px] font-semibold text-trama-brand hover:bg-trama-sand-100"
             >Ingresar</a
           >
         </div>

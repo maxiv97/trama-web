@@ -37,7 +37,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
       <div class="mx-auto max-w-2xl space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Editar consignación</h1>
 
-        <div class="space-y-5 rounded-2xl border border-trama-sand-200 bg-white p-6">
+        <div class="t-card space-y-5 p-6">
           <!-- Fotos -->
           <div>
             <span class="mb-1 block text-sm font-medium text-trama-dark">Fotos</span>
@@ -181,7 +181,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
         <div class="flex items-center justify-between">
           <a
             [routerLink]="['/c/garment', garmentId]"
-            class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+            class="t-btn t-btn-ghost"
           >
             Cancelar
           </a>
@@ -189,7 +189,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
             type="button"
             (click)="save()"
             [disabled]="saving()"
-            class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            class="t-btn t-btn-primary"
           >
             {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
           </button>
@@ -210,7 +210,7 @@ export class EditGarment {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly inputClass =
-    'w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm';
+    't-input';
   protected readonly seasons = SEASONS;
   protected readonly conditions = CONDITIONS;
 

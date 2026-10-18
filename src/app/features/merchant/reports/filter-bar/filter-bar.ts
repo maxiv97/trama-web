@@ -48,7 +48,7 @@ function rangeFor(key: string): { from?: string; to?: string } {
           [value]="periodKey()"
           (change)="onPeriod($any($event.target).value)"
           aria-label="Período"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
+          class="t-input"
         >
           @for (p of periods; track p.key) {
             <option [value]="p.key">{{ p.label }}</option>
@@ -59,7 +59,7 @@ function rangeFor(key: string): { from?: string; to?: string } {
           [value]="filters.salesPointId() ?? ''"
           (change)="filters.setSalesPoint($any($event.target).value || undefined)"
           aria-label="Punto de venta"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
+          class="t-input"
         >
           <option value="">Todos los puntos</option>
           @for (o of salesPoints(); track o.value) {
@@ -71,7 +71,7 @@ function rangeFor(key: string): { from?: string; to?: string } {
           [value]="filters.category() ?? ''"
           (change)="filters.setCategory($any($event.target).value || undefined)"
           aria-label="Categoría"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
+          class="t-input"
         >
           <option value="">Todas las categorías</option>
           @for (o of categories(); track o.value) {
@@ -83,7 +83,7 @@ function rangeFor(key: string): { from?: string; to?: string } {
           [value]="filters.consignorId() ?? ''"
           (change)="filters.setConsignor($any($event.target).value || undefined)"
           aria-label="Cedente"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
+          class="t-input"
         >
           <option value="">Todos los cedentes</option>
           @for (o of consignors(); track o.value) {

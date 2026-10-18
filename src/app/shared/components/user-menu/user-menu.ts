@@ -31,7 +31,7 @@ const ROLE_LABELS: Record<Role, string> = {
       @if (open()) {
         <div class="fixed inset-0 z-40" (click)="open.set(false)"></div>
         <div
-          class="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-trama-sand-200 bg-white p-1 shadow-lg"
+          class="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-trama-sand-200 bg-trama-paper p-1 shadow-lg"
         >
           <div class="px-3 py-2 md:hidden">
             <p class="text-sm font-medium text-trama-dark">{{ name() }}</p>

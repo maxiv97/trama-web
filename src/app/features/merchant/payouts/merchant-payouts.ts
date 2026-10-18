@@ -43,7 +43,7 @@ type PayoutsState =
             <select
               [value]="activeMonth()"
               (change)="selectedMonth.set($any($event.target).value)"
-              class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+              class="t-input"
             >
               @for (month of months(); track month) {
                 <option [value]="month" [selected]="activeMonth() === month">
@@ -79,7 +79,7 @@ type PayoutsState =
             </div>
           }
 
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="border-b border-trama-sand-200 text-trama-dark/60">
                 <tr>
@@ -112,7 +112,7 @@ type PayoutsState =
                         <button
                           type="button"
                           (click)="download(row)"
-                          class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                          class="t-btn t-btn-secondary t-btn-sm"
                         >
                           Descargar
                         </button>
@@ -120,7 +120,7 @@ type PayoutsState =
                           <button
                             type="button"
                             (click)="openSettle(row)"
-                            class="rounded-lg bg-trama-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-trama-green-700"
+                            class="t-btn t-btn-primary t-btn-sm"
                           >
                             Marcar pagada
                           </button>
@@ -139,10 +139,10 @@ type PayoutsState =
 
       @if (settling(); as row) {
         <div
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4"
           (click)="closeSettle()"
         >
-          <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
+          <div class="w-full max-w-md rounded-2xl bg-trama-paper p-6 shadow-lg" (click)="$event.stopPropagation()">
             <h2 class="text-lg font-semibold text-trama-dark">Marcar liquidación pagada</h2>
             <p class="mt-1 text-sm text-trama-dark/60">
               {{ row.counterpartName }} · {{ monthLabel(row.month) }} ·
@@ -155,7 +155,7 @@ type PayoutsState =
                 <select
                   [value]="paymentMethod()"
                   (change)="paymentMethod.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  class="t-input mt-1.5 w-full"
                 >
                   <option value="transfer">Transferencia</option>
                   <option value="cash">Efectivo</option>
@@ -167,7 +167,7 @@ type PayoutsState =
                   [value]="receiptNumber()"
                   (input)="receiptNumber.set($any($event.target).value)"
                   placeholder="Opcional"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 />
               </label>
             </div>
@@ -177,7 +177,7 @@ type PayoutsState =
                 type="button"
                 (click)="closeSettle()"
                 [disabled]="acting()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100 disabled:opacity-40"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -185,7 +185,7 @@ type PayoutsState =
                 type="button"
                 (click)="confirmSettle()"
                 [disabled]="acting()"
-                class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                class="t-btn t-btn-primary"
               >
                 {{ acting() ? 'Registrando…' : 'Registrar pago' }}
               </button>

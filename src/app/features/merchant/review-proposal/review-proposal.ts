@@ -57,7 +57,7 @@ type ReviewState =
           <div class="space-y-4">
             <app-photo-gallery [photos]="d.garment.photos" />
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+            <div class="t-card p-5">
               <h2 class="text-lg font-semibold text-trama-dark">{{ d.garment.name }}</h2>
               <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div>
@@ -98,7 +98,7 @@ type ReviewState =
             </div>
           </div>
 
-          <div class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <div class="t-card space-y-4 p-5">
             <h2 class="text-sm font-medium text-trama-dark/60">Decisión</h2>
             <div class="space-y-3">
               <div class="flex items-center justify-between">
@@ -131,7 +131,7 @@ type ReviewState =
                   min="1"
                   [value]="counterPrice() ?? ''"
                   (input)="counterPrice.set(toNumber($event))"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  class="t-input w-full"
                 />
                 @if (counterSalePrice() !== null) {
                   <p class="text-sm text-trama-dark/70">
@@ -144,14 +144,14 @@ type ReviewState =
                     type="button"
                     (click)="sendCounteroffer()"
                     [disabled]="!counterValid() || acting()"
-                    class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                    class="t-btn t-btn-primary"
                   >
                     Enviar contraoferta
                   </button>
                   <button
                     type="button"
                     (click)="countering.set(false)"
-                    class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/60 hover:bg-trama-sand-100"
+                    class="t-btn t-btn-ghost"
                   >
                     Cancelar
                   </button>
@@ -163,7 +163,7 @@ type ReviewState =
                   type="button"
                   (click)="activeModal.set('accept')"
                   [disabled]="acting()"
-                  class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                  class="t-btn t-btn-primary"
                 >
                   Aceptar
                 </button>
@@ -171,7 +171,7 @@ type ReviewState =
                   type="button"
                   (click)="startCounteroffer(d.proposal.requestedConsignorPrice)"
                   [disabled]="acting()"
-                  class="rounded-lg border border-trama-brand px-4 py-2 text-sm font-medium text-trama-brand hover:bg-trama-green-50 disabled:opacity-40"
+                  class="t-btn t-btn-secondary"
                 >
                   Contraofertar
                 </button>
@@ -179,7 +179,7 @@ type ReviewState =
                   type="button"
                   (click)="activeModal.set('reject')"
                   [disabled]="acting()"
-                  class="rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
+                  class="t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
                 >
                   Rechazar
                 </button>

@@ -93,13 +93,13 @@ type TrackingState =
 
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-xs text-trama-dark/50">Precio del cedente</p>
                 <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
                 <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
@@ -107,7 +107,7 @@ type TrackingState =
               </div>
             </div>
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <p class="text-xs text-trama-dark/50">Cedente</p>
               <p class="mt-1 text-sm text-trama-dark">
                 {{ d.consignor?.name ?? '—' }}
@@ -117,7 +117,7 @@ type TrackingState =
               </p>
             </div>
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
@@ -129,7 +129,7 @@ type TrackingState =
                   </p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'reception']"
-                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    class="t-btn t-btn-primary"
                     >Registrar recepción</a
                   >
                 </div>
@@ -139,7 +139,7 @@ type TrackingState =
                   <p class="text-sm font-medium text-trama-dark">La prenda está en stock.</p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    class="t-btn t-btn-primary"
                     >Registrar venta</a
                   >
                 </div>
@@ -152,7 +152,7 @@ type TrackingState =
                   }
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    class="t-btn t-btn-primary"
                     >Registrar venta</a
                   >
                 </div>
@@ -188,12 +188,12 @@ type TrackingState =
                     <button
                       type="button"
                       (click)="payingOut.set(true)"
-                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                      class="t-btn t-btn-primary"
                     >
                       Marcar liquidación pagada
                     </button>
                   } @else {
-                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-white p-4">
+                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-trama-paper p-4">
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark"
                           >Método de pago</label
@@ -201,7 +201,7 @@ type TrackingState =
                         <select
                           [value]="paymentMethod()"
                           (change)="paymentMethod.set($any($event.target).value)"
-                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                          class="t-input w-full"
                         >
                           <option value="transfer">Transferencia</option>
                           <option value="cash">Efectivo</option>
@@ -216,7 +216,7 @@ type TrackingState =
                           [value]="receiptNumber()"
                           (input)="receiptNumber.set($any($event.target).value)"
                           placeholder="Opcional"
-                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                          class="t-input w-full"
                         />
                       </div>
                       <div class="flex gap-3">
@@ -224,7 +224,7 @@ type TrackingState =
                           type="button"
                           (click)="confirmingPayout.set(true)"
                           [disabled]="acting()"
-                          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                          class="t-btn t-btn-primary"
                         >
                           {{ acting() ? 'Registrando…' : 'Registrar pago' }}
                         </button>
@@ -232,7 +232,7 @@ type TrackingState =
                           type="button"
                           (click)="payingOut.set(false)"
                           [disabled]="acting()"
-                          class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-40"
+                          class="t-btn t-btn-secondary"
                         >
                           Cancelar
                         </button>
@@ -242,7 +242,7 @@ type TrackingState =
                 </div>
               }
               @case ('paid_out') {
-                <div class="space-y-2 rounded-2xl border border-trama-sand-200 bg-white p-5">
+                <div class="t-card space-y-2 p-5">
                   <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -292,7 +292,7 @@ type TrackingState =
           </div>
         </div>
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <div class="t-card p-5">
           <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>

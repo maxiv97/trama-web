@@ -51,7 +51,7 @@ type PanelState =
           <h1 class="font-display text-2xl font-semibold text-trama-dark">Mi panel</h1>
           <a
             routerLink="/c/upload"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+            class="t-btn t-btn-primary"
             >Cargar artículo</a
           >
         </div>
@@ -64,7 +64,7 @@ type PanelState =
         </div>
 
         @if (data.rows.length) {
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="border-b border-trama-sand-200 text-trama-dark/60">
                 <tr>

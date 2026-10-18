@@ -103,12 +103,12 @@ type ProposalsState =
             [value]="search()"
             (input)="search.set($any($event.target).value)"
             placeholder="Buscar por nombre"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            class="t-input"
           />
           <select
             [value]="statusFilter()"
             (change)="statusFilter.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            class="t-input"
           >
             @for (option of statusFilters; track option.value) {
               <option [value]="option.value" [selected]="statusFilter() === option.value">
@@ -119,7 +119,7 @@ type ProposalsState =
           <select
             [value]="consignorFilter()"
             (change)="consignorFilter.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            class="t-input"
           >
             <option value="all" [selected]="consignorFilter() === 'all'">Todos los cedentes</option>
             @for (option of d.consignors; track option.id) {
@@ -131,7 +131,7 @@ type ProposalsState =
           <select
             [value]="salesPointFilter()"
             (change)="salesPointFilter.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            class="t-input"
           >
             <option value="all">Todos los puntos</option>
             @for (option of d.salesPoints; track option.id) {
@@ -141,7 +141,7 @@ type ProposalsState =
         </div>
 
         @if (filteredRows().length) {
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="border-b border-trama-sand-200 text-trama-dark/60">
                 <tr>
@@ -184,7 +184,7 @@ type ProposalsState =
                         <a
                           [routerLink]="['/m/proposal', row.proposalId]"
                           (click)="$event.stopPropagation()"
-                          class="inline-block rounded-lg bg-trama-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-trama-green-700"
+                          class="t-btn t-btn-primary t-btn-sm"
                         >
                           Revisar
                         </a>

@@ -154,7 +154,7 @@ interface SummaryRow {
               <p class="mt-3 max-w-lg text-white/70">Elegí un rol para empezar el registro.</p>
             </div>
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
-              <div class="flex flex-col gap-3 rounded-2xl border border-trama-sand-200 bg-white p-6">
+              <div class="t-card flex flex-col gap-3 p-6">
                 <span class="text-xs font-semibold tracking-wide text-trama-brand uppercase">Cedente</span>
                 <h2 class="font-display text-xl font-semibold text-trama-dark">
                   Quiero dejar prendas en consignación
@@ -170,13 +170,13 @@ interface SummaryRow {
                 <button
                   type="button"
                   (click)="pick('consignor')"
-                  class="mt-auto rounded-lg bg-trama-brand px-4 py-2.5 font-medium text-white hover:bg-trama-green-700"
+                  class="mt-auto t-btn t-btn-primary"
                 >
                   Registrarme como cedente
                 </button>
               </div>
 
-              <div class="flex flex-col gap-3 rounded-2xl border border-trama-sand-200 bg-white p-6">
+              <div class="t-card flex flex-col gap-3 p-6">
                 <span class="text-xs font-semibold tracking-wide text-trama-gold uppercase">Comercio</span>
                 <h2 class="font-display text-xl font-semibold text-trama-dark">
                   Quiero recibir prendas para vender
@@ -243,7 +243,7 @@ interface SummaryRow {
               </div>
             }
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-6 sm:p-8">
+            <div class="t-card p-6 sm:p-8">
               <p class="text-xs font-semibold tracking-wide text-trama-brand uppercase">
                 Paso {{ step() + 1 }} de {{ steps().length }}
               </p>
@@ -505,7 +505,7 @@ interface SummaryRow {
                               max="95"
                               [value]="consignorPct()"
                               (input)="setConsignorPct($any($event.target).value)"
-                              class="w-24 rounded-lg border border-trama-sand-200 px-3 py-2 text-2xl font-semibold text-trama-dark"
+                              class="t-input w-24 text-2xl font-semibold text-trama-dark"
                             />
                             <span class="text-xl font-semibold text-trama-dark/60">%</span>
                           </div>
@@ -609,7 +609,7 @@ interface SummaryRow {
               <button
                 type="button"
                 (click)="back()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 {{ step() === 0 ? 'Cambiar de rol' : 'Anterior' }}
               </button>
@@ -617,7 +617,7 @@ interface SummaryRow {
                 <button
                   type="button"
                   (click)="next()"
-                  class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                  class="t-btn t-btn-primary"
                 >
                   Siguiente
                 </button>
@@ -626,7 +626,7 @@ interface SummaryRow {
                   type="button"
                   (click)="submit()"
                   [disabled]="submitting()"
-                  class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                  class="t-btn t-btn-primary"
                 >
                   {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
                 </button>
@@ -635,7 +635,7 @@ interface SummaryRow {
           }
 
           @case ('verify') {
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-6 sm:p-8">
+            <div class="t-card p-6 sm:p-8">
               <span class="text-xs font-semibold tracking-wide text-trama-brand uppercase">Cuenta creada</span>
               <h2 class="mt-1 font-display text-2xl font-semibold text-trama-dark">Confirmá tu email</h2>
               <p class="mt-1 text-sm text-trama-dark/60">
@@ -651,7 +651,7 @@ interface SummaryRow {
                   inputmode="numeric"
                   maxlength="6"
                   placeholder="123456"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-center text-2xl font-semibold tracking-[0.3em] text-trama-dark"
+                  class="t-input w-full text-center text-2xl font-semibold tracking-[0.3em] text-trama-dark"
                 />
                 @if (codeError()) {
                   <p class="text-xs text-status-none">{{ codeError() }}</p>
@@ -661,7 +661,7 @@ interface SummaryRow {
                     type="button"
                     (click)="verify()"
                     [disabled]="code().length < 6 || verifying()"
-                    class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                    class="t-btn t-btn-primary"
                   >
                     {{ verifying() ? 'Verificando…' : 'Verificar' }}
                   </button>
@@ -698,7 +698,7 @@ interface SummaryRow {
               }
               <a
                 [routerLink]="panelHref()"
-                class="mt-6 block w-fit rounded-lg bg-trama-brand px-5 py-3 font-medium text-white hover:bg-trama-green-700"
+                class="mt-6 w-fit t-btn t-btn-primary"
               >
                 {{ panelLabel() }}
               </a>
@@ -722,7 +722,7 @@ export class Register {
   protected readonly days = DAYS;
   protected readonly timeSlots = TIME_SLOTS;
   protected readonly inputClass =
-    'w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm text-trama-dark';
+    't-input';
 
   protected readonly view = signal<'role' | 'wizard' | 'verify' | 'done'>('role');
   protected readonly role = signal<Role | null>(null);

@@ -15,10 +15,10 @@ const COLOR_CLASSES: Record<ConfirmColor, string> = {
   template: `
     @if (open()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4"
         (click)="cancelled.emit()"
       >
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
+        <div class="w-full max-w-md rounded-2xl bg-trama-paper p-6 shadow-lg" (click)="$event.stopPropagation()">
           <h2 class="text-lg font-semibold text-trama-dark">{{ title() }}</h2>
           <p class="mt-2 text-sm text-trama-dark/70">{{ body() }}</p>
 
@@ -27,7 +27,7 @@ const COLOR_CLASSES: Record<ConfirmColor, string> = {
               <span class="text-trama-dark/70">{{ fieldLabel }}</span>
               <input
                 [(ngModel)]="fieldValue"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
             </label>
           }
@@ -36,7 +36,7 @@ const COLOR_CLASSES: Record<ConfirmColor, string> = {
             <button
               type="button"
               (click)="cancelled.emit()"
-              class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+              class="t-btn t-btn-ghost"
             >
               Cancelar
             </button>

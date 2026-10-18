@@ -50,11 +50,11 @@ type ConsignorsState =
           [value]="search()"
           (input)="search.set($any($event.target).value)"
           placeholder="Buscar por nombre, DNI o email"
-          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm sm:max-w-sm"
+          class="t-input w-full sm:max-w-sm"
         />
 
         @if (filteredRows().length) {
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="border-b border-trama-sand-200 text-trama-dark/60">
                 <tr>

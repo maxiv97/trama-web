@@ -34,7 +34,7 @@ type State =
   selector: 'app-discrepancias-card',
   imports: [LoadingSpinner, ErrorState],
   template: `
-    <div id="rep-discrepancias" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+    <div id="rep-discrepancias" class="t-card scroll-mt-4 p-5">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 class="font-display text-lg font-semibold text-trama-dark">
@@ -48,7 +48,7 @@ type State =
           <button
             (click)="exportXlsx()"
             [disabled]="exporting()"
-            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-50"
+            class="shrink-0 t-btn t-btn-secondary t-btn-sm"
           >
             {{ exporting() ? 'Generando…' : 'Excel' }}
           </button>

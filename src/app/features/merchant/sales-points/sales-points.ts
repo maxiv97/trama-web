@@ -54,7 +54,7 @@ type SalesPointsState =
           <button
             type="button"
             (click)="openCreate()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+            class="t-btn t-btn-primary"
           >
             Agregar punto
           </button>
@@ -63,7 +63,7 @@ type SalesPointsState =
         @if (d.cards.length) {
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             @for (card of d.cards; track card.id) {
-              <div class="space-y-3 rounded-2xl border border-trama-sand-200 bg-white p-5">
+              <div class="t-card space-y-3 p-5">
                 <div class="flex items-start justify-between gap-3">
                   <div>
                     <p class="font-medium text-trama-dark">{{ card.name }}</p>
@@ -72,7 +72,7 @@ type SalesPointsState =
                   <button
                     type="button"
                     (click)="openEdit(card)"
-                    class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                    class="t-btn t-btn-secondary t-btn-sm"
                   >
                     Editar
                   </button>
@@ -108,11 +108,11 @@ type SalesPointsState =
 
       @if (formOpen()) {
         <div
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4"
           (click)="close()"
         >
           <div
-            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-lg"
+            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-trama-paper p-6 shadow-lg"
             (click)="$event.stopPropagation()"
           >
             <h2 class="text-lg font-semibold text-trama-dark">
@@ -125,7 +125,7 @@ type SalesPointsState =
                 <input
                   [value]="fName()"
                   (input)="fName.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 />
               </label>
 
@@ -134,7 +134,7 @@ type SalesPointsState =
                 <input
                   [value]="fAddress()"
                   (input)="fAddress.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 />
               </label>
 
@@ -143,7 +143,7 @@ type SalesPointsState =
                 <input
                   [value]="fPhone()"
                   (input)="fPhone.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 />
               </label>
 
@@ -154,7 +154,7 @@ type SalesPointsState =
                     [value]="fDays()"
                     (input)="fDays.set($any($event.target).value)"
                     placeholder="Lun a Vie"
-                    class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                    class="t-input mt-1.5 w-full"
                   />
                 </label>
                 <label class="block text-sm">
@@ -163,7 +163,7 @@ type SalesPointsState =
                     [value]="fHours()"
                     (input)="fHours.set($any($event.target).value)"
                     placeholder="10 a 18 h"
-                    class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                    class="t-input mt-1.5 w-full"
                   />
                 </label>
               </div>
@@ -173,7 +173,7 @@ type SalesPointsState =
                 <input
                   [value]="fInstructions()"
                   (input)="fInstructions.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input mt-1.5 w-full"
                 />
               </label>
 
@@ -203,7 +203,7 @@ type SalesPointsState =
               <button
                 type="button"
                 (click)="close()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -211,7 +211,7 @@ type SalesPointsState =
                 type="button"
                 (click)="save()"
                 [disabled]="!canSave() || saving()"
-                class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                class="t-btn t-btn-primary"
               >
                 {{ saving() ? 'Guardando…' : 'Guardar' }}
               </button>

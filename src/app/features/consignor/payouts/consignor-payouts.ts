@@ -45,7 +45,7 @@ type PayoutsState =
           <select
             [value]="activeMonth()"
             (change)="selectedMonth.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            class="t-input"
           >
             @for (month of months(); track month) {
               <option [value]="month" [selected]="activeMonth() === month">
@@ -56,7 +56,7 @@ type PayoutsState =
         }
 
         @if (monthRows().length) {
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card overflow-x-auto">
             <table class="w-full text-left text-sm">
               <thead class="border-b border-trama-sand-200 text-trama-dark/60">
                 <tr>
@@ -82,7 +82,7 @@ type PayoutsState =
                       <button
                         type="button"
                         (click)="download(row)"
-                        class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                        class="t-btn t-btn-secondary t-btn-sm"
                       >
                         Descargar
                       </button>

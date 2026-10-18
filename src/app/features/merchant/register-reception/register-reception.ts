@@ -63,7 +63,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
       <div class="mx-auto max-w-2xl space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Registrar recepción</h1>
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+        <div class="t-card p-4">
           <p class="font-medium text-trama-dark">{{ d.garment.name }}</p>
           <p class="text-sm text-trama-dark/60">
             Condición declarada por el cedente:
@@ -93,7 +93,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
         </div>
 
         @if (needsDetail()) {
-          <div class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-4">
+          <div class="t-card space-y-4 p-4">
             <div>
               <p class="mb-2 text-sm font-medium text-trama-dark">Discrepancias</p>
               <div class="grid gap-2 sm:grid-cols-2">
@@ -115,7 +115,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
                 rows="3"
                 [value]="detail()"
                 (input)="detail.set($any($event.target).value)"
-                class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                class="t-input w-full"
               ></textarea>
             </div>
             <div>
@@ -158,7 +158,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
           <select
             [value]="salesPointId()"
             (change)="salesPointId.set($any($event.target).value)"
-            class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            class="t-input w-full"
           >
             <option value="">Elegí un punto de venta</option>
             @for (point of d.merchant?.salesPoints ?? []; track point.id) {
@@ -172,7 +172,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
             type="button"
             (click)="confirm()"
             [disabled]="!canConfirm() || acting()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            class="t-btn t-btn-primary"
           >
             {{ acting() ? 'Confirmando…' : 'Confirmar recepción' }}
           </button>

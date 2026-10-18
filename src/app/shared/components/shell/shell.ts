@@ -84,7 +84,7 @@ const MENUS: Record<Role, NavItem[]> = {
 
       @if (!isPublic()) {
         <header
-          class="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-trama-sand-200 bg-white px-4 py-3 md:ml-60 md:px-8"
+          class="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-trama-sand-200 bg-trama-paper px-4 py-3 md:ml-60 md:px-8"
         >
           <a
             [routerLink]="notificationsLink()"
@@ -105,7 +105,7 @@ const MENUS: Record<Role, NavItem[]> = {
 
       @if (!isPublic()) {
         <nav
-          class="fixed inset-x-0 bottom-0 z-40 flex border-t border-trama-sand-200 bg-white md:hidden"
+          class="fixed inset-x-0 bottom-0 z-40 flex border-t border-trama-sand-200 bg-trama-paper md:hidden"
         >
           @for (item of menu(); track item.link) {
             <a

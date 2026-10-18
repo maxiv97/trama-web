@@ -92,13 +92,13 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-xs text-trama-dark/50">Precio que pediste</p>
                 <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <div class="t-card p-4">
                 <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
                 <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
@@ -106,7 +106,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               </div>
             </div>
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
@@ -118,7 +118,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                   </p>
                   <a
                     [routerLink]="['/c/garment', d.garment.id, 'edit']"
-                    class="shrink-0 rounded-lg border border-trama-brand px-4 py-2 text-sm font-medium text-trama-brand hover:bg-trama-green-50"
+                    class="shrink-0 t-btn t-btn-secondary"
                   >
                     Editar consignación
                   </a>
@@ -150,7 +150,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       type="button"
                       (click)="openAccept()"
                       [disabled]="acting()"
-                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                      class="t-btn t-btn-primary"
                     >
                       Aceptar
                     </button>
@@ -158,7 +158,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       type="button"
                       (click)="openReject()"
                       [disabled]="acting()"
-                      class="rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
+                      class="t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
                     >
                       Rechazar
                     </button>
@@ -199,7 +199,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                     type="button"
                     (click)="openRedeliver()"
                     [disabled]="acting()"
-                    class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                    class="t-btn t-btn-primary"
                   >
                     Coordinar nueva entrega
                   </button>
@@ -271,7 +271,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
         </div>
 
         @if (canCancel()) {
-          <div class="flex items-center justify-between gap-3 rounded-2xl border border-status-none/20 bg-white p-5">
+          <div class="flex items-center justify-between gap-3 rounded-2xl border border-status-none/20 bg-trama-paper p-5">
             <div>
               <p class="text-sm font-medium text-trama-dark">¿Ya no querés consignar esta prenda?</p>
               <p class="text-xs text-trama-dark/50">
@@ -282,14 +282,14 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               type="button"
               (click)="openCancel()"
               [disabled]="acting()"
-              class="shrink-0 rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
+              class="shrink-0 t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
             >
               Cancelar prenda
             </button>
           </div>
         }
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <div class="t-card p-5">
           <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>

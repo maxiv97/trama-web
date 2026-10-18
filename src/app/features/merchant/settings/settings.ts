@@ -27,7 +27,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               <button
                 type="button"
                 (click)="discard()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Descartar cambios
               </button>
@@ -35,21 +35,21 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
             <button
               type="submit"
               [disabled]="form.invalid || form.pristine || saving()"
-              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+              class="t-btn t-btn-primary"
             >
               {{ saving() ? 'Guardando…' : 'Guardar' }}
             </button>
           </div>
         </div>
 
-        <section formGroupName="profile" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <section formGroupName="profile" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Datos del comercio</h2>
 
           <label class="block text-sm">
             <span class="text-trama-dark/70">Nombre del negocio</span>
             <input
               formControlName="businessName"
-              class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+              class="t-input mt-1.5 w-full"
             />
             @if (invalid('profile', 'businessName')) {
               <span class="mt-1 block text-xs text-status-none">Ingresá el nombre del negocio.</span>
@@ -62,7 +62,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               <input
                 formControlName="email"
                 type="email"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('profile', 'email')) {
                 <span class="mt-1 block text-xs text-status-none">Ingresá un email válido.</span>
@@ -72,7 +72,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               <span class="text-trama-dark/70">Teléfono</span>
               <input
                 formControlName="phone"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('profile', 'phone')) {
                 <span class="mt-1 block text-xs text-status-none">Ingresá el teléfono.</span>
@@ -85,7 +85,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               <span class="text-trama-dark/70">Barrio</span>
               <input
                 formControlName="neighborhood"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('profile', 'neighborhood')) {
                 <span class="mt-1 block text-xs text-status-none">Ingresá el barrio.</span>
@@ -95,7 +95,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
               <span class="text-trama-dark/70">Ciudad</span>
               <input
                 formControlName="city"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('profile', 'city')) {
                 <span class="mt-1 block text-xs text-status-none">Ingresá la ciudad.</span>
@@ -104,7 +104,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
           </div>
         </section>
 
-        <section formGroupName="commission" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <section formGroupName="commission" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Comisión</h2>
           <p class="text-xs text-trama-dark/50">
             El porcentaje del comercio se calcula como el complemento del cedente.
@@ -117,7 +117,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 type="number"
                 min="0"
                 max="100"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('commission', 'consignorPercentage')) {
                 <span class="mt-1 block text-xs text-status-none">Ingresá un valor entre 0 y 100.</span>
@@ -134,7 +134,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
           </div>
         </section>
 
-        <section formGroupName="terms" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <section formGroupName="terms" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Términos de consignación</h2>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <label class="block text-sm">
@@ -143,7 +143,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 formControlName="saleWindowMonths"
                 type="number"
                 min="1"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('terms', 'saleWindowMonths')) {
                 <span class="mt-1 block text-xs text-status-none">Mínimo 1 mes.</span>
@@ -155,7 +155,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 formControlName="graceMonths"
                 type="number"
                 min="0"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('terms', 'graceMonths')) {
                 <span class="mt-1 block text-xs text-status-none">No puede ser negativo.</span>
@@ -168,7 +168,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
                 type="number"
                 min="1"
                 max="28"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input mt-1.5 w-full"
               />
               @if (invalid('terms', 'payoutDay')) {
                 <span class="mt-1 block text-xs text-status-none">Entre 1 y 28.</span>
@@ -177,7 +177,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
           </div>
         </section>
 
-        <section class="flex items-center justify-between gap-3 rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <section class="t-card flex items-center justify-between gap-3 p-5">
           <div>
             <h2 class="text-sm font-semibold text-trama-dark">Puntos de venta</h2>
             <p class="text-sm text-trama-dark/60">
@@ -187,7 +187,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
           </div>
           <a
             routerLink="/m/sales-points"
-            class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
+            class="t-btn t-btn-secondary"
           >
             Administrar
           </a>
