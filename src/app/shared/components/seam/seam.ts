@@ -31,16 +31,16 @@ let nextId = 0;
       <svg [attr.width]="width()" [attr.height]="svgHeight()" class="absolute left-0 top-0 block overflow-visible" aria-hidden="true">
         @if (width() > 0) {
           <!-- hilván pendiente -->
-          @if (current() < steps().length - 1) {
+          @if (c() < steps().length - 1) {
             <path
-              [attr.d]="'M' + xs()[current()] + ',' + cy() + ' L' + xs()[steps().length - 1] + ',' + cy()"
+              [attr.d]="'M' + xs()[c()] + ',' + cy() + ' L' + xs()[steps().length - 1] + ',' + cy()"
               stroke="#C9C2AE"
               stroke-width="4"
               stroke-linecap="round"
               stroke-dasharray="12 10"
             />
           }
-          @if (current() > 0) {
+          @if (c() > 0) {
             <!-- revés del hilo -->
             <path
               [attr.d]="donePath()"
@@ -73,7 +73,7 @@ let nextId = 0;
             />
           }
           @for (step of steps(); track $index; let i = $index) {
-            @if (i === current()) {
+            @if (i === c()) {
               @for (k of [ringKey()]; track k) {
                 <circle
                   class="seam-ring"
@@ -90,14 +90,14 @@ let nextId = 0;
               [attr.cx]="xs()[i]"
               [attr.cy]="cy()"
               [attr.r]="radius()"
-              [attr.fill]="i < current() ? '#1F3A2B' : '#FFFDF7'"
-              [attr.stroke]="i < current() ? '#1F3A2B' : '#C9C2AE'"
+              [attr.fill]="i < c() ? '#1F3A2B' : '#FFFDF7'"
+              [attr.stroke]="i < c() ? '#1F3A2B' : '#C9C2AE'"
               stroke-width="3"
             />
             @for (h of holes(); track $index) {
-              <circle [attr.cx]="xs()[i] + h[0]" [attr.cy]="cy() + h[1]" [attr.r]="holeR()" [attr.fill]="i < current() ? '#F2B636' : '#C9C2AE'" />
+              <circle [attr.cx]="xs()[i] + h[0]" [attr.cy]="cy() + h[1]" [attr.r]="holeR()" [attr.fill]="i < c() ? '#F2B636' : '#C9C2AE'" />
             }
-            @if (i < current()) {
+            @if (i < c()) {
               <path
                 [attr.d]="crossPath(xs()[i])"
                 stroke="#F2B636"
@@ -109,7 +109,7 @@ let nextId = 0;
         }
       </svg>
       @for (step of steps(); track $index; let i = $index) {
-        @if (navigable() && i < current()) {
+        @if (navigable() && i < c()) {
           <button
             type="button"
             class="absolute top-0 rounded-full focus-visible:outline-2"
@@ -123,15 +123,15 @@ let nextId = 0;
         }
         <span
           class="absolute -translate-x-1/2 text-center leading-tight"
-          [class]="compactLabels() && i !== current() ? 'hidden sm:block' : ''"
+          [class]="compactLabels() && i !== c() ? 'hidden sm:block' : ''"
           [style.left.px]="xs()[i]"
           [style.top.px]="svgHeight() + 6"
           [style.width.px]="labelWidth()"
           [style.font-size.px]="labelSize()"
-          [style.font-weight]="i === current() ? 700 : 600"
-          [style.color]="i <= current() ? '#1F3A2B' : '#6B6A5E'"
-          [class.cursor-pointer]="navigable() && i < current()"
-          (click)="navigable() && i < current() ? stepClick.emit(i) : null"
+          [style.font-weight]="i === c() ? 700 : 600"
+          [style.color]="i <= c() ? '#1F3A2B' : '#6B6A5E'"
+          [class.cursor-pointer]="navigable() && i < c()"
+          (click)="navigable() && i < c() ? stepClick.emit(i) : null"
           >{{ step }}</span
         >
       }
@@ -164,6 +164,9 @@ export class Seam {
   /** Duración del cosido al avanzar un paso (ms). */
   readonly stepMs = input(600);
   readonly navigable = input(false);
+  /** Todos los pasos hechos (al terminar un wizard). */
+  readonly allDone = input(false);
+  protected readonly c = computed(() => (this.allDone() ? this.steps().length : this.current()));
   /** En pantallas chicas muestra solo la etiqueta del paso actual. */
   readonly compactLabels = input(false);
   readonly stepClick = output<number>();
@@ -202,7 +205,7 @@ export class Seam {
   });
   protected readonly donePath = computed(() => {
     const xs = this.xs();
-    return `M${xs[0]},${this.cy()} L${xs[this.current()]},${this.cy()}`;
+    return `M${xs[0]},${this.cy()} L${xs[Math.min(this.c(), xs.length - 1)]},${this.cy()}`;
   });
 
   constructor() {
@@ -225,7 +228,7 @@ export class Seam {
     // Cose el tramo hecho: al entrar en enterMs y en cada cambio de paso en stepMs.
     effect(() => {
       const xs = this.xs();
-      const current = this.current();
+      const current = Math.min(this.c(), xs.length - 1);
       if (!this.width()) return;
       const target = xs[current] - xs[0] + 24;
       untracked(() => {
