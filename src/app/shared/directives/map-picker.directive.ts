@@ -1,5 +1,6 @@
 import { afterNextRender, Directive, ElementRef, inject, input, OnDestroy, output } from '@angular/core';
 import * as L from 'leaflet';
+import { merchantPin, personPin, TILE_ATTRIBUTION, TILE_URL } from './map-pins';
 
 // Fallback centre when no initial coordinates are given: downtown Córdoba.
 const CORDOBA = { lat: -31.4201, lng: -64.1888 };
@@ -19,6 +20,8 @@ export class MapPickerDirective implements OnDestroy {
   readonly lat = input<number | undefined>();
   readonly lng = input<number | undefined>();
   readonly zoom = input(14);
+  /** Qué representa el pin: la persona (punto naranja) o el local (gota con Store). */
+  readonly kind = input<'person' | 'merchant'>('person');
   readonly coordsChange = output<Coords>();
 
   private map?: L.Map;
@@ -31,18 +34,13 @@ export class MapPickerDirective implements OnDestroy {
   private init(): void {
     const start: Coords = { lat: this.lat() ?? CORDOBA.lat, lng: this.lng() ?? CORDOBA.lng };
 
-    this.map = L.map(this.host.nativeElement, { attributionControl: false }).setView(
+    this.map = L.map(this.host.nativeElement).setView(
       [start.lat, start.lng],
       this.zoom(),
     );
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(this.map);
+    L.tileLayer(TILE_URL, { maxZoom: 19, attribution: TILE_ATTRIBUTION }).addTo(this.map);
 
-    const icon = L.divIcon({
-      className: '',
-      html: '<span style="display:block;width:18px;height:18px;border-radius:50%;background:#2e7d54;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)"></span>',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9],
-    });
+    const icon = this.kind() === 'merchant' ? merchantPin() : personPin();
     this.marker = L.marker([start.lat, start.lng], { icon, draggable: true }).addTo(this.map);
     this.marker.on('dragend', () => this.emit());
     this.map.on('click', (event: L.LeafletMouseEvent) => {

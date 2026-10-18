@@ -59,8 +59,8 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
           >
             ✓
           </div>
-          <h2 class="mt-4 font-display text-xl font-semibold text-trama-dark">¡Propuesta enviada!</h2>
-          <p class="mx-auto mt-2 max-w-sm text-sm text-trama-dark/70">
+          <h2 class="mt-4 text-title-3 text-trama-dark">¡Propuesta enviada!</h2>
+          <p class="mx-auto mt-2 max-w-sm text-sm text-trama-body">
             Le llegó a <span class="font-medium text-trama-dark">{{ sentMerchantName() }}</span> para
             revisar. Te avisamos apenas responda.
           </p>
@@ -117,14 +117,14 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
         @switch (step()) {
           @case (1) {
             <div class="space-y-4">
-              <p class="text-sm text-trama-dark/70">
+              <p class="text-sm text-trama-body">
                 Subí al menos una foto de tu prenda. Cuantas más subas, mejor podrá evaluarla el
                 comercio.
               </p>
               <label
                 (dragover)="$event.preventDefault()"
                 (drop)="onDrop($event)"
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-trama-sand-200 py-10 text-center text-trama-dark/60 hover:border-trama-brand"
+                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-trama-sand-200 py-10 text-center text-trama-body hover:border-trama-brand"
               >
                 <span class="text-sm">Arrastrá tus fotos acá o hacé click para elegir</span>
                 <input
@@ -155,27 +155,27 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                     </div>
                   }
                 </div>
-                <p class="text-xs text-trama-dark/50">{{ photos().length }} foto(s) cargada(s).</p>
+                <p class="text-xs text-trama-muted">{{ photos().length }} foto(s) cargada(s).</p>
               }
 
               <div>
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Video (opcional)</span>
+                <span class="t-label">Video (opcional)</span>
                 @if (videoName(); as name) {
                   <div
                     class="flex items-center justify-between rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                   >
-                    <span class="truncate text-trama-dark/80">{{ name }}</span>
+                    <span class="truncate text-trama-body">{{ name }}</span>
                     <button
                       type="button"
                       (click)="removeVideo()"
-                      class="ml-2 shrink-0 text-xs text-trama-dark/50 hover:text-status-none"
+                      class="ml-2 shrink-0 text-xs text-trama-muted hover:text-status-none"
                     >
                       Quitar
                     </button>
                   </div>
                 } @else {
                   <label
-                    class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-dark/60 hover:border-trama-brand"
+                    class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-body hover:border-trama-brand"
                   >
                     Subí un video de tu prenda
                     <input
@@ -196,7 +196,7 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                 [value]="search()"
                 (input)="search.set($any($event.target).value)"
                 placeholder="Buscar por nombre o barrio"
-                class="t-input w-full"
+                class="t-input"
               />
               @if (merchantOptions().length) {
                 <div class="space-y-3">
@@ -214,13 +214,13 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                       <div class="flex items-center justify-between">
                         <span class="font-medium text-trama-dark">{{ option.businessName }}</span>
                         @if (option.distance !== null) {
-                          <span class="text-xs text-trama-dark/60"
+                          <span class="text-xs text-trama-body"
                             >{{ option.distance | number: '1.1-1' }} km</span
                           >
                         }
                       </div>
-                      <span class="text-sm text-trama-dark/70">{{ option.neighborhood }}</span>
-                      <span class="text-xs text-trama-dark/60"
+                      <span class="text-sm text-trama-body">{{ option.neighborhood }}</span>
+                      <span class="text-xs text-trama-body"
                         >Comisión cedente: {{ option.commission }}% · Recepción:
                         {{ option.scheduleDays }} {{ option.scheduleHours }}</span
                       >
@@ -228,7 +228,7 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                   }
                 </div>
               } @else {
-                <p class="py-8 text-center text-sm text-trama-dark/60">
+                <p class="py-8 text-center text-sm text-trama-body">
                   No encontramos comercios para tu búsqueda.
                 </p>
               }
@@ -240,21 +240,21 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
           @case (3) {
             <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+                <label class="t-label">Nombre</label>
                 <input
                   formControlName="name"
                   placeholder="Ej: Campera de jean azul"
-                  class="t-input w-full"
+                  class="t-input"
                 />
                 @if (showError('name')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('name') }}</p>
+                  <p class="t-error">{{ errorMessage('name') }}</p>
                 }
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
+                <label class="t-label">Categoría</label>
                 <select
                   formControlName="category"
-                  class="t-input w-full"
+                  class="t-input"
                 >
                   <option value="">Elegí una categoría</option>
                   @for (category of categories(); track category.id) {
@@ -262,14 +262,14 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                   }
                 </select>
                 @if (showError('category')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('category') }}</p>
+                  <p class="t-error">{{ errorMessage('category') }}</p>
                 }
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
+                <label class="t-label">Subcategoría</label>
                 <select
                   formControlName="subcategory"
-                  class="t-input w-full"
+                  class="t-input"
                 >
                   <option value="">Elegí una subcategoría</option>
                   @for (subcategory of subcategories(); track subcategory) {
@@ -277,44 +277,44 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                   }
                 </select>
                 @if (showError('subcategory')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('subcategory') }}</p>
+                  <p class="t-error">{{ errorMessage('subcategory') }}</p>
                 }
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
+                <label class="t-label">Marca</label>
                 <input
                   formControlName="brand"
-                  class="t-input w-full"
+                  class="t-input"
                 />
                 @if (showError('brand')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('brand') }}</p>
+                  <p class="t-error">{{ errorMessage('brand') }}</p>
                 }
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
+                <label class="t-label">Talle</label>
                 <input
                   formControlName="size"
-                  class="t-input w-full"
+                  class="t-input"
                 />
                 @if (showError('size')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('size') }}</p>
+                  <p class="t-error">{{ errorMessage('size') }}</p>
                 }
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
+                <label class="t-label">Color</label>
                 <input
                   formControlName="color"
-                  class="t-input w-full"
+                  class="t-input"
                 />
                 @if (showError('color')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('color') }}</p>
+                  <p class="t-error">{{ errorMessage('color') }}</p>
                 }
               </div>
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
+                <label class="t-label">Temporada</label>
                 <select
                   formControlName="season"
-                  class="t-input w-full"
+                  class="t-input"
                 >
                   <option value="">Elegí una temporada</option>
                   @for (season of seasons; track season) {
@@ -322,31 +322,31 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
                   }
                 </select>
                 @if (showError('season')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('season') }}</p>
+                  <p class="t-error">{{ errorMessage('season') }}</p>
                 }
               </div>
               <div class="sm:col-span-2">
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
+                <span class="t-label">Condición</span>
                 <div class="flex flex-wrap gap-3">
                   @for (condition of conditions; track condition.value) {
-                    <label class="flex items-center gap-2 text-sm text-trama-dark/80">
+                    <label class="flex items-center gap-2 text-sm text-trama-body">
                       <input type="radio" formControlName="condition" [value]="condition.value" />
                       {{ condition.label }}
                     </label>
                   }
                 </div>
                 @if (showError('condition')) {
-                  <p class="mt-1 text-xs text-status-none">Elegí la condición de la prenda.</p>
+                  <p class="t-error">Elegí la condición de la prenda.</p>
                 }
               </div>
               <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark"
-                  >Descripción <span class="text-trama-dark/40">(opcional)</span></label
+                <label class="t-label"
+                  >Descripción <span class="text-trama-muted">(opcional)</span></label
                 >
                 <textarea
                   formControlName="description"
                   rows="3"
-                  class="t-input w-full"
+                  class="t-input"
                 ></textarea>
               </div>
             </form>
@@ -354,21 +354,21 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
           @case (4) {
             <form [formGroup]="form" class="space-y-4">
               <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark"
+                <label class="t-label"
                   >¿Cuánto querés recibir?</label
                 >
                 <input
                   type="number"
                   formControlName="consignorPrice"
                   min="1"
-                  class="t-input w-full"
+                  class="t-input"
                 />
                 @if (showError('consignorPrice')) {
-                  <p class="mt-1 text-xs text-status-none">Ingresá un monto mayor a cero.</p>
+                  <p class="t-error">Ingresá un monto mayor a cero.</p>
                 }
               </div>
               @if (salePrice() !== null) {
-                <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
+                <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-body">
                   El comercio lo venderá a
                   <span class="font-semibold text-trama-brand">{{ salePrice() | money }}</span>
                 </div>
@@ -394,7 +394,7 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
           type="button"
           (click)="back()"
           [disabled]="step() === 1"
-          class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 disabled:opacity-40"
+          class="rounded-lg px-4 py-2 text-sm font-medium text-trama-body disabled:opacity-40"
         >
           Anterior
         </button>
@@ -539,11 +539,11 @@ export class UploadGarment {
     const current = this.step();
     if (index < current) return 'bg-trama-brand text-white';
     if (index === current) return 'bg-trama-brand text-white ring-4 ring-trama-green-100';
-    return 'bg-trama-sand-200 text-trama-dark/50';
+    return 'bg-trama-sand-200 text-trama-muted';
   }
 
   protected labelClass(index: number): string {
-    return index <= this.step() ? 'font-medium text-trama-dark' : 'text-trama-dark/40';
+    return index <= this.step() ? 'font-medium text-trama-dark' : 'text-trama-muted';
   }
 
   protected onFilesSelected(event: Event): void {

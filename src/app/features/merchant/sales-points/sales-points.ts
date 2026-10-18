@@ -1,4 +1,6 @@
 import { MapPin } from 'lucide-angular';
+import { Avatar } from '../../../shared/components/avatar/avatar';
+import { Stitch } from '../../../shared/components/stitch/stitch';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -43,7 +45,7 @@ type SalesPointsState =
 
 @Component({
   selector: 'app-sales-points',
-  imports: [PageSkeleton, PageHeader, LeafletMap, MoneyPipe, ErrorState, EmptyState],
+  imports: [Avatar, Stitch, PageSkeleton, PageHeader, LeafletMap, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
       <app-page-skeleton layout="list" />
@@ -64,123 +66,117 @@ type SalesPointsState =
         @if (d.cards.length) {
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             @for (card of d.cards; track card.id) {
-              <div class="t-card space-y-3 p-5">
-                <div class="flex items-start justify-between gap-3">
-                  <div>
-                    <p class="font-medium text-trama-dark">{{ card.name }}</p>
-                    <p class="text-sm text-trama-dark/60">{{ card.address }}</p>
+              <div class="t-card flex flex-col gap-4 p-6">
+                <div class="flex items-start gap-4">
+                  <app-avatar kind="merchant" [name]="card.name" [size]="48" />
+                  <div class="min-w-0 flex-1">
+                    <p class="text-title-3 truncate text-trama-dark">{{ card.name }}</p>
+                    <p class="truncate text-sm text-trama-body">{{ card.address }}</p>
                   </div>
-                  <button
-                    type="button"
-                    (click)="openEdit(card)"
-                    class="t-btn t-btn-secondary t-btn-sm"
-                  >
-                    Editar
-                  </button>
+                  <button type="button" (click)="openEdit(card)" class="t-btn t-btn-secondary t-btn-sm">Editar</button>
                 </div>
 
-                <div class="text-sm text-trama-dark/70">
+                <div class="space-y-0.5 text-sm text-trama-body">
                   <p>{{ card.phone }}</p>
-                  <p class="text-trama-dark/50">
-                    Recepción: {{ card.days }} · {{ card.hours }}
-                  </p>
+                  <p>Recepción: {{ card.days }} · {{ card.hours }}</p>
                 </div>
 
-                <div class="flex gap-6 border-t border-trama-sand-100 pt-3 text-sm">
+                <app-stitch variant="baste" />
+
+                <div class="flex gap-8">
                   <div>
-                    <p class="text-trama-dark/50">En stock</p>
-                    <p class="font-medium text-trama-dark">
-                      {{ card.inStockCount }}
-                      {{ card.inStockCount === 1 ? 'artículo' : 'artículos' }}
+                    <p class="text-[13px] font-semibold text-trama-body">En stock</p>
+                    <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      {{ card.inStockCount }} <span class="text-sm font-semibold text-trama-body">{{ card.inStockCount === 1 ? 'artículo' : 'artículos' }}</span>
                     </p>
                   </div>
                   <div>
-                    <p class="text-trama-dark/50">Valor del stock</p>
-                    <p class="font-medium text-trama-dark">{{ card.stockValue | money }}</p>
+                    <p class="text-[13px] font-semibold text-trama-body">Valor del stock</p>
+                    <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">{{ card.stockValue | money }}</p>
                   </div>
                 </div>
               </div>
             }
           </div>
         } @else {
-          <app-empty-state message="Todavía no cargaste puntos de venta." />
+          <app-empty-state [icon]="headerIcon" title="Todavía no hay puntos de venta" message="Sumá el local donde exhibís las prendas para que los cedentes puedan elegirte en el mapa." />
         }
       </div>
 
       @if (formOpen()) {
         <div
-          class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4"
+          class="t-overlay"
           (click)="close()"
         >
           <div
-            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-trama-paper p-6 shadow-lg"
+            class="t-modal t-pop-in max-h-[90vh] w-full max-w-lg overflow-y-auto"
             (click)="$event.stopPropagation()"
           >
-            <h2 class="text-lg font-semibold text-trama-dark">
+            <h2 class="text-title-2 text-trama-dark">
               {{ editingId() ? 'Editar punto de venta' : 'Agregar punto de venta' }}
             </h2>
 
             <div class="mt-4 space-y-4">
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Nombre</span>
+              <label class="block">
+                <span class="t-label">Nombre</span>
                 <input
                   [value]="fName()"
                   (input)="fName.set($any($event.target).value)"
-                  class="t-input mt-1.5 w-full"
+                  class="t-input"
                 />
               </label>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Dirección</span>
+              <label class="block">
+                <span class="t-label">Dirección</span>
                 <input
                   [value]="fAddress()"
                   (input)="fAddress.set($any($event.target).value)"
-                  class="t-input mt-1.5 w-full"
+                  class="t-input"
                 />
               </label>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Teléfono</span>
+              <label class="block">
+                <span class="t-label">Teléfono</span>
                 <input
                   [value]="fPhone()"
                   (input)="fPhone.set($any($event.target).value)"
-                  class="t-input mt-1.5 w-full"
+                  class="t-input"
                 />
               </label>
 
               <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label class="block text-sm">
-                  <span class="text-trama-dark/70">Días de recepción</span>
+                <label class="block">
+                  <span class="t-label">Días de recepción</span>
                   <input
                     [value]="fDays()"
                     (input)="fDays.set($any($event.target).value)"
                     placeholder="Lun a Vie"
-                    class="t-input mt-1.5 w-full"
+                    class="t-input"
                   />
                 </label>
-                <label class="block text-sm">
-                  <span class="text-trama-dark/70">Horario</span>
+                <label class="block">
+                  <span class="t-label">Horario</span>
                   <input
                     [value]="fHours()"
                     (input)="fHours.set($any($event.target).value)"
                     placeholder="10 a 18 h"
-                    class="t-input mt-1.5 w-full"
+                    class="t-input"
                   />
                 </label>
               </div>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Instrucciones para el cedente</span>
+              <label class="block">
+                <span class="t-label">Instrucciones para el cedente</span>
                 <input
                   [value]="fInstructions()"
                   (input)="fInstructions.set($any($event.target).value)"
-                  class="t-input mt-1.5 w-full"
+                  class="t-input"
                 />
               </label>
 
               <div class="text-sm">
-                <span class="text-trama-dark/70">Ubicación</span>
-                <p class="mb-1 text-xs text-trama-dark/50">
+                <span class="text-trama-body">Ubicación</span>
+                <p class="mb-1 text-xs text-trama-muted">
                   Tocá el mapa para fijar la ubicación (opcional).
                 </p>
                 <div
@@ -193,7 +189,7 @@ type SalesPointsState =
                   class="h-[300px] w-full overflow-hidden rounded-lg border border-trama-sand-200"
                 ></div>
                 @if (fGeo(); as geo) {
-                  <p class="mt-1 text-xs text-trama-dark/60">
+                  <p class="t-help">
                     {{ geo.lat.toFixed(5) }}, {{ geo.lng.toFixed(5) }}
                   </p>
                 }

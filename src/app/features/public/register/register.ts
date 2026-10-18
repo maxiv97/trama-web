@@ -139,9 +139,9 @@ interface SummaryRow {
         <div class="mb-6 flex items-center justify-between">
           <a routerLink="/" class="flex items-center gap-2">
             <app-logo-icon [size]="28" />
-            <span class="font-display text-lg font-semibold text-trama-brand">Trama</span>
+            <span class="text-title-3 text-trama-brand">Trama</span>
           </a>
-          <span class="text-sm text-trama-dark/60">
+          <span class="text-sm text-trama-body">
             ¿Ya tenés cuenta?
             <a routerLink="/login" class="font-medium text-trama-brand hover:underline">Ingresar</a>
           </span>
@@ -156,13 +156,13 @@ interface SummaryRow {
             <div class="mt-4 grid gap-4 sm:grid-cols-2">
               <div class="t-card flex flex-col gap-3 p-6">
                 <span class="text-xs font-semibold tracking-wide text-trama-brand uppercase">Cedente</span>
-                <h2 class="font-display text-xl font-semibold text-trama-dark">
+                <h2 class="text-title-3 text-trama-dark">
                   Quiero dejar prendas en consignación
                 </h2>
-                <p class="text-sm text-trama-dark/70">
+                <p class="text-sm text-trama-body">
                   Cargás tus artículos, acordás el precio con el comercio y cobrás cuando se venden.
                 </p>
-                <ul class="mt-1 space-y-1 text-sm text-trama-dark/60">
+                <ul class="mt-1 space-y-1 text-sm text-trama-body">
                   <li>Datos personales y DNI</li>
                   <li>Barrio y ciudad</li>
                   <li>Verificación del email</li>
@@ -178,10 +178,10 @@ interface SummaryRow {
 
               <div class="t-card flex flex-col gap-3 p-6">
                 <span class="text-xs font-semibold tracking-wide text-trama-gold uppercase">Comercio</span>
-                <h2 class="font-display text-xl font-semibold text-trama-dark">
+                <h2 class="text-title-3 text-trama-dark">
                   Quiero recibir prendas para vender
                 </h2>
-                <p class="text-sm text-trama-dark/70">
+                <p class="text-sm text-trama-body">
                   Configurás tu comisión, tus condiciones de venta y el punto de venta donde recibís.
                 </p>
                 @if (monetization()) {
@@ -190,7 +190,7 @@ interface SummaryRow {
                     buscan dónde consignar.
                   </p>
                 }
-                <ul class="mt-1 space-y-1 text-sm text-trama-dark/60">
+                <ul class="mt-1 space-y-1 text-sm text-trama-body">
                   <li>Datos del comercio y CUIT</li>
                   <li>Punto de venta y horarios</li>
                   <li>Comisión, plazos y día de pago</li>
@@ -235,7 +235,7 @@ interface SummaryRow {
                 <p class="text-sm font-semibold text-trama-dark">
                   Trama es un servicio pago para comercios
                 </p>
-                <p class="mt-1 text-sm text-trama-dark/70">
+                <p class="mt-1 text-sm text-trama-body">
                   Con tu suscripción aparecés ante los cedentes de tu zona que buscan dónde consignar,
                   además de todas las herramientas para gestionar el ciclo. Cuanto mejor tu plan, mejor
                   tu posicionamiento en la plataforma.
@@ -250,7 +250,7 @@ interface SummaryRow {
               <h2 class="mt-1 font-display text-2xl font-semibold text-trama-dark">
                 {{ current().title }}
               </h2>
-              <p class="mt-1 text-sm text-trama-dark/60">{{ current().sub }}</p>
+              <p class="mt-1 text-sm text-trama-body">{{ current().sub }}</p>
 
               <div class="mt-6">
                 @switch (current().id) {
@@ -258,113 +258,113 @@ interface SummaryRow {
                     <form [formGroup]="accountForm" class="grid gap-4 sm:grid-cols-2">
                       @if (role() === 'merchant') {
                         <div class="sm:col-span-2">
-                          <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre y apellido</label>
+                          <label class="t-label">Nombre y apellido</label>
                           <input formControlName="name" placeholder="María Vega" [class]="inputClass" />
                           @if (showErrors() && !accountForm.controls.name.value?.trim()) {
-                            <p class="mt-1 text-xs text-status-none">Ingresá el nombre y apellido.</p>
+                            <p class="t-error">Ingresá el nombre y apellido.</p>
                           }
                         </div>
                       } @else {
                         <div>
-                          <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+                          <label class="t-label">Nombre</label>
                           <input formControlName="firstName" placeholder="María" [class]="inputClass" />
                           @if (showErrors() && !accountForm.controls.firstName.value?.trim()) {
-                            <p class="mt-1 text-xs text-status-none">Ingresá tu nombre.</p>
+                            <p class="t-error">Ingresá tu nombre.</p>
                           }
                         </div>
                         <div>
-                          <label class="mb-1 block text-sm font-medium text-trama-dark">Apellido</label>
+                          <label class="t-label">Apellido</label>
                           <input formControlName="lastName" placeholder="Vega" [class]="inputClass" />
                           @if (showErrors() && !accountForm.controls.lastName.value?.trim()) {
-                            <p class="mt-1 text-xs text-status-none">Ingresá tu apellido.</p>
+                            <p class="t-error">Ingresá tu apellido.</p>
                           }
                         </div>
                       }
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Email</label>
+                        <label class="t-label">Email</label>
                         <input formControlName="email" type="email" placeholder="maria@email.com" [class]="inputClass" />
                         @if (showError(accountForm, 'email')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(accountForm, 'email') }}</p>
+                          <p class="t-error">{{ errorMessage(accountForm, 'email') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Teléfono</label>
+                        <label class="t-label">Teléfono</label>
                         <input formControlName="phone" type="tel" placeholder="+54 9 351 555 1234" [class]="inputClass" />
                         @if (showError(accountForm, 'phone')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(accountForm, 'phone') }}</p>
+                          <p class="t-error">{{ errorMessage(accountForm, 'phone') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Contraseña</label>
+                        <label class="t-label">Contraseña</label>
                         <input formControlName="password" type="password" placeholder="Mínimo 8 caracteres" [class]="inputClass" />
                         @if (showError(accountForm, 'password')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(accountForm, 'password') }}</p>
+                          <p class="t-error">{{ errorMessage(accountForm, 'password') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Repetir contraseña</label>
+                        <label class="t-label">Repetir contraseña</label>
                         <input formControlName="password2" type="password" [class]="inputClass" />
                         @if (passwordMismatch()) {
-                          <p class="mt-1 text-xs text-status-none">Las contraseñas no coinciden.</p>
+                          <p class="t-error">Las contraseñas no coinciden.</p>
                         }
                       </div>
                     </form>
                   }
                   @case ('dni') {
                     <form [formGroup]="dniForm" class="max-w-xs">
-                      <label class="mb-1 block text-sm font-medium text-trama-dark">Número de DNI</label>
+                      <label class="t-label">Número de DNI</label>
                       <input formControlName="dni" placeholder="30123456" [class]="inputClass" />
                       @if (showError(dniForm, 'dni')) {
-                        <p class="mt-1 text-xs text-status-none">{{ errorMessage(dniForm, 'dni') }}</p>
+                        <p class="t-error">{{ errorMessage(dniForm, 'dni') }}</p>
                       } @else {
-                        <p class="mt-1 text-xs text-trama-dark/50">Sin puntos ni espacios.</p>
+                        <p class="t-help">Sin puntos ni espacios.</p>
                       }
                     </form>
                   }
                   @case ('location') {
                     <form [formGroup]="consignorLocationForm" class="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Calle</label>
+                        <label class="t-label">Calle</label>
                         <input formControlName="street" placeholder="Independencia" [class]="inputClass" />
                         @if (showError(consignorLocationForm, 'street')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'street') }}</p>
+                          <p class="t-error">{{ errorMessage(consignorLocationForm, 'street') }}</p>
                         }
                       </div>
                       <div class="grid grid-cols-2 gap-4">
                         <div>
-                          <label class="mb-1 block text-sm font-medium text-trama-dark">Número</label>
+                          <label class="t-label">Número</label>
                           <input formControlName="number" placeholder="742" [class]="inputClass" />
                           @if (showError(consignorLocationForm, 'number')) {
-                            <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'number') }}</p>
+                            <p class="t-error">{{ errorMessage(consignorLocationForm, 'number') }}</p>
                           }
                         </div>
                         <div>
-                          <label class="mb-1 block text-sm font-medium text-trama-dark">Depto / Piso <span class="text-trama-dark/40">(opcional)</span></label>
+                          <label class="t-label">Depto / Piso <span class="text-trama-muted">(opcional)</span></label>
                           <input formControlName="unit" placeholder="3B" [class]="inputClass" />
                         </div>
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
+                        <label class="t-label">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Nueva Córdoba" [class]="inputClass" />
                         @if (showError(consignorLocationForm, 'neighborhood')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'neighborhood') }}</p>
+                          <p class="t-error">{{ errorMessage(consignorLocationForm, 'neighborhood') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
+                        <label class="t-label">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
                         @if (showError(consignorLocationForm, 'city')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(consignorLocationForm, 'city') }}</p>
+                          <p class="t-error">{{ errorMessage(consignorLocationForm, 'city') }}</p>
                         }
                       </div>
                       <div class="sm:col-span-2">
-                        <span class="mb-1 block text-sm font-medium text-trama-dark">Marcá tu ubicación en el mapa</span>
+                        <span class="t-label">Marcá tu ubicación en el mapa</span>
                         <div
                           appMapPicker
                           (coordsChange)="consignorGeo.set($event)"
                           class="h-56 w-full overflow-hidden rounded-xl border border-trama-sand-200"
                         ></div>
-                        <p class="mt-1 text-xs text-trama-dark/50">
+                        <p class="t-help">
                           Arrastrá el pin o tocá el mapa para ajustar el punto. No publicamos tu dirección exacta.
                         </p>
                       </div>
@@ -373,33 +373,33 @@ interface SummaryRow {
                   @case ('business') {
                     <form [formGroup]="businessForm" class="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre del comercio</label>
+                        <label class="t-label">Nombre del comercio</label>
                         <input formControlName="businessName" placeholder="Vuelta Showroom" [class]="inputClass" />
                         @if (showError(businessForm, 'businessName')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'businessName') }}</p>
+                          <p class="t-error">{{ errorMessage(businessForm, 'businessName') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">CUIT</label>
+                        <label class="t-label">CUIT</label>
                         <input formControlName="cuit" placeholder="30712345678" [class]="inputClass" />
                         @if (showError(businessForm, 'cuit')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'cuit') }}</p>
+                          <p class="t-error">{{ errorMessage(businessForm, 'cuit') }}</p>
                         } @else {
-                          <p class="mt-1 text-xs text-trama-dark/50">11 dígitos, sin guiones.</p>
+                          <p class="t-help">11 dígitos, sin guiones.</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
+                        <label class="t-label">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Güemes" [class]="inputClass" />
                         @if (showError(businessForm, 'neighborhood')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'neighborhood') }}</p>
+                          <p class="t-error">{{ errorMessage(businessForm, 'neighborhood') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
+                        <label class="t-label">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
                         @if (showError(businessForm, 'city')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(businessForm, 'city') }}</p>
+                          <p class="t-error">{{ errorMessage(businessForm, 'city') }}</p>
                         }
                       </div>
                     </form>
@@ -407,28 +407,28 @@ interface SummaryRow {
                   @case ('pdv') {
                     <form [formGroup]="pdvForm" class="grid gap-4 sm:grid-cols-2">
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre del punto de venta</label>
+                        <label class="t-label">Nombre del punto de venta</label>
                         <input formControlName="spName" placeholder="Local Güemes" [class]="inputClass" />
                         @if (showError(pdvForm, 'spName')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(pdvForm, 'spName') }}</p>
+                          <p class="t-error">{{ errorMessage(pdvForm, 'spName') }}</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Teléfono del local</label>
+                        <label class="t-label">Teléfono del local</label>
                         <input formControlName="spPhone" type="tel" placeholder="351 444 2020" [class]="inputClass" />
                         @if (showError(pdvForm, 'spPhone')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(pdvForm, 'spPhone') }}</p>
+                          <p class="t-error">{{ errorMessage(pdvForm, 'spPhone') }}</p>
                         }
                       </div>
                       <div class="sm:col-span-2">
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Dirección</label>
+                        <label class="t-label">Dirección</label>
                         <input formControlName="spAddress" placeholder="Belgrano 800" [class]="inputClass" />
                         @if (showError(pdvForm, 'spAddress')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(pdvForm, 'spAddress') }}</p>
+                          <p class="t-error">{{ errorMessage(pdvForm, 'spAddress') }}</p>
                         }
                       </div>
                       <div class="sm:col-span-2">
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Instrucciones para el cedente</label>
+                        <label class="t-label">Instrucciones para el cedente</label>
                         <textarea
                           formControlName="spInstructions"
                           rows="2"
@@ -447,7 +447,7 @@ interface SummaryRow {
                               [class]="
                                 daysSel()[i]
                                   ? 'border-trama-brand bg-trama-green-50 text-trama-brand'
-                                  : 'border-trama-sand-200 text-trama-dark/70 hover:border-trama-brand'
+                                  : 'border-trama-sand-200 text-trama-body hover:border-trama-brand'
                               "
                             >
                               {{ day.short }}
@@ -455,11 +455,11 @@ interface SummaryRow {
                           }
                         </div>
                         @if (showErrors() && !daysSel().includes(true)) {
-                          <p class="mt-1 text-xs text-status-none">Elegí al menos un día de recepción.</p>
+                          <p class="t-error">Elegí al menos un día de recepción.</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Abre</label>
+                        <label class="t-label">Abre</label>
                         <select [value]="fromTime()" (change)="setFrom($any($event.target).value)" [class]="inputClass">
                           @for (slot of timeSlots; track slot) {
                             <option [value]="slot" [selected]="slot === fromTime()">{{ slot }}</option>
@@ -467,27 +467,28 @@ interface SummaryRow {
                         </select>
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Cierra</label>
+                        <label class="t-label">Cierra</label>
                         <select [value]="toTime()" (change)="setTo($any($event.target).value)" [class]="inputClass">
                           @for (slot of timeSlots; track slot) {
                             <option [value]="slot" [selected]="slot === toTime()">{{ slot }}</option>
                           }
                         </select>
                         @if (!hoursValid()) {
-                          <p class="mt-1 text-xs text-status-none">El cierre debe ser posterior a la apertura.</p>
+                          <p class="t-error">El cierre debe ser posterior a la apertura.</p>
                         }
                       </div>
                       <div class="sm:col-span-2">
                         <div class="mb-1 flex items-baseline justify-between">
                           <span class="text-sm font-medium text-trama-dark">Ubicación exacta del local</span>
-                          <span class="text-xs text-trama-dark/50">{{ coordsLabel(merchantGeo()) }}</span>
+                          <span class="text-xs text-trama-muted">{{ coordsLabel(merchantGeo()) }}</span>
                         </div>
                         <div
                           appMapPicker
+                          kind="merchant"
                           (coordsChange)="merchantGeo.set($event)"
                           class="h-56 w-full overflow-hidden rounded-xl border border-trama-sand-200"
                         ></div>
-                        <p class="mt-1 text-xs text-trama-dark/50">
+                        <p class="t-help">
                           Arrastrá el pin o tocá el mapa para ubicar la puerta del local.
                         </p>
                       </div>
@@ -507,14 +508,14 @@ interface SummaryRow {
                               (input)="setConsignorPct($any($event.target).value)"
                               class="t-input w-24 text-2xl font-semibold text-trama-dark"
                             />
-                            <span class="text-xl font-semibold text-trama-dark/60">%</span>
+                            <span class="text-xl font-semibold text-trama-body">%</span>
                           </div>
                         </div>
                         <div class="rounded-xl border border-trama-sand-200 bg-trama-sand-50 p-4">
                           <p class="text-sm font-medium text-trama-dark">Se lleva el comercio</p>
                           <div class="mt-2 flex items-baseline gap-2">
                             <span class="text-2xl font-semibold text-trama-dark">{{ merchantPct() }}</span>
-                            <span class="text-xl font-semibold text-trama-dark/60">%</span>
+                            <span class="text-xl font-semibold text-trama-body">%</span>
                           </div>
                         </div>
                       </div>
@@ -537,30 +538,30 @@ interface SummaryRow {
                   @case ('conditions') {
                     <form [formGroup]="conditionsForm" class="grid gap-4 sm:grid-cols-3">
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Plazo de venta</label>
+                        <label class="t-label">Plazo de venta</label>
                         <input formControlName="saleWindowMonths" type="number" min="1" max="12" [class]="inputClass" />
                         @if (showError(conditionsForm, 'saleWindowMonths')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(conditionsForm, 'saleWindowMonths') }}</p>
+                          <p class="t-error">{{ errorMessage(conditionsForm, 'saleWindowMonths') }}</p>
                         } @else {
-                          <p class="mt-1 text-xs text-trama-dark/50">Meses en góndola (1 a 12).</p>
+                          <p class="t-help">Meses en góndola (1 a 12).</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Período de gracia</label>
+                        <label class="t-label">Período de gracia</label>
                         <input formControlName="graceMonths" type="number" min="0" max="6" [class]="inputClass" />
                         @if (showError(conditionsForm, 'graceMonths')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(conditionsForm, 'graceMonths') }}</p>
+                          <p class="t-error">{{ errorMessage(conditionsForm, 'graceMonths') }}</p>
                         } @else {
-                          <p class="mt-1 text-xs text-trama-dark/50">Meses extra (0 a 6).</p>
+                          <p class="t-help">Meses extra (0 a 6).</p>
                         }
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark">Día de pago</label>
+                        <label class="t-label">Día de pago</label>
                         <input formControlName="payoutDay" type="number" min="1" max="28" [class]="inputClass" />
                         @if (showError(conditionsForm, 'payoutDay')) {
-                          <p class="mt-1 text-xs text-status-none">{{ errorMessage(conditionsForm, 'payoutDay') }}</p>
+                          <p class="t-error">{{ errorMessage(conditionsForm, 'payoutDay') }}</p>
                         } @else {
-                          <p class="mt-1 text-xs text-trama-dark/50">Del mes (1 a 28).</p>
+                          <p class="t-help">Del mes (1 a 28).</p>
                         }
                       </div>
                     </form>
@@ -570,12 +571,12 @@ interface SummaryRow {
                       <div class="grid gap-3 rounded-xl border border-trama-sand-200 bg-trama-sand-50 p-4 sm:grid-cols-2">
                         @for (row of summary(); track row.key) {
                           <div>
-                            <p class="text-xs font-semibold tracking-wide text-trama-dark/50 uppercase">{{ row.key }}</p>
+                            <p class="text-xs font-semibold tracking-wide text-trama-muted uppercase">{{ row.key }}</p>
                             <p class="mt-0.5 text-sm text-trama-dark">{{ row.value }}</p>
                           </div>
                         }
                       </div>
-                      <div class="max-h-40 space-y-2 overflow-auto rounded-xl border border-trama-sand-200 bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
+                      <div class="max-h-40 space-y-2 overflow-auto rounded-xl border border-trama-sand-200 bg-trama-sand-50 p-4 text-sm text-trama-body">
                         <p>La consignación no transfiere la propiedad de la prenda: el cedente sigue siendo dueño hasta que se concreta la venta al público.</p>
                         <p>El comercio recibe, revisa y exhibe las prendas acordadas, y registra cualquier discrepancia respecto de la propuesta al momento de la recepción.</p>
                         <p>El reparto de cada venta se rige por la comisión acordada. Un cambio posterior de comisión no afecta a las prendas ya acordadas.</p>
@@ -638,7 +639,7 @@ interface SummaryRow {
             <div class="t-card p-6 sm:p-8">
               <span class="text-xs font-semibold tracking-wide text-trama-brand uppercase">Cuenta creada</span>
               <h2 class="mt-1 font-display text-2xl font-semibold text-trama-dark">Confirmá tu email</h2>
-              <p class="mt-1 text-sm text-trama-dark/60">
+              <p class="mt-1 text-sm text-trama-body">
                 Te enviamos un código de 6 dígitos a
                 <span class="font-medium text-trama-dark">{{ accountForm.controls.email.value }}</span
                 >. Ingresalo para verificar tu cuenta.
@@ -679,7 +680,7 @@ interface SummaryRow {
               <button
                 type="button"
                 (click)="finish()"
-                class="mt-6 block text-sm text-trama-dark/50 hover:text-trama-dark hover:underline"
+                class="mt-6 block text-sm text-trama-muted hover:text-trama-dark hover:underline"
               >
                 Verificar más tarde
               </button>
@@ -829,11 +830,11 @@ export class Register {
     const current = this.step();
     if (index < current) return 'bg-trama-brand text-white';
     if (index === current) return 'bg-trama-brand text-white ring-4 ring-trama-green-100';
-    return 'bg-trama-sand-200 text-trama-dark/50';
+    return 'bg-trama-sand-200 text-trama-muted';
   }
 
   protected labelClass(index: number): string {
-    return index <= this.step() ? 'font-medium text-trama-dark' : 'text-trama-dark/40';
+    return index <= this.step() ? 'font-medium text-trama-dark' : 'text-trama-muted';
   }
 
   protected passwordMismatch(): boolean {

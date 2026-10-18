@@ -23,7 +23,7 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
           novalidate
           class="rounded-[18px] border border-black/[.07] bg-trama-paper p-7 shadow-[0_12px_40px_rgba(0,0,0,.06)]"
         >
-          <label for="email" class="mb-1.5 block text-[13px] font-semibold text-trama-dark/80">Email</label>
+          <label for="email" class="mb-1.5 block text-[13px] font-semibold text-trama-body">Email</label>
           <input
             id="email"
             type="email"
@@ -33,10 +33,10 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
             [class]="inputClass"
           />
           @if (showError('email')) {
-            <p class="mt-1 text-xs text-status-none">Ingresá un email válido.</p>
+            <p class="t-error">Ingresá un email válido.</p>
           }
 
-          <label for="password" class="mt-4 mb-1.5 block text-[13px] font-semibold text-trama-dark/80"
+          <label for="password" class="mt-4 mb-1.5 block text-[13px] font-semibold text-trama-body"
             >Contraseña</label
           >
           <input
@@ -47,7 +47,7 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
             [class]="inputClass"
           />
           @if (showError('password')) {
-            <p class="mt-1 text-xs text-status-none">Ingresá tu contraseña.</p>
+            <p class="t-error">Ingresá tu contraseña.</p>
           }
 
           @if (error()) {
@@ -94,7 +94,7 @@ export class Login {
   private readonly fb = inject(FormBuilder);
 
   protected readonly inputClass =
-    'w-full rounded-[10px] border border-black/[.14] bg-trama-sand-100 px-3.5 py-3 text-[15px] text-trama-dark outline-none focus:border-trama-brand focus:ring-2 focus:ring-trama-green-100';
+    't-input';
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

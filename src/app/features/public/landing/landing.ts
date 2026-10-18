@@ -95,7 +95,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
           >
             Gestioná tus consignaciones de indumentaria de forma simple y trazable
           </h1>
-          <p class="mb-8 max-w-[520px] text-lg leading-relaxed text-trama-dark/70">
+          <p class="mb-8 max-w-[520px] text-lg leading-relaxed text-trama-body">
             Conectá tus prendas en desuso con comercios que las venden por vos. Vos ponés el precio
             que querés recibir, el comercio se encarga del resto y cada paso queda registrado: desde
             el acuerdo hasta la liquidación.
@@ -119,7 +119,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-[11px] font-semibold tracking-wide text-trama-muted uppercase">Artículo</p>
-                <p class="font-display text-lg font-semibold">Campera de lana · Talle M</p>
+                <p class="text-title-3">Campera de lana · Talle M</p>
               </div>
               <span class="rounded-full bg-status-sold-soft px-2.5 py-1 text-xs font-semibold text-status-sold"
                 >Vendido</span
@@ -142,7 +142,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
                   <div class="flex w-full items-center">
                     <span
                       class="size-3 shrink-0 rounded-full"
-                      [class]="i < 4 ? 'bg-trama-brand' : 'border-2 border-trama-brand bg-white'"
+                      [class]="i < 4 ? 'bg-trama-brand' : 'border-2 border-trama-brand bg-trama-paper'"
                     ></span>
                     @if (!last) {
                       <span class="h-0.5 flex-1" [class]="i < 3 ? 'bg-trama-brand' : 'bg-trama-sand-50'"></span>
@@ -185,7 +185,7 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
                   {{ s.n }}
                 </div>
                 <h3 class="mb-2 font-display text-[19px] font-semibold">{{ s.title }}</h3>
-                <p class="text-[14.5px] leading-normal text-trama-dark/70">{{ s.body }}</p>
+                <p class="text-[14.5px] leading-normal text-trama-body">{{ s.body }}</p>
               </div>
             }
           </div>
@@ -260,5 +260,5 @@ export class Landing {
   protected readonly primaryBtn =
     'inline-block rounded-[11px] bg-trama-brand px-[22px] py-3.5 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(46,125,84,.28)] hover:bg-trama-green-700';
   protected readonly secondaryBtn =
-    'inline-block rounded-[11px] border border-trama-dark/20 bg-white px-[22px] py-3.5 text-[15px] font-semibold text-trama-dark hover:bg-trama-sand-100';
+    'inline-block rounded-[11px] border border-trama-dark/20 bg-trama-paper px-[22px] py-3.5 text-[15px] font-semibold text-trama-dark hover:bg-trama-sand-100';
 }

@@ -60,63 +60,63 @@ type ReviewState =
             <app-photo-gallery [photos]="d.garment.photos" />
 
             <div class="t-card p-5">
-              <h2 class="text-lg font-semibold text-trama-dark">{{ d.garment.name }}</h2>
+              <h2 class="text-title-2 text-trama-dark">{{ d.garment.name }}</h2>
               <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div>
-                  <dt class="text-trama-dark/50">Categoría</dt>
-                  <dd class="text-trama-dark/80">
+                  <dt class="text-trama-muted">Categoría</dt>
+                  <dd class="text-trama-body">
                     {{ d.garment.category }}@if (d.garment.subcategory) {
                       · {{ d.garment.subcategory }}
                     }
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Marca</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.brand }}</dd>
+                  <dt class="text-trama-muted">Marca</dt>
+                  <dd class="text-trama-body">{{ d.garment.brand }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Talle</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.size }}</dd>
+                  <dt class="text-trama-muted">Talle</dt>
+                  <dd class="text-trama-body">{{ d.garment.size }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Color</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.color }}</dd>
+                  <dt class="text-trama-muted">Color</dt>
+                  <dd class="text-trama-body">{{ d.garment.color }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Temporada</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.season }}</dd>
+                  <dt class="text-trama-muted">Temporada</dt>
+                  <dd class="text-trama-body">{{ d.garment.season }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Condición</dt>
-                  <dd class="text-trama-dark/80">{{ conditionLabel(d.garment.condition) }}</dd>
+                  <dt class="text-trama-muted">Condición</dt>
+                  <dd class="text-trama-body">{{ conditionLabel(d.garment.condition) }}</dd>
                 </div>
               </dl>
               @if (d.garment.description) {
-                <p class="mt-3 text-sm text-trama-dark/70">{{ d.garment.description }}</p>
+                <p class="mt-3 text-sm text-trama-body">{{ d.garment.description }}</p>
               }
-              <p class="mt-3 text-sm text-trama-dark/50">
-                Cedente: <span class="text-trama-dark/80">{{ d.consignor?.name ?? '—' }}</span>
+              <p class="mt-3 text-sm text-trama-muted">
+                Cedente: <span class="text-trama-body">{{ d.consignor?.name ?? '—' }}</span>
               </p>
             </div>
           </div>
 
           <div class="t-card space-y-4 p-5">
-            <h2 class="text-sm font-medium text-trama-dark/60">Decisión</h2>
+            <h2 class="text-sm font-medium text-trama-body">Decisión</h2>
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-sm text-trama-dark/70">El cedente pide</span>
+                <span class="text-sm text-trama-body">El cedente pide</span>
                 <span class="font-semibold text-trama-dark">
                   {{ d.proposal.requestedConsignorPrice | money }}
                 </span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm text-trama-dark/70">Se vendería a</span>
+                <span class="text-sm text-trama-body">Se vendería a</span>
                 <span class="font-semibold text-trama-dark">
                   {{ d.proposal.calculatedSalePrice | money }}
                 </span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm text-trama-dark/70">Comisión del comercio</span>
+                <span class="text-sm text-trama-body">Comisión del comercio</span>
                 <span class="font-semibold text-trama-dark">
                   {{ d.merchant?.commissionConfig?.merchantPercentage }}%
                 </span>
@@ -133,10 +133,10 @@ type ReviewState =
                   min="1"
                   [value]="counterPrice() ?? ''"
                   (input)="counterPrice.set(toNumber($event))"
-                  class="t-input w-full"
+                  class="t-input"
                 />
                 @if (counterSalePrice() !== null) {
-                  <p class="text-sm text-trama-dark/70">
+                  <p class="text-sm text-trama-body">
                     Se vendería a
                     <span class="font-semibold text-trama-brand">{{ counterSalePrice() | money }}</span>
                   </p>

@@ -11,6 +11,7 @@ import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 interface BaseRow {
   label: string;
@@ -31,7 +32,7 @@ type CategoriesState =
 
 @Component({
   selector: 'app-manage-categories',
-  imports: [PageSkeleton, PageHeader, ErrorState, EmptyState],
+  imports: [Dropdown, PageSkeleton, PageHeader, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
       <app-page-skeleton layout="list" />
@@ -51,7 +52,7 @@ type CategoriesState =
 
         <!-- Categorías propias -->
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold tracking-wide text-trama-dark/60 uppercase">
+          <h2 class="text-sm font-semibold tracking-wide text-trama-body uppercase">
             Mis categorías
           </h2>
           @if (d.custom.length) {
@@ -62,7 +63,7 @@ type CategoriesState =
                     <div>
                       <p class="font-medium text-trama-dark">{{ category.label }}</p>
                       @if (category.parentLabel) {
-                        <p class="text-xs text-trama-dark/50">Consolida en: {{ category.parentLabel }}</p>
+                        <p class="text-xs text-trama-muted">Consolida en: {{ category.parentLabel }}</p>
                       }
                     </div>
                     <div class="flex gap-2">
@@ -83,9 +84,9 @@ type CategoriesState =
                     </div>
                   </div>
                   @if (category.subcategories.length) {
-                    <p class="text-sm text-trama-dark/70">{{ category.subcategories.join(' · ') }}</p>
+                    <p class="text-sm text-trama-body">{{ category.subcategories.join(' · ') }}</p>
                   } @else {
-                    <p class="text-sm text-trama-dark/40">Sin subcategorías</p>
+                    <p class="text-sm text-trama-muted">Sin subcategorías</p>
                   }
                 </div>
               }
@@ -97,16 +98,16 @@ type CategoriesState =
 
         <!-- Catálogo base -->
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold tracking-wide text-trama-dark/60 uppercase">
+          <h2 class="text-sm font-semibold tracking-wide text-trama-body uppercase">
             Catálogo base
           </h2>
-          <p class="text-sm text-trama-dark/60">
+          <p class="text-sm text-trama-body">
             Las que no ofrecés no aparecen cuando un cedente te elige. No afecta a otros comercios.
           </p>
           <div class="t-card divide-y divide-trama-sand-100 overflow-hidden">
             @for (row of d.base; track row.label) {
               <div class="flex items-center justify-between gap-3 px-4 py-3">
-                <span [class]="row.shown ? 'text-trama-dark' : 'text-trama-dark/40 line-through'">
+                <span [class]="row.shown ? 'text-trama-dark' : 'text-trama-muted line-through'">
                   {{ row.label }}
                 </span>
                 <button
@@ -116,7 +117,7 @@ type CategoriesState =
                   class="rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-40"
                   [class]="
                     row.shown
-                      ? 'border-trama-sand-200 text-trama-dark/70 hover:bg-trama-sand-100'
+                      ? 'border-trama-sand-200 text-trama-body hover:bg-trama-sand-100'
                       : 'border-trama-brand bg-trama-green-50 text-trama-brand hover:bg-trama-green-100'
                   "
                 >
@@ -130,53 +131,49 @@ type CategoriesState =
 
       <!-- Alta / edición -->
       @if (formOpen()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4" (click)="close()">
+        <div class="t-overlay" (click)="close()">
           <div
-            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-trama-paper p-6 shadow-lg"
+            class="t-modal t-pop-in max-h-[90vh] w-full max-w-lg overflow-y-auto"
             (click)="$event.stopPropagation()"
           >
-            <h2 class="text-lg font-semibold text-trama-dark">
+            <h2 class="text-title-2 text-trama-dark">
               {{ editingId() ? 'Editar categoría' : 'Agregar categoría' }}
             </h2>
 
             <div class="mt-4 space-y-4">
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Nombre</span>
+              <label class="block">
+                <span class="t-label">Nombre</span>
                 <input
                   [value]="fLabel()"
                   (input)="fLabel.set($any($event.target).value)"
                   placeholder="Ej: Ropa de bebé"
-                  class="t-input mt-1.5 w-full"
+                  class="t-input"
                 />
               </label>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Subcategorías</span>
-                <span class="block text-xs text-trama-dark/50">Una por línea (opcional).</span>
+              <label class="block">
+                <span class="t-label">Subcategorías</span>
+                <span class="block text-xs text-trama-muted">Una por línea (opcional).</span>
                 <textarea
                   [value]="fSubcategories()"
                   (input)="fSubcategories.set($any($event.target).value)"
                   rows="4"
                   placeholder="Bodys&#10;Enteritos&#10;Camperitas"
-                  class="t-input mt-1.5 w-full"
+                  class="t-input"
                 ></textarea>
               </label>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Consolidar en (para reportes)</span>
-                <span class="block text-xs text-trama-dark/50">
+              <label class="block">
+                <span class="t-label">Consolidar en (para reportes)</span>
+                <span class="block text-xs text-trama-muted">
                   Categoría base con la que se agrupa en las métricas. Opcional.
                 </span>
-                <select
+                <app-dropdown
+                  ariaLabel="Consolida en"
+                  [options]="parentDropdown()"
                   [value]="fParent()"
-                  (change)="fParent.set($any($event.target).value)"
-                  class="t-input mt-1.5 w-full"
-                >
-                  <option value="">Ninguna</option>
-                  @for (label of parentOptions(); track label) {
-                    <option [value]="label" [selected]="label === fParent()">{{ label }}</option>
-                  }
-                </select>
+                  (valueChange)="fParent.set($event)"
+                />
               </label>
 
               @if (formError()) {
@@ -209,10 +206,10 @@ type CategoriesState =
 
       <!-- Confirmación de baja -->
       @if (deleting(); as target) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4" (click)="deleting.set(null)">
-          <div class="w-full max-w-sm rounded-2xl bg-trama-paper p-6 shadow-lg" (click)="$event.stopPropagation()">
-            <h2 class="text-lg font-semibold text-trama-dark">Dar de baja la categoría</h2>
-            <p class="mt-2 text-sm text-trama-dark/70">
+        <div class="t-overlay" (click)="deleting.set(null)">
+          <div class="t-modal t-pop-in w-full max-w-sm" (click)="$event.stopPropagation()">
+            <h2 class="text-title-2 text-trama-dark">Dar de baja la categoría</h2>
+            <p class="mt-2 text-sm text-trama-body">
               "{{ target.label }}" dejará de ofrecerse a los cedentes. Las prendas que ya la usan no
               se modifican.
             </p>
@@ -240,6 +237,11 @@ type CategoriesState =
   `,
 })
 export class ManageCategories {
+  protected readonly parentDropdown = computed<DropdownOption[]>(() => [
+    { value: '', label: 'Ninguna' },
+    ...this.parentOptions().map((label) => ({ value: label, label })),
+  ]);
+
   protected readonly headerIcon = Tags;
   private readonly auth = inject(AuthService);
   private readonly categoriesService = inject(CategoriesService);

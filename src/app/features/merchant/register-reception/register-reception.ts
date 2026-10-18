@@ -30,6 +30,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 import { Hanger } from '../../../shared/icons/trama-icons';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 interface ReviewData {
   garment: Garment;
@@ -55,7 +56,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
 
 @Component({
   selector: 'app-register-reception',
-  imports: [PageSkeleton, PageHeader, ErrorState],
+  imports: [Dropdown, PageSkeleton, PageHeader, ErrorState],
   template: `
     @if (isLoading()) {
       <app-page-skeleton layout="form" />
@@ -67,9 +68,9 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
 
         <div class="t-card p-4">
           <p class="font-medium text-trama-dark">{{ d.garment.name }}</p>
-          <p class="text-sm text-trama-dark/60">
+          <p class="text-sm text-trama-body">
             Condición declarada por el cedente:
-            <span class="text-trama-dark/80">{{ conditionLabel(d.garment.condition) }}</span>
+            <span class="text-trama-body">{{ conditionLabel(d.garment.condition) }}</span>
           </p>
         </div>
 
@@ -88,7 +89,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
                 "
               >
                 <span class="block font-medium text-trama-dark">{{ option.label }}</span>
-                <span class="mt-1 block text-xs text-trama-dark/60">{{ option.hint }}</span>
+                <span class="mt-1 block text-xs text-trama-body">{{ option.hint }}</span>
               </button>
             }
           </div>
@@ -100,7 +101,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
               <p class="mb-2 text-sm font-medium text-trama-dark">Discrepancias</p>
               <div class="grid gap-2 sm:grid-cols-2">
                 @for (option of discrepancyOptions; track option.value) {
-                  <label class="flex items-center gap-2 text-sm text-trama-dark/80">
+                  <label class="flex items-center gap-2 text-sm text-trama-body">
                     <input
                       type="checkbox"
                       [checked]="discrepancies().includes(option.value)"
@@ -112,18 +113,18 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
               </div>
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Detalle</label>
+              <label class="t-label">Detalle</label>
               <textarea
                 rows="3"
                 [value]="detail()"
                 (input)="detail.set($any($event.target).value)"
-                class="t-input w-full"
+                class="t-input"
               ></textarea>
             </div>
             <div>
               <p class="mb-1 text-sm font-medium text-trama-dark">Evidencia fotográfica</p>
               <label
-                class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-dark/60 hover:border-trama-brand"
+                class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-body hover:border-trama-brand"
               >
                 Subí fotos de la evidencia
                 <input
@@ -156,17 +157,14 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
         }
 
         <div>
-          <label class="mb-1 block text-sm font-medium text-trama-dark">Punto de venta receptor</label>
-          <select
+          <label class="t-label">Punto de venta receptor</label>
+          <app-dropdown
+            placeholder="Elegí un punto de venta"
+            ariaLabel="Punto de venta receptor"
+            [options]="salesPointOptions(d.merchant?.salesPoints ?? [])"
             [value]="salesPointId()"
-            (change)="salesPointId.set($any($event.target).value)"
-            class="t-input w-full"
-          >
-            <option value="">Elegí un punto de venta</option>
-            @for (point of d.merchant?.salesPoints ?? []; track point.id) {
-              <option [value]="point.id">{{ point.name }} — {{ point.address }}</option>
-            }
-          </select>
+            (valueChange)="salesPointId.set($event)"
+          />
         </div>
 
         <div class="flex justify-end">
@@ -184,6 +182,10 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
   `,
 })
 export class RegisterReception {
+  protected salesPointOptions(points: { id: string; name: string; address: string }[]): DropdownOption[] {
+    return points.map((p) => ({ value: p.id, label: p.name, hint: p.address }));
+  }
+
   protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

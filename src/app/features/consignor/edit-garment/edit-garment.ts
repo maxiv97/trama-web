@@ -19,6 +19,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
@@ -29,7 +30,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
 
 @Component({
   selector: 'app-edit-garment',
-  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, MoneyPipe, ErrorState],
+  imports: [Dropdown, PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, MoneyPipe, ErrorState],
   template: `
     @if (loading()) {
       <app-page-skeleton layout="form" />
@@ -42,11 +43,11 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
         <div class="t-card space-y-5 p-6">
           <!-- Fotos -->
           <div>
-            <span class="mb-1 block text-sm font-medium text-trama-dark">Fotos</span>
+            <span class="t-label">Fotos</span>
             <label
               (dragover)="$event.preventDefault()"
               (drop)="onDrop($event)"
-              class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-trama-sand-200 py-6 text-center text-sm text-trama-dark/60 hover:border-trama-brand"
+              class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-trama-sand-200 py-6 text-center text-sm text-trama-body hover:border-trama-brand"
             >
               Arrastrá o hacé click para agregar
               <input type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
@@ -69,103 +70,91 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
               </div>
             }
             @if (showErrors() && !photos().length) {
-              <p class="mt-1 text-xs text-status-none">Dejá al menos una foto.</p>
+              <p class="t-error">Dejá al menos una foto.</p>
             }
           </div>
 
           <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="sm:col-span-2">
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+              <label class="t-label">Nombre</label>
               <input formControlName="name" [class]="inputClass" />
               @if (showError('name')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('name') }}</p>
+                <p class="t-error">{{ errorMessage('name') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
-              <select formControlName="category" [class]="inputClass">
-                <option value="">Elegí una categoría</option>
-                @for (category of categories(); track category.id) {
-                  <option [value]="category.label">{{ category.label }}</option>
-                }
-              </select>
+              <label class="t-label">Categoría</label>
+              <app-dropdown formControlName="category" placeholder="Elegí una categoría" ariaLabel="Categoría" [invalid]="showError('category')"
+                [options]="categoryOptions()" />
               @if (showError('category')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('category') }}</p>
+                <p class="t-error">{{ errorMessage('category') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
-              <select formControlName="subcategory" [class]="inputClass">
-                <option value="">Elegí una subcategoría</option>
-                @for (subcategory of subcategories(); track subcategory) {
-                  <option [value]="subcategory">{{ subcategory }}</option>
-                }
-              </select>
+              <label class="t-label">Subcategoría</label>
+              <app-dropdown formControlName="subcategory" placeholder="Elegí una subcategoría" ariaLabel="Subcategoría" [invalid]="showError('subcategory')"
+                [options]="subcategoryOptions()" />
               @if (showError('subcategory')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('subcategory') }}</p>
+                <p class="t-error">{{ errorMessage('subcategory') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
+              <label class="t-label">Marca</label>
               <input formControlName="brand" [class]="inputClass" />
               @if (showError('brand')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('brand') }}</p>
+                <p class="t-error">{{ errorMessage('brand') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
+              <label class="t-label">Talle</label>
               <input formControlName="size" [class]="inputClass" />
               @if (showError('size')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('size') }}</p>
+                <p class="t-error">{{ errorMessage('size') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
+              <label class="t-label">Color</label>
               <input formControlName="color" [class]="inputClass" />
               @if (showError('color')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('color') }}</p>
+                <p class="t-error">{{ errorMessage('color') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
-              <select formControlName="season" [class]="inputClass">
-                <option value="">Elegí una temporada</option>
-                @for (season of seasons; track season) {
-                  <option [value]="season">{{ season }}</option>
-                }
-              </select>
+              <label class="t-label">Temporada</label>
+              <app-dropdown formControlName="season" placeholder="Elegí una temporada" ariaLabel="Temporada" [invalid]="showError('season')"
+                [options]="seasonOptions" />
               @if (showError('season')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('season') }}</p>
+                <p class="t-error">{{ errorMessage('season') }}</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
+              <span class="t-label">Condición</span>
               <div class="flex flex-wrap gap-3">
                 @for (condition of conditions; track condition.value) {
-                  <label class="flex items-center gap-2 text-sm text-trama-dark/80">
+                  <label class="flex items-center gap-2 text-sm text-trama-body">
                     <input type="radio" formControlName="condition" [value]="condition.value" />
                     {{ condition.label }}
                   </label>
                 }
               </div>
               @if (showError('condition')) {
-                <p class="mt-1 text-xs text-status-none">Elegí la condición de la prenda.</p>
+                <p class="t-error">Elegí la condición de la prenda.</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1 block text-sm font-medium text-trama-dark"
-                >Descripción <span class="text-trama-dark/40">(opcional)</span></label
+              <label class="t-label"
+                >Descripción <span class="text-trama-muted">(opcional)</span></label
               >
               <textarea formControlName="description" rows="3" [class]="inputClass"></textarea>
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1 block text-sm font-medium text-trama-dark">¿Cuánto querés recibir?</label>
+              <label class="t-label">¿Cuánto querés recibir?</label>
               <input type="number" formControlName="consignorPrice" min="1" [class]="inputClass" />
               @if (showError('consignorPrice')) {
-                <p class="mt-1 text-xs text-status-none">Ingresá un monto mayor a cero.</p>
+                <p class="t-error">Ingresá un monto mayor a cero.</p>
               }
               @if (salePrice() !== null) {
-                <p class="mt-2 text-sm text-trama-dark/70">
+                <p class="mt-2 text-sm text-trama-body">
                   El comercio lo venderá a
                   <span class="font-semibold text-trama-brand">{{ salePrice() | money }}</span>
                 </p>
@@ -201,6 +190,14 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   `,
 })
 export class EditGarment {
+  protected readonly categoryOptions = computed<DropdownOption[]>(() =>
+    this.categories().map((c) => ({ value: c.label, label: c.label })),
+  );
+  protected readonly subcategoryOptions = computed<DropdownOption[]>(() =>
+    this.subcategories().map((sub) => ({ value: sub, label: sub })),
+  );
+  protected readonly seasonOptions: DropdownOption[] = SEASONS.map((season) => ({ value: season, label: season }));
+
   protected readonly headerIcon = Shirt;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

@@ -46,60 +46,60 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
         <section formGroupName="profile" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Datos del comercio</h2>
 
-          <label class="block text-sm">
-            <span class="text-trama-dark/70">Nombre del negocio</span>
+          <label class="block">
+            <span class="t-label">Nombre del negocio</span>
             <input
               formControlName="businessName"
-              class="t-input mt-1.5 w-full"
+              class="t-input"
             />
             @if (invalid('profile', 'businessName')) {
-              <span class="mt-1 block text-xs text-status-none">Ingresá el nombre del negocio.</span>
+              <span class="t-error">Ingresá el nombre del negocio.</span>
             }
           </label>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Email</span>
+            <label class="block">
+              <span class="t-label">Email</span>
               <input
                 formControlName="email"
                 type="email"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('profile', 'email')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá un email válido.</span>
+                <span class="t-error">Ingresá un email válido.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Teléfono</span>
+            <label class="block">
+              <span class="t-label">Teléfono</span>
               <input
                 formControlName="phone"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('profile', 'phone')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá el teléfono.</span>
+                <span class="t-error">Ingresá el teléfono.</span>
               }
             </label>
           </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Barrio</span>
+            <label class="block">
+              <span class="t-label">Barrio</span>
               <input
                 formControlName="neighborhood"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('profile', 'neighborhood')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá el barrio.</span>
+                <span class="t-error">Ingresá el barrio.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Ciudad</span>
+            <label class="block">
+              <span class="t-label">Ciudad</span>
               <input
                 formControlName="city"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('profile', 'city')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá la ciudad.</span>
+                <span class="t-error">Ingresá la ciudad.</span>
               }
             </label>
           </div>
@@ -107,29 +107,29 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
 
         <section formGroupName="commission" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Comisión</h2>
-          <p class="text-xs text-trama-dark/50">
+          <p class="text-xs text-trama-muted">
             El porcentaje del comercio se calcula como el complemento del cedente.
           </p>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">% para el cedente</span>
+            <label class="block">
+              <span class="t-label">% para el cedente</span>
               <input
                 formControlName="consignorPercentage"
                 type="number"
                 min="0"
                 max="100"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('commission', 'consignorPercentage')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá un valor entre 0 y 100.</span>
+                <span class="t-error">Ingresá un valor entre 0 y 100.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">% para el comercio</span>
+            <label class="block">
+              <span class="t-label">% para el comercio</span>
               <input
                 [value]="merchantPercentage()"
                 disabled
-                class="mt-1 w-full rounded-lg border border-trama-sand-100 bg-trama-sand-100 px-3 py-2 text-sm text-trama-dark/60"
+                class="mt-1 w-full rounded-lg border border-trama-sand-100 bg-trama-sand-100 px-3 py-2 text-sm text-trama-body"
               />
             </label>
           </div>
@@ -138,41 +138,41 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
         <section formGroupName="terms" class="t-card space-y-4 p-5">
           <h2 class="text-sm font-semibold text-trama-dark">Términos de consignación</h2>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Ventana de venta (meses)</span>
+            <label class="block">
+              <span class="t-label">Ventana de venta (meses)</span>
               <input
                 formControlName="saleWindowMonths"
                 type="number"
                 min="1"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('terms', 'saleWindowMonths')) {
-                <span class="mt-1 block text-xs text-status-none">Mínimo 1 mes.</span>
+                <span class="t-error">Mínimo 1 mes.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Gracia (meses)</span>
+            <label class="block">
+              <span class="t-label">Gracia (meses)</span>
               <input
                 formControlName="graceMonths"
                 type="number"
                 min="0"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('terms', 'graceMonths')) {
-                <span class="mt-1 block text-xs text-status-none">No puede ser negativo.</span>
+                <span class="t-error">No puede ser negativo.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Día de pago</span>
+            <label class="block">
+              <span class="t-label">Día de pago</span>
               <input
                 formControlName="payoutDay"
                 type="number"
                 min="1"
                 max="28"
-                class="t-input mt-1.5 w-full"
+                class="t-input"
               />
               @if (invalid('terms', 'payoutDay')) {
-                <span class="mt-1 block text-xs text-status-none">Entre 1 y 28.</span>
+                <span class="t-error">Entre 1 y 28.</span>
               }
             </label>
           </div>
@@ -181,7 +181,7 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
         <section class="t-card flex items-center justify-between gap-3 p-5">
           <div>
             <h2 class="text-sm font-semibold text-trama-dark">Puntos de venta</h2>
-            <p class="text-sm text-trama-dark/60">
+            <p class="text-sm text-trama-body">
               {{ salesPointsCount() }}
               {{ salesPointsCount() === 1 ? 'punto configurado' : 'puntos configurados' }}
             </p>

@@ -94,13 +94,13 @@ type TrackingState =
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
               <div class="t-card p-4">
-                <p class="text-xs text-trama-dark/50">Precio del cedente</p>
+                <p class="text-xs text-trama-muted">Precio del cedente</p>
                 <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
               <div class="t-card p-4">
-                <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
+                <p class="text-xs text-trama-muted">Precio de venta acordado</p>
                 <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
                 </p>
@@ -108,11 +108,11 @@ type TrackingState =
             </div>
 
             <div class="t-card p-4">
-              <p class="text-xs text-trama-dark/50">Cedente</p>
+              <p class="text-xs text-trama-muted">Cedente</p>
               <p class="mt-1 text-sm text-trama-dark">
                 {{ d.consignor?.name ?? '—' }}
                 @if (d.consignor?.dni) {
-                  <span class="text-trama-dark/50">· DNI {{ d.consignor?.dni }}</span>
+                  <span class="text-trama-muted">· DNI {{ d.consignor?.dni }}</span>
                 }
               </p>
             </div>
@@ -172,13 +172,13 @@ type TrackingState =
                   <p class="text-sm font-medium text-trama-dark">Prenda vendida.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-dark/50">Le corresponde al cedente</p>
+                      <p class="text-xs text-trama-muted">Le corresponde al cedente</p>
                       <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
+                      <p class="text-xs text-trama-muted">Tu comisión</p>
                       <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
@@ -195,20 +195,16 @@ type TrackingState =
                   } @else {
                     <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-trama-paper p-4">
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark"
+                        <label class="t-label"
                           >Método de pago</label
                         >
-                        <select
-                          [value]="paymentMethod()"
-                          (change)="paymentMethod.set($any($event.target).value)"
-                          class="t-input w-full"
-                        >
-                          <option value="transfer">Transferencia</option>
-                          <option value="cash">Efectivo</option>
-                        </select>
+                        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Método de pago">
+                          <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'transfer'" (click)="paymentMethod.set('transfer')">Transferencia</button>
+                          <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'cash'" (click)="paymentMethod.set('cash')">Efectivo</button>
+                        </div>
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark"
+                        <label class="t-label"
                           >Nº de comprobante</label
                         >
                         <input
@@ -216,7 +212,7 @@ type TrackingState =
                           [value]="receiptNumber()"
                           (input)="receiptNumber.set($any($event.target).value)"
                           placeholder="Opcional"
-                          class="t-input w-full"
+                          class="t-input"
                         />
                       </div>
                       <div class="flex gap-3">
@@ -246,13 +242,13 @@ type TrackingState =
                   <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-dark/50">Le pagaste al cedente</p>
+                      <p class="text-xs text-trama-muted">Le pagaste al cedente</p>
                       <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
+                      <p class="text-xs text-trama-muted">Tu comisión</p>
                       <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
@@ -260,7 +256,7 @@ type TrackingState =
                   </div>
                   @if (d.sale; as sale) {
                     @if (sale.paidAt) {
-                      <p class="text-sm text-trama-dark/70">
+                      <p class="text-sm text-trama-body">
                         {{ methodLabel(sale.paymentMethod) }}
                         @if (sale.receiptNumber) {
                           · Comp. {{ sale.receiptNumber }}
@@ -273,19 +269,19 @@ type TrackingState =
               }
               @case ('under_review') {
                 <div class="rounded-2xl bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-dark/70">Propuesta en revisión.</p>
+                  <p class="text-sm text-trama-body">Propuesta en revisión.</p>
                 </div>
               }
               @case ('counteroffer') {
                 <div class="rounded-2xl border border-status-counter/20 bg-status-counter-soft p-5">
-                  <p class="text-sm text-trama-dark/70">
+                  <p class="text-sm text-trama-body">
                     Contraoferta enviada. Esperando la respuesta del cedente.
                   </p>
                 </div>
               }
               @case ('no_agreement') {
                 <div class="rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-dark/70">No hubo acuerdo con el cedente.</p>
+                  <p class="text-sm text-trama-body">No hubo acuerdo con el cedente.</p>
                 </div>
               }
             }
@@ -293,7 +289,7 @@ type TrackingState =
         </div>
 
         <div class="t-card p-5">
-          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
+          <h2 class="mb-4 text-sm font-medium text-trama-body">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>

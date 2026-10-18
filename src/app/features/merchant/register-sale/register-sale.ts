@@ -53,15 +53,15 @@ type PageState =
 
         <div class="t-card p-4">
           <p class="font-medium text-trama-dark">{{ d.garment.name }}</p>
-          <p class="text-sm text-trama-dark/60">
+          <p class="text-sm text-trama-body">
             Precio de venta acordado:
-            <span class="text-trama-dark/80">{{ d.agreement?.agreedSalePrice | money }}</span>
+            <span class="text-trama-body">{{ d.agreement?.agreedSalePrice | money }}</span>
           </p>
         </div>
 
         <div class="t-card space-y-4 p-4">
           <div>
-            <label class="mb-1 block text-sm font-medium text-trama-dark"
+            <label class="t-label"
               >Precio de venta real</label
             >
             <input
@@ -69,20 +69,20 @@ type PageState =
               min="1"
               [value]="effectivePrice() || ''"
               (input)="actualSalePrice.set(toNumber($event))"
-              class="t-input w-full"
+              class="t-input"
             />
           </div>
           <div>
-            <label class="mb-1 block text-sm font-medium text-trama-dark">Fecha de venta</label>
+            <label class="t-label">Fecha de venta</label>
             <input
               type="date"
               [value]="soldAt()"
               (input)="soldAt.set($any($event.target).value)"
-              class="t-input w-full"
+              class="t-input"
             />
           </div>
 
-          <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
+          <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-body">
             El cedente recibirá
             <span class="font-semibold text-trama-brand">{{ consignorAmount() | money }}</span>
             · Tu comisión:
