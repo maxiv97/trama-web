@@ -31,7 +31,7 @@ export function pageOf<T>(rows: readonly T[], page: number, size = PAGE_SIZE): T
 @Component({
   selector: 'app-data-table',
   imports: [LucideAngularModule],
-  host: { class: 'block' },
+  host: { class: 'block t-enter', style: 'animation-delay: 180ms' },
   template: `
     <div class="t-card p-4 sm:p-6">
       <div class="toolbar flex flex-wrap items-center gap-3 empty:hidden">

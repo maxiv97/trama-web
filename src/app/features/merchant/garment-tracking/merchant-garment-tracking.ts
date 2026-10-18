@@ -94,21 +94,21 @@ type TrackingState =
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
               <div class="t-card p-4">
-                <p class="text-xs text-trama-muted">Precio del cedente</p>
-                <p class="mt-1 text-lg font-semibold text-trama-dark">
+                <p class="text-[13px] font-semibold text-trama-body">Precio del cedente</p>
+                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
               <div class="t-card p-4">
-                <p class="text-xs text-trama-muted">Precio de venta acordado</p>
-                <p class="mt-1 text-lg font-semibold text-trama-dark">
+                <p class="text-[13px] font-semibold text-trama-body">Precio de venta acordado</p>
+                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
                 </p>
               </div>
             </div>
 
             <div class="t-card p-4">
-              <p class="text-xs text-trama-muted">Cedente</p>
+              <p class="text-[13px] font-semibold text-trama-body">Cedente</p>
               <p class="mt-1 text-sm text-trama-dark">
                 {{ d.consignor?.name ?? '—' }}
                 @if (d.consignor?.dni) {
@@ -124,7 +124,7 @@ type TrackingState =
             @switch (d.garment.status) {
               @case ('agreed') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">
+                  <p class="text-[15px] font-bold text-trama-dark">
                     Acuerdo confirmado. Cuando recibas la prenda, registrá la recepción.
                   </p>
                   <a
@@ -136,7 +136,7 @@ type TrackingState =
               }
               @case ('in_stock') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">La prenda está en stock.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">La prenda está en stock.</p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
                     class="t-btn t-btn-primary"
@@ -146,7 +146,7 @@ type TrackingState =
               }
               @case ('with_remarks') {
                 <div class="space-y-3 rounded-2xl border border-status-pending/20 bg-status-pending-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">Recibida con observaciones.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">Recibida con observaciones.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
@@ -159,7 +159,7 @@ type TrackingState =
               }
               @case ('rejected') {
                 <div class="space-y-2 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">
+                  <p class="text-[15px] font-bold text-trama-dark">
                     Recepción rechazada. La prenda se devuelve al cedente.
                   </p>
                   @if (d.reception; as reception) {
@@ -169,17 +169,17 @@ type TrackingState =
               }
               @case ('sold') {
                 <div class="space-y-4 rounded-2xl border border-status-sold/20 bg-status-sold-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">Prenda vendida.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">Prenda vendida.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-muted">Le corresponde al cedente</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Le corresponde al cedente</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-muted">Tu comisión</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Tu comisión</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
@@ -239,17 +239,17 @@ type TrackingState =
               }
               @case ('paid_out') {
                 <div class="t-card space-y-2 p-5">
-                  <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">Liquidación pagada.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-muted">Le pagaste al cedente</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Le pagaste al cedente</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-muted">Tu comisión</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Tu comisión</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
@@ -289,7 +289,7 @@ type TrackingState =
         </div>
 
         <div class="t-card p-5">
-          <h2 class="mb-4 text-sm font-medium text-trama-body">Historial</h2>
+          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>

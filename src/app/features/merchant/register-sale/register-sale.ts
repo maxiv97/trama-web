@@ -84,7 +84,7 @@ type PageState =
 
           <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-body">
             El cedente recibirá
-            <span class="font-semibold text-trama-brand">{{ consignorAmount() | money }}</span>
+            <span class="font-bold text-trama-dark">{{ consignorAmount() | money }}</span>
             · Tu comisión:
             <span class="font-semibold text-trama-dark">{{ merchantCommission() | money }}</span>
           </div>

@@ -52,7 +52,7 @@ type CategoriesState =
 
         <!-- Categorías propias -->
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold tracking-wide text-trama-body uppercase">
+          <h2 class="text-eyebrow">
             Mis categorías
           </h2>
           @if (d.custom.length) {
@@ -63,7 +63,7 @@ type CategoriesState =
                     <div>
                       <p class="font-medium text-trama-dark">{{ category.label }}</p>
                       @if (category.parentLabel) {
-                        <p class="text-xs text-trama-muted">Consolida en: {{ category.parentLabel }}</p>
+                        <p class="text-[13px] font-semibold text-trama-body">Consolida en: {{ category.parentLabel }}</p>
                       }
                     </div>
                     <div class="flex gap-2">
@@ -98,7 +98,7 @@ type CategoriesState =
 
         <!-- Catálogo base -->
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold tracking-wide text-trama-body uppercase">
+          <h2 class="text-eyebrow">
             Catálogo base
           </h2>
           <p class="text-sm text-trama-body">
@@ -177,7 +177,7 @@ type CategoriesState =
               </label>
 
               @if (formError()) {
-                <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none">
+                <p class="t-alert">
                   {{ formError() }}
                 </p>
               }

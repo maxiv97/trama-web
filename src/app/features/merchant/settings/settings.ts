@@ -44,7 +44,7 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
         </app-page-header>
 
         <section formGroupName="profile" class="t-card space-y-4 p-5">
-          <h2 class="text-sm font-semibold text-trama-dark">Datos del comercio</h2>
+          <h2 class="text-title-3 text-trama-dark">Datos del comercio</h2>
 
           <label class="block">
             <span class="t-label">Nombre del negocio</span>
@@ -106,8 +106,8 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
         </section>
 
         <section formGroupName="commission" class="t-card space-y-4 p-5">
-          <h2 class="text-sm font-semibold text-trama-dark">Comisión</h2>
-          <p class="text-xs text-trama-muted">
+          <h2 class="text-title-3 text-trama-dark">Comisión</h2>
+          <p class="text-[13px] font-semibold text-trama-body">
             El porcentaje del comercio se calcula como el complemento del cedente.
           </p>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -136,7 +136,7 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
         </section>
 
         <section formGroupName="terms" class="t-card space-y-4 p-5">
-          <h2 class="text-sm font-semibold text-trama-dark">Términos de consignación</h2>
+          <h2 class="text-title-3 text-trama-dark">Términos de consignación</h2>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <label class="block">
               <span class="t-label">Ventana de venta (meses)</span>
@@ -180,7 +180,7 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
 
         <section class="t-card flex items-center justify-between gap-3 p-5">
           <div>
-            <h2 class="text-sm font-semibold text-trama-dark">Puntos de venta</h2>
+            <h2 class="text-title-3 text-trama-dark">Puntos de venta</h2>
             <p class="text-sm text-trama-body">
               {{ salesPointsCount() }}
               {{ salesPointsCount() === 1 ? 'punto configurado' : 'puntos configurados' }}

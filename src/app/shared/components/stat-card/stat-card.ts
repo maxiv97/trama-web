@@ -11,7 +11,7 @@ type StatColor = 'default' | 'green' | 'red';
 @Component({
   selector: 'app-stat-card',
   imports: [Stitch],
-  host: { class: 'block' },
+  host: { class: 'block t-enter', style: 'animation-delay: 120ms' },
   template: `
     <div
       class="flex h-full flex-col gap-1 rounded-2xl p-[18px] sm:p-[22px]"

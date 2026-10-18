@@ -11,6 +11,7 @@ import { CategoriesService } from '../../../core/services/categories.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { PhotoUploader } from '../../../shared/components/photo-uploader/photo-uploader';
 import { SEASONS } from '../../../core/models/garment-taxonomy';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { compressImage } from '../../../core/utils/image.util';
@@ -30,7 +31,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
 
 @Component({
   selector: 'app-edit-garment',
-  imports: [Dropdown, PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, MoneyPipe, ErrorState],
+  imports: [PhotoUploader, Dropdown, PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, MoneyPipe, ErrorState],
   template: `
     @if (loading()) {
       <app-page-skeleton layout="form" />
@@ -40,41 +41,17 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
       <div class="mx-auto max-w-2xl space-y-6">
         <app-page-header title="Editar consignación" section="Mis prendas" [icon]="headerIcon" lead="Mientras está en revisión podés corregir las fotos, los datos y el precio." />
 
-        <div class="t-card space-y-5 p-6">
+        <div class="t-card space-y-6 p-6 sm:p-8">
           <!-- Fotos -->
           <div>
             <span class="t-label">Fotos</span>
-            <label
-              (dragover)="$event.preventDefault()"
-              (drop)="onDrop($event)"
-              class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-trama-sand-200 py-6 text-center text-sm text-trama-body hover:border-trama-brand"
-            >
-              Arrastrá o hacé click para agregar
-              <input type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
-            </label>
-            @if (photos().length) {
-              <div class="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                @for (photo of photos(); track $index) {
-                  <div class="relative aspect-square overflow-hidden rounded-lg">
-                    <img [src]="photo" alt="" class="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      (click)="removePhoto($index)"
-                      class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
-                      aria-label="Eliminar foto"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                }
-              </div>
-            }
+            <app-photo-uploader [(photos)]="photos" [invalid]="showErrors() && !photos().length" />
             @if (showErrors() && !photos().length) {
               <p class="t-error">Dejá al menos una foto.</p>
             }
           </div>
 
-          <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form [formGroup]="form" class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
             <div class="sm:col-span-2">
               <label class="t-label">Nombre</label>
               <input formControlName="name" [class]="inputClass" />
@@ -129,12 +106,17 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
             </div>
             <div class="sm:col-span-2">
               <span class="t-label">Condición</span>
-              <div class="flex flex-wrap gap-3">
+              <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Estado de la prenda">
                 @for (condition of conditions; track condition.value) {
-                  <label class="flex items-center gap-2 text-sm text-trama-body">
-                    <input type="radio" formControlName="condition" [value]="condition.value" />
+                  <button
+                    type="button"
+                    role="radio"
+                    class="t-chip"
+                    [attr.aria-checked]="form.controls.condition.value === condition.value"
+                    (click)="form.controls.condition.setValue(condition.value); form.controls.condition.markAsTouched()"
+                  >
                     {{ condition.label }}
-                  </label>
+                  </button>
                 }
               </div>
               @if (showError('condition')) {
@@ -163,7 +145,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
           </form>
 
           @if (submitError()) {
-            <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+            <p class="t-alert" role="alert">
               {{ submitError() }}
             </p>
           }
@@ -333,31 +315,6 @@ export class EditGarment {
     if (errors['required']) return 'Este campo es obligatorio.';
     if (errors['min']) return `El mínimo es ${errors['min'].min}.`;
     return 'Revisá este dato.';
-  }
-
-  protected onFilesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) this.addFiles(input.files);
-    input.value = '';
-  }
-
-  protected onDrop(event: DragEvent): void {
-    event.preventDefault();
-    if (event.dataTransfer?.files) this.addFiles(event.dataTransfer.files);
-  }
-
-  protected removePhoto(index: number): void {
-    this.photos.update((list) => list.filter((_, i) => i !== index));
-  }
-
-  private addFiles(files: FileList): void {
-    Array.from(files)
-      .filter((file) => file.type.startsWith('image/'))
-      .forEach((file) => {
-        compressImage(file)
-          .then((photo) => this.photos.update((list) => [...list, photo]))
-          .catch(() => this.toast.show('No pudimos procesar una de las fotos', 'error'));
-      });
   }
 
   protected save(): void {

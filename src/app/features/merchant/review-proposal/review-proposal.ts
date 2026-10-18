@@ -63,32 +63,32 @@ type ReviewState =
               <h2 class="text-title-2 text-trama-dark">{{ d.garment.name }}</h2>
               <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div>
-                  <dt class="text-trama-muted">Categoría</dt>
-                  <dd class="text-trama-body">
+                  <dt class="text-[13px] text-trama-muted">Categoría</dt>
+                  <dd class="font-semibold text-trama-dark">
                     {{ d.garment.category }}@if (d.garment.subcategory) {
                       · {{ d.garment.subcategory }}
                     }
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Marca</dt>
-                  <dd class="text-trama-body">{{ d.garment.brand }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Marca</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.brand }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Talle</dt>
-                  <dd class="text-trama-body">{{ d.garment.size }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Talle</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.size }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Color</dt>
-                  <dd class="text-trama-body">{{ d.garment.color }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Color</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.color }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Temporada</dt>
-                  <dd class="text-trama-body">{{ d.garment.season }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Temporada</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.season }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Condición</dt>
-                  <dd class="text-trama-body">{{ conditionLabel(d.garment.condition) }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Condición</dt>
+                  <dd class="font-semibold text-trama-dark">{{ conditionLabel(d.garment.condition) }}</dd>
                 </div>
               </dl>
               @if (d.garment.description) {
@@ -101,7 +101,7 @@ type ReviewState =
           </div>
 
           <div class="t-card space-y-4 p-5">
-            <h2 class="text-sm font-medium text-trama-body">Decisión</h2>
+            <h2 class="text-title-3 text-trama-dark">Decisión</h2>
             <div class="space-y-3">
               <div class="flex items-center justify-between">
                 <span class="text-sm text-trama-body">El cedente pide</span>
@@ -138,7 +138,7 @@ type ReviewState =
                 @if (counterSalePrice() !== null) {
                   <p class="text-sm text-trama-body">
                     Se vendería a
-                    <span class="font-semibold text-trama-brand">{{ counterSalePrice() | money }}</span>
+                    <span class="font-bold text-trama-dark">{{ counterSalePrice() | money }}</span>
                   </p>
                 }
                 <div class="flex gap-2">

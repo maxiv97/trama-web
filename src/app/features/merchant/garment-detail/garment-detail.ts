@@ -94,37 +94,37 @@ type DetailState =
 
           <div class="space-y-6 md:col-span-2">
             <div class="t-card p-5">
-              <h2 class="mb-4 text-sm font-medium text-trama-body">Datos de la prenda</h2>
+              <h2 class="mb-4 text-title-3 text-trama-dark">Datos de la prenda</h2>
               <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <div>
-                  <dt class="text-trama-muted">Categoría</dt>
-                  <dd class="text-trama-body">{{ d.garment.category }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Categoría</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.category }}</dd>
                 </div>
                 @if (d.garment.subcategory) {
                   <div>
-                    <dt class="text-trama-muted">Subcategoría</dt>
-                    <dd class="text-trama-body">{{ d.garment.subcategory }}</dd>
+                    <dt class="text-[13px] text-trama-muted">Subcategoría</dt>
+                    <dd class="font-semibold text-trama-dark">{{ d.garment.subcategory }}</dd>
                   </div>
                 }
                 <div>
-                  <dt class="text-trama-muted">Marca</dt>
-                  <dd class="text-trama-body">{{ d.garment.brand }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Marca</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.brand }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Talle</dt>
-                  <dd class="text-trama-body">{{ d.garment.size }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Talle</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.size }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Color</dt>
-                  <dd class="text-trama-body">{{ d.garment.color }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Color</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.color }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Temporada</dt>
-                  <dd class="text-trama-body">{{ d.garment.season }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Temporada</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.season }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-muted">Estado</dt>
-                  <dd class="text-trama-body">{{ conditionLabel(d.garment.condition) }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Estado</dt>
+                  <dd class="font-semibold text-trama-dark">{{ conditionLabel(d.garment.condition) }}</dd>
                 </div>
               </dl>
               @if (d.garment.description) {
@@ -137,22 +137,22 @@ type DetailState =
 
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="t-card p-4">
-                <p class="text-xs text-trama-muted">Cedente</p>
+                <p class="text-[13px] font-semibold text-trama-body">Cedente</p>
                 @if (d.consignor; as consignor) {
                   <p class="mt-1 text-sm text-trama-dark">{{ consignor.name }}</p>
                   @if (consignor.dni) {
-                    <p class="text-xs text-trama-muted">DNI {{ consignor.dni }}</p>
+                    <p class="text-[13px] font-semibold text-trama-body">DNI {{ consignor.dni }}</p>
                   }
                 } @else {
                   <p class="mt-1 text-sm text-trama-dark">—</p>
                 }
               </div>
               <div class="t-card p-4">
-                <p class="text-xs text-trama-muted">Punto de venta</p>
+                <p class="text-[13px] font-semibold text-trama-body">Punto de venta</p>
                 @if (d.salesPoint; as salesPoint) {
                   <p class="mt-1 text-sm text-trama-dark">{{ salesPoint.name }}</p>
                   @if (salesPoint.address) {
-                    <p class="text-xs text-trama-muted">{{ salesPoint.address }}</p>
+                    <p class="text-[13px] font-semibold text-trama-body">{{ salesPoint.address }}</p>
                   }
                 } @else {
                   <p class="mt-1 text-sm text-trama-dark">—</p>
@@ -162,7 +162,7 @@ type DetailState =
 
             @if (d.agreement; as agreement) {
               <div class="t-card p-5">
-                <h2 class="mb-4 text-sm font-medium text-trama-body">Precios acordados</h2>
+                <h2 class="mb-4 text-title-3 text-trama-dark">Precios acordados</h2>
                 <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
                   <div>
                     <p class="text-trama-muted">Precio del cedente</p>
@@ -188,7 +188,7 @@ type DetailState =
 
             @if (d.reception; as reception) {
               <div class="t-card p-5">
-                <h2 class="mb-3 text-sm font-medium text-trama-body">Recepción</h2>
+                <h2 class="mb-3 text-title-3 text-trama-dark">Recepción</h2>
                 <p class="text-sm text-trama-body">
                   Comprobante {{ reception.receiptNumber }} ·
                   {{ reception.receivedAt | shortDate }}
@@ -221,7 +221,7 @@ type DetailState =
               >
             } @else if (d.garment.status === 'paid_out') {
               <div class="t-card p-5">
-                <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
+                <p class="text-[15px] font-bold text-trama-dark">Liquidación pagada.</p>
                 @if (d.sale; as sale) {
                   @if (sale.paidAt) {
                     <p class="mt-1 text-sm text-trama-body">
@@ -239,7 +239,7 @@ type DetailState =
         </div>
 
         <div class="t-card p-5">
-          <h2 class="mb-4 text-sm font-medium text-trama-body">Historial</h2>
+          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
