@@ -189,10 +189,10 @@ export interface WizardSummaryRow {
       }
     }
     .step-in-right {
-      animation: t-slide-in-right 250ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+      animation: t-slide-in-right 250ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
     }
     .step-in-left {
-      animation: t-slide-in-left 250ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+      animation: t-slide-in-left 250ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards;
     }
     .m-baste {
       height: 3px;

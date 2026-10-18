@@ -1,9 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { catchError, filter, map, of, switchMap } from 'rxjs';
 import {
   BarChart3,
+  ChevronRight,
+  Menu,
   Bell,
   Inbox,
   LayoutDashboard,
@@ -21,6 +23,7 @@ import { Role } from '../../../core/models/user.model';
 import { LogoIcon } from '../logo/logo';
 import { UserMenu } from '../user-menu/user-menu';
 import { BlobIcon } from '../blob-icon/blob-icon';
+import { Drawer } from '../drawer/drawer';
 import { Hanger } from '../../icons/trama-icons';
 
 interface NavItem {
@@ -31,6 +34,8 @@ interface NavItem {
   badge?: boolean;
   /** Etiqueta corta para la barra inferior del celular. */
   short?: string;
+  /** Grupo dentro de "Más" en el celular; sin grupo va en la barra. */
+  group?: string;
 }
 
 const MENUS: Record<Role, NavItem[]> = {
@@ -44,18 +49,18 @@ const MENUS: Record<Role, NavItem[]> = {
     { label: 'Propuestas', link: '/m/proposals', icon: Inbox },
     { label: 'Inventario', link: '/m/inventory', icon: Hanger },
     { label: 'Liquidaciones', link: '/m/payouts', icon: Receipt, short: 'Pagos' },
-    { label: 'Reportes', link: '/m/reports', icon: BarChart3 },
-    { label: 'Mis cedentes', link: '/m/consignors', icon: Users, short: 'Cedentes' },
-    { label: 'Puntos de venta', link: '/m/sales-points', icon: MapPin, short: 'Puntos' },
-    { label: 'Categorías', link: '/m/categories', icon: Tags },
-    { label: 'Configuración', link: '/m/settings', icon: Settings, short: 'Ajustes' },
-    { label: 'Notificaciones', link: '/m/notifications', icon: Bell, badge: true, short: 'Avisos' },
+    { label: 'Reportes', link: '/m/reports', icon: BarChart3, group: 'El negocio' },
+    { label: 'Mis cedentes', link: '/m/consignors', icon: Users, short: 'Cedentes', group: 'El negocio' },
+    { label: 'Puntos de venta', link: '/m/sales-points', icon: MapPin, short: 'Puntos', group: 'Mi comercio' },
+    { label: 'Categorías', link: '/m/categories', icon: Tags, group: 'Mi comercio' },
+    { label: 'Configuración', link: '/m/settings', icon: Settings, short: 'Ajustes', group: 'Mi comercio' },
+    { label: 'Notificaciones', link: '/m/notifications', icon: Bell, badge: true, short: 'Avisos', group: 'Avisos' },
   ],
 };
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule, LogoIcon, UserMenu, BlobIcon],
+  imports: [RouterLink, RouterLinkActive, LucideAngularModule, LogoIcon, UserMenu, BlobIcon, Drawer],
   template: `
     <div [class]="isPublic() ? '' : 'min-h-screen bg-trama-sand-50'">
       @if (!isPublic()) {
@@ -140,7 +145,8 @@ const MENUS: Record<Role, NavItem[]> = {
 
       @if (!isPublic()) {
         <nav
-          class="fixed inset-x-0 bottom-0 z-40 flex overflow-x-auto border-t border-trama-sand-100 bg-trama-paper pb-[env(safe-area-inset-bottom)] md:hidden"
+          class="fixed inset-x-0 bottom-0 z-40 flex border-t border-trama-sand-100 bg-trama-paper pb-[env(safe-area-inset-bottom)] md:hidden"
+          aria-label="Navegación"
         >
           @for (item of mobileMenu(); track item.link) {
             <a
@@ -148,7 +154,7 @@ const MENUS: Record<Role, NavItem[]> = {
               routerLinkActive
               #mrla="routerLinkActive"
               [routerLinkActiveOptions]="{ exact: !!item.exact }"
-              class="relative flex min-w-[64px] flex-1 flex-col items-center gap-0.5 py-2 text-[11px]"
+              class="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[11px]"
               [class]="mrla.isActive ? 'font-bold text-trama-dark' : 'font-medium text-trama-muted'"
               [attr.aria-label]="item.label"
             >
@@ -167,7 +173,64 @@ const MENUS: Record<Role, NavItem[]> = {
               }
             </a>
           }
+          @if (moreGroups().length) {
+            <button
+              type="button"
+              class="relative flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2 text-[11px]"
+              [class]="moreActive() || moreOpen() ? 'font-bold text-trama-dark' : 'font-medium text-trama-muted'"
+              [attr.aria-expanded]="moreOpen()"
+              aria-haspopup="dialog"
+              (click)="moreOpen.set(true)"
+            >
+              <app-blob-icon
+                class="nav-blob"
+                [class.nav-blob-on]="moreActive()"
+                [icon]="moreIcon"
+                [size]="32"
+                [iconSize]="19"
+                [tone]="moreActive() ? 'gold' : 'transparent'"
+                [iconColor]="moreActive() ? '#1F3A2B' : 'currentColor'"
+              />
+              <span class="max-w-full truncate px-1">{{ moreLabel() }}</span>
+              @if (unread()) {
+                <span class="absolute right-[24%] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-trama-paper bg-trama-knot"></span>
+              }
+            </button>
+          }
         </nav>
+      }
+
+      @if (moreOpen()) {
+        <app-drawer side="auto" eyebrow="Comercio" title="Más secciones" (close)="moreOpen.set(false)">
+          <div class="space-y-5 pb-5">
+            @for (g of moreGroups(); track g.name) {
+              <section>
+                <p class="text-eyebrow mb-1.5">{{ g.name }}</p>
+                <ul>
+                  @for (item of g.items; track item.link) {
+                    <li>
+                      <a
+                        [routerLink]="item.link"
+                        routerLinkActive
+                        #grla="routerLinkActive"
+                        (click)="moreOpen.set(false)"
+                        class="flex items-center gap-3 rounded-[14px] px-2 py-2.5 transition-colors hover:bg-trama-sand-50"
+                        [class.bg-trama-sand-50]="grla.isActive"
+                      >
+                        <app-blob-icon [icon]="item.icon" [size]="38" [iconSize]="19" [tone]="grla.isActive ? 'gold' : 'cream'" />
+                        <span class="flex-1 text-[15px] text-trama-dark" [class]="grla.isActive ? 'font-bold' : 'font-semibold'">{{ item.label }}</span>
+                        @if (item.badge && unread()) {
+                          <span class="inline-flex min-w-5 items-center justify-center rounded-full bg-trama-knot px-1.5 text-xs font-bold leading-5 text-trama-paper">{{ unread() }}</span>
+                        }
+                        <lucide-angular class="flex text-trama-thread-faint" [img]="chevIcon" [size]="18" />
+                      </a>
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          </div>
+        </app-drawer>
       }
     </div>
   `,
@@ -208,7 +271,28 @@ export class Shell {
     return role ? MENUS[role] : [];
   });
 
-  protected readonly mobileMenu = this.menu;
+  /** En el celular: los ítems sin grupo van en la barra; el resto, en "Más". */
+  protected readonly mobileMenu = computed(() => this.menu().filter((i) => !i.group));
+  protected readonly moreGroups = computed(() => {
+    const groups: { name: string; items: NavItem[] }[] = [];
+    for (const item of this.menu().filter((i) => i.group)) {
+      let g = groups.find((x) => x.name === item.group);
+      if (!g) groups.push((g = { name: item.group!, items: [] }));
+      g.items.push(item);
+    }
+    return groups;
+  });
+  protected readonly moreOpen = signal(false);
+  /** "Más" se marca activo cuando la sección actual está adentro. */
+  private readonly moreItem = computed(() =>
+    this.moreGroups()
+      .flatMap((g) => g.items)
+      .find((i) => this.url().startsWith(i.link)),
+  );
+  protected readonly moreActive = computed(() => !!this.moreItem());
+  protected readonly moreLabel = computed(() => this.moreItem()?.short ?? this.moreItem()?.label ?? 'Más');
+  protected readonly moreIcon = Menu;
+  protected readonly chevIcon = ChevronRight;
 
   protected readonly notificationsLink = computed(() =>
     this.auth.role() === 'merchant' ? '/m/notifications' : '/c/notifications',

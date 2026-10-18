@@ -9,6 +9,9 @@ import {
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
 import { Dropdown, DropdownOption } from '../../../../shared/components/dropdown/dropdown';
 import { Segmented } from '../../../../shared/components/tabs/tabs';
+import { Drawer } from '../../../../shared/components/drawer/drawer';
+import { NgTemplateOutlet } from '@angular/common';
+import { LucideAngularModule, SlidersHorizontal } from 'lucide-angular';
 
 interface PeriodPreset {
   key: string;
@@ -43,33 +46,73 @@ function rangeFor(key: string): { from?: string; to?: string } {
 
 @Component({
   selector: 'app-reports-filter-bar',
-  imports: [Segmented, Dropdown],
+  imports: [Segmented, Dropdown, Drawer, LucideAngularModule, NgTemplateOutlet],
+  styles: `
+    .f-on {
+      background: var(--color-trama-dark);
+      color: var(--color-trama-sand-50);
+    }
+  `,
   template: `
-    <div class="space-y-3">
-      <div class="flex flex-wrap items-center gap-3">
-        <app-segmented ariaLabel="Período" [onPage]="true" [options]="periodOptions" [value]="periodKey()" (valueChange)="onPeriod($event)" />
-        <div class="flex flex-1 flex-wrap gap-3">
-          <app-dropdown class="w-full sm:w-52" size="sm" [onPage]="true" ariaLabel="Punto de venta"
-            [options]="salesPointOptions()" [value]="filters.salesPointId() ?? ''" (valueChange)="filters.setSalesPoint($event || undefined)" />
-          <app-dropdown class="w-full sm:w-52" size="sm" [onPage]="true" ariaLabel="Categoría"
-            [options]="categoryOptions()" [value]="filters.category() ?? ''" (valueChange)="filters.setCategory($event || undefined)" />
-          <app-dropdown class="w-full sm:w-52" size="sm" [onPage]="true" ariaLabel="Cedente"
-            [options]="consignorOptions()" [value]="filters.consignorId() ?? ''" (valueChange)="filters.setConsignor($event || undefined)" />
-        </div>
+    <!-- Escritorio: período segmentado y filtros a la vista -->
+    <div class="hidden flex-wrap items-center gap-3 sm:flex">
+      <app-segmented ariaLabel="Período" [onPage]="true" [options]="periodOptions" [value]="periodKey()" (valueChange)="onPeriod($event)" />
+      <div class="flex flex-1 flex-wrap gap-3">
+        <ng-container *ngTemplateOutlet="filtersTpl; context: { stacked: false }" />
       </div>
-
-      @if (chips().length) {
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-eyebrow">Recorte activo</span>
-          @for (chip of chips(); track chip.key) {
-            <span class="inline-flex items-center rounded-full bg-trama-green-50 px-3 py-1 text-[13px] font-bold text-trama-green-700">
-              {{ chip.label }}
-            </span>
-          }
-          <button type="button" (click)="clear()" class="t-link">Limpiar</button>
-        </div>
-      }
     </div>
+
+    <!-- Celular: un solo selector de período y el resto en un drawer -->
+    <div class="flex items-center gap-2 sm:hidden">
+      <app-dropdown class="min-w-0 flex-1" [onPage]="true" ariaLabel="Período" [options]="periodOptions" [value]="periodKey()" (valueChange)="onPeriod($event)" />
+      <button
+        type="button"
+        class="t-btn t-btn-secondary relative shrink-0 !px-4"
+        [class.f-on]="activeFilters()"
+        (click)="sheetOpen.set(true)"
+        aria-haspopup="dialog"
+      >
+        <lucide-angular [img]="filterIcon" [size]="18" />
+        Filtros
+        @if (activeFilters()) {
+          <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-trama-gold px-1.5 text-xs font-bold text-trama-dark">{{ activeFilters() }}</span>
+        }
+      </button>
+    </div>
+
+    @if (sheetOpen()) {
+      <app-drawer side="auto" eyebrow="Reportes" title="Filtrar" lead="Elegí el punto de venta, la categoría o el cedente." (close)="sheetOpen.set(false)">
+        <div class="space-y-4 pb-5">
+          <ng-container *ngTemplateOutlet="filtersTpl; context: { stacked: true }" />
+        </div>
+        <button footer type="button" class="t-btn t-btn-ghost mr-auto" [disabled]="!activeFilters()" (click)="clearFilters()">Limpiar</button>
+        <button footer type="button" class="t-btn t-btn-primary" (click)="sheetOpen.set(false)">Ver reportes</button>
+      </app-drawer>
+    }
+
+    <ng-template #filtersTpl let-stacked="stacked">
+      <div [class]="stacked ? 'block' : 'contents'">
+        @if (stacked) {
+          <span class="t-label">Punto de venta</span>
+        }
+        <app-dropdown [class]="stacked ? 'block' : 'w-full sm:w-52'" size="sm" [onPage]="!stacked" ariaLabel="Punto de venta"
+          [options]="salesPointOptions()" [value]="filters.salesPointId() ?? ''" (valueChange)="filters.setSalesPoint($event || undefined)" />
+      </div>
+      <div [class]="stacked ? 'block' : 'contents'">
+        @if (stacked) {
+          <span class="t-label">Categoría</span>
+        }
+        <app-dropdown [class]="stacked ? 'block' : 'w-full sm:w-52'" size="sm" [onPage]="!stacked" ariaLabel="Categoría"
+          [options]="categoryOptions()" [value]="filters.category() ?? ''" (valueChange)="filters.setCategory($event || undefined)" />
+      </div>
+      <div [class]="stacked ? 'block' : 'contents'">
+        @if (stacked) {
+          <span class="t-label">Cedente</span>
+        }
+        <app-dropdown [class]="stacked ? 'block' : 'w-full sm:w-52'" size="sm" [onPage]="!stacked" ariaLabel="Cedente"
+          [options]="consignorOptions()" [value]="filters.consignorId() ?? ''" (valueChange)="filters.setConsignor($event || undefined)" />
+      </div>
+    </ng-template>
   `,
 })
 export class ReportsFilterBar {
@@ -106,18 +149,14 @@ export class ReportsFilterBar {
     initialValue: [] as FilterOption[],
   });
 
-  protected readonly chips = computed(() => {
-    const chips: { key: string; label: string }[] = [];
-    const period = this.periods.find((p) => p.key === this.periodKey());
-    if (period && period.key !== 'all') chips.push({ key: 'period', label: period.label });
-    const sp = this.salesPoints().find((o) => o.value === this.filters.salesPointId());
-    if (sp) chips.push({ key: 'sp', label: sp.label });
-    const category = this.filters.category();
-    if (category) chips.push({ key: 'category', label: category });
-    const consignor = this.consignors().find((o) => o.value === this.filters.consignorId());
-    if (consignor) chips.push({ key: 'consignor', label: consignor.label });
-    return chips;
-  });
+  protected readonly sheetOpen = signal(false);
+  protected readonly filterIcon = SlidersHorizontal;
+  /** Cuántos filtros (fuera del período) están aplicados. */
+  protected readonly activeFilters = computed(
+    () =>
+      [this.filters.salesPointId(), this.filters.category(), this.filters.consignorId()].filter(Boolean)
+        .length,
+  );
 
   protected onPeriod(key: string): void {
     this.periodKey.set(key);
@@ -125,8 +164,9 @@ export class ReportsFilterBar {
     this.filters.setPeriod(range.from, range.to);
   }
 
-  protected clear(): void {
-    this.periodKey.set('all');
-    this.filters.clear();
+  protected clearFilters(): void {
+    this.filters.setSalesPoint(undefined);
+    this.filters.setCategory(undefined);
+    this.filters.setConsignor(undefined);
   }
 }

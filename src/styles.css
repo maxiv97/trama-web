@@ -822,7 +822,11 @@
 }
 
 .t-enter {
-  animation: t-enter var(--duration-enter) var(--ease-out) both;
+  animation: t-enter var(--duration-enter) var(--ease-out) backwards;
+}
+/* Entrada solo con opacidad: no crea un bloque contenedor para los drawers fijos */
+.t-fade-in {
+  animation: t-fade var(--duration-enter) var(--ease-out) backwards;
 }
 .t-sew {
   transform-origin: left center;
@@ -832,7 +836,7 @@
   animation: t-pop 400ms var(--ease-bounce) both;
 }
 .t-pop-in {
-  animation: t-pop-in var(--duration-base) var(--ease-out) both;
+  animation: t-pop-in var(--duration-base) var(--ease-out) backwards;
 }
 .t-grow-y {
   transform-origin: bottom center;

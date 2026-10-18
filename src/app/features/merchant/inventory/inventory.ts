@@ -1,4 +1,5 @@
 import { ChevronRight, LucideAngularModule } from 'lucide-angular';
+import { FilterSheet } from '../../../shared/components/filter-sheet/filter-sheet';
 import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -75,7 +76,7 @@ type InventoryState =
 
 @Component({
   selector: 'app-inventory',
-  imports: [LucideAngularModule, Dropdown, PersonCell, TableThumb, SearchField, FilterChips, DataTable, PageSkeleton, PageHeader, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
+  imports: [FilterSheet, LucideAngularModule, Dropdown, PersonCell, TableThumb, SearchField, FilterChips, DataTable, PageSkeleton, PageHeader, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
       <app-page-skeleton layout="table" />
@@ -95,18 +96,34 @@ type InventoryState =
           </button>
         }
 
-        <div class="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 [&>:first-child]:col-span-2 md:[&>:first-child]:col-span-1">
           <app-stat-card title="Artículos en stock" [value]="d.stockCount" [highlight]="true" />
           <app-stat-card title="Valor a precio de venta" [value]="d.stockValue | money" />
           <app-stat-card title="Comprometido con cedentes" [value]="d.committed | money" />
         </div>
 
         <app-data-table [total]="filteredRows().length" [shown]="pageRows().length" noun="prendas" [(page)]="page">
-          <app-filter-chips toolbar [options]="statusChips()" [(value)]="statusFilter" />
-          <div toolbar class="flex w-full flex-wrap gap-3">
-            <app-dropdown class="w-full sm:w-56" size="sm" ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
-            <app-dropdown class="w-full sm:w-56" size="sm" ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
-            <app-search-field [(value)]="search" placeholder="Buscar por nombre" />
+          <div toolbar class="hidden w-full sm:block">
+            <app-filter-chips [options]="statusChips()" [(value)]="statusFilter" />
+          </div>
+          <div toolbar class="flex w-full gap-2 sm:flex-wrap sm:gap-3">
+            <app-dropdown class="hidden sm:block sm:w-56" size="sm" ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
+            <app-dropdown class="hidden sm:block sm:w-56" size="sm" ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
+            <app-search-field class="min-w-0 flex-1 sm:flex-none" [(value)]="search" placeholder="Buscar por nombre" />
+            <app-filter-sheet class="shrink-0 sm:hidden" [count]="activeFilterCount()" [results]="filteredRows().length" noun="prendas" (clear)="clearFilters()">
+              <div>
+                <p class="t-label">Estado</p>
+                <app-filter-chips [options]="statusChips()" [(value)]="statusFilter" />
+              </div>
+              <div>
+                <p class="t-label">Cedente</p>
+                <app-dropdown ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
+              </div>
+              <div>
+                <p class="t-label">Punto de venta</p>
+                <app-dropdown ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
+              </div>
+            </app-filter-sheet>
           </div>
 
           @if (filteredRows().length) {
@@ -203,6 +220,18 @@ export class Inventory {
     { value: 'all', label: 'Todos los puntos' },
     ...(this.data()?.salesPoints ?? []).map((p) => ({ value: p.id, label: p.name })),
   ]);
+
+  protected readonly activeFilterCount = computed(
+    () =>
+      [this.statusFilter() !== 'all', this.consignorFilter() !== 'all', this.salesPointFilter() !== 'all'].filter(Boolean)
+        .length,
+  );
+
+  protected clearFilters(): void {
+    this.statusFilter.set('all');
+    this.consignorFilter.set('all');
+    this.salesPointFilter.set('all');
+  }
 
   protected readonly pageRows = computed(() => pageOf(this.filteredRows(), this.page()));
 

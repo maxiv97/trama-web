@@ -78,7 +78,7 @@ const INDEX: IndexEntry[] = [
 
       <app-reports-filter-bar />
 
-      <app-tabs [options]="tabOptions" [(value)]="tab" />
+      <app-tabs class="pt-2" [options]="tabOptions" [(value)]="tab" />
 
       <div class="flex flex-wrap items-center gap-2">
         <span class="text-eyebrow mr-1">¿Qué querés saber?</span>

@@ -17,9 +17,16 @@ const ROLE_EYEBROW = { consignor: 'Cedente', merchant: 'Comercio' } as const;
   selector: 'app-page-header',
   imports: [BlobIcon, Stitch, EnterDirective],
   host: { class: 'block' },
+  styles: `
+    @media (max-width: 767.98px) {
+      .actions > ::ng-deep * {
+        flex: 1 1 auto;
+      }
+    }
+  `,
   template: `
     <header class="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 basis-full md:flex-1 md:basis-0">
         <div class="flex items-center gap-2.5" [appEnter]="0">
           @if (icon(); as img) {
             <app-blob-icon [icon]="img" [size]="34" [iconSize]="18" tone="gold" />
@@ -35,7 +42,7 @@ const ROLE_EYEBROW = { consignor: 'Cedente', merchant: 'Comercio' } as const;
         }
         <ng-content select="[lead]" />
       </div>
-      <div class="flex flex-wrap items-center gap-3" [appEnter]="2">
+      <div class="actions flex w-full flex-wrap items-center gap-3 empty:hidden md:w-auto" [appEnter]="2">
         <ng-content select="[actions]" />
       </div>
     </header>

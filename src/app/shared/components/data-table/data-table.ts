@@ -31,7 +31,7 @@ export function pageOf<T>(rows: readonly T[], page: number, size = PAGE_SIZE): T
 @Component({
   selector: 'app-data-table',
   imports: [LucideAngularModule],
-  host: { class: 'block t-enter', style: 'animation-delay: 180ms' },
+  host: { class: 'block t-fade-in', style: 'animation-delay: 180ms' },
   template: `
     <div class="t-card p-4 sm:p-6">
       <div class="toolbar flex flex-wrap items-center gap-3 empty:hidden">
@@ -174,14 +174,14 @@ export class FilterChips<T extends string = string> {
   host: { class: 'relative block w-full sm:ml-auto sm:w-64' },
   template: `
     <lucide-angular
-      class="pointer-events-none absolute left-3.5 top-0 flex h-full items-center text-trama-muted"
+      class="pointer-events-none absolute left-3 top-0 flex h-full items-center text-trama-muted"
       [img]="icon"
       [size]="17"
     />
     <input
       type="search"
       class="t-input t-input-sm"
-      style="padding-left: 42px"
+      style="padding-left: 44px"
       [placeholder]="placeholder()"
       [attr.aria-label]="placeholder()"
       [value]="value()"

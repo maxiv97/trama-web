@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   computed,
   ElementRef,
   forwardRef,
@@ -37,6 +38,7 @@ let nextId = 0;
   host: {
     class: 'relative block',
     '(document:click)': 'onDocumentClick($event)',
+    '(window:resize)': 'place()',
     '(keydown.escape)': 'close(true)',
   },
   template: `
@@ -70,9 +72,12 @@ let nextId = 0;
 
     @if (open()) {
       <div
-        class="t-popover t-pop-in absolute left-0 z-50 mt-2 w-full min-w-[220px] p-2"
-        [class.right-0]="alignRight()"
-        [class.left-auto]="alignRight()"
+        class="t-popover t-pop-in fixed z-[70] flex flex-col p-2"
+        [style.top.px]="pos().top"
+        [style.bottom.px]="pos().bottom"
+        [style.left.px]="pos().left"
+        [style.width.px]="pos().width"
+        [style.max-height.px]="pos().maxHeight"
       >
         @if (searchable()) {
           <div class="relative mb-1.5">
@@ -97,7 +102,7 @@ let nextId = 0;
         <ul
           [attr.id]="listId"
           role="listbox"
-          class="max-h-72 overflow-y-auto"
+          class="min-h-0 flex-1 overflow-y-auto"
           tabindex="-1"
           (keydown)="onListKey($event)"
         >
@@ -164,6 +169,7 @@ export class Dropdown implements ControlValueAccessor {
   readonly size = input<'md' | 'sm'>('md');
   readonly invalid = input(false);
   readonly disabled = input(false);
+  /** Alinea el panel al borde derecho del disparador. */
   readonly alignRight = input(false);
   /** Va sobre el fondo crema de la página: el disparador pasa a papel. */
   readonly onPage = input(false);
@@ -195,6 +201,13 @@ export class Dropdown implements ControlValueAccessor {
     );
   });
 
+  constructor() {
+    // Reubica el panel al hacer scroll en cualquier contenedor (por ejemplo, un drawer).
+    const onScroll = (): void => this.place();
+    window.addEventListener('scroll', onScroll, true);
+    inject(DestroyRef).onDestroy(() => window.removeEventListener('scroll', onScroll, true));
+  }
+
   private onChange: (v: string) => void = () => {};
   private onTouched: () => void = () => {};
 
@@ -216,11 +229,36 @@ export class Dropdown implements ControlValueAccessor {
     else this.openPanel();
   }
 
+  /** Posición del panel: fijo sobre todo, debajo del disparador o arriba si no entra. */
+  protected readonly pos = signal<{ top: number | null; bottom: number | null; left: number; width: number; maxHeight: number }>(
+    { top: 0, bottom: null, left: 0, width: 220, maxHeight: 288 },
+  );
+
+  protected place(): void {
+    const el = this.trigger()?.nativeElement;
+    if (!this.open() || !el) return;
+    const r = el.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    const width = Math.min(Math.max(r.width, 220), vw - 16);
+    let left = this.alignRight() ? r.right - width : r.left;
+    left = Math.max(8, Math.min(left, vw - width - 8));
+    const below = vh - r.bottom - 12;
+    const above = r.top - 12;
+    const wanted = 300;
+    if (below >= Math.min(wanted, 200) || below >= above) {
+      this.pos.set({ top: r.bottom + 8, bottom: null, left, width, maxHeight: Math.min(wanted, below) });
+    } else {
+      this.pos.set({ top: null, bottom: vh - r.top + 8, left, width, maxHeight: Math.min(wanted, above) });
+    }
+  }
+
   private openPanel(): void {
     this.query.set('');
     const idx = this.options().findIndex((o) => o.value === this.value());
     this.active.set(Math.max(0, idx));
     this.open.set(true);
+    this.place();
     if (this.searchable()) queueMicrotask(() => this.searchBox()?.nativeElement.focus());
   }
 

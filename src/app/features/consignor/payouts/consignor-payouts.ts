@@ -40,7 +40,7 @@ type PayoutsState =
       <div class="space-y-6">
         <app-page-header title="Mis liquidaciones" section="Liquidaciones" [icon]="headerIcon" lead="Lo que cobraste y lo que te deben los comercios por tus prendas vendidas.">
           @if (months().length) {
-            <app-dropdown actions class="w-52" [onPage]="true" [alignRight]="true" ariaLabel="Mes" [options]="monthOptions()" [value]="activeMonth()" (valueChange)="selectedMonth.set($event)" />
+            <app-dropdown actions class="w-full md:w-52" [onPage]="true" [alignRight]="true" ariaLabel="Mes" [options]="monthOptions()" [value]="activeMonth()" (valueChange)="selectedMonth.set($event)" />
           }
         </app-page-header>
 

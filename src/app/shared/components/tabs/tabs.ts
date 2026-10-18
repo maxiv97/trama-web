@@ -23,8 +23,25 @@ export interface TabOption<T extends string = string> {
   selector: 'app-tabs',
   host: { class: 'block' },
   template: `
-    <div class="relative overflow-x-auto">
-      <div role="tablist" class="relative flex min-w-max gap-7 pb-4">
+    <!-- Celular: grilla de 2 columnas, sin scroll -->
+    <div role="tablist" class="grid grid-cols-2 gap-2 sm:hidden">
+      @for (t of options(); track t.value) {
+        <button
+          type="button"
+          role="tab"
+          class="t-chip w-full justify-center !whitespace-normal !px-3 !py-2.5 text-center leading-tight"
+          [attr.aria-selected]="t.value === value()"
+          [class.t-chip-active]="t.value === value()"
+          (click)="value.set(t.value)"
+        >
+          {{ t.label }}
+        </button>
+      }
+    </div>
+
+    <!-- Escritorio: pestañas con la puntada con nudo que se desliza -->
+    <div class="relative hidden sm:block">
+      <div role="tablist" class="relative flex flex-wrap gap-x-7 gap-y-2 pb-5">
         @for (t of options(); track t.value) {
           <button
             #tab
@@ -41,9 +58,9 @@ export interface TabOption<T extends string = string> {
           </button>
         }
         <span
-          class="indicator pointer-events-none absolute bottom-0 left-0 h-[14px]"
+          class="indicator pointer-events-none absolute left-0 top-0 h-[14px]"
           [style.width.px]="ind().w"
-          [style.transform]="'translateX(' + ind().x + 'px)'"
+          [style.transform]="'translate(' + ind().x + 'px,' + ind().y + 'px)'"
           aria-hidden="true"
         >
           <svg class="block h-full w-full overflow-visible">
@@ -66,7 +83,6 @@ export interface TabOption<T extends string = string> {
   `,
   styles: `
     .indicator {
-      bottom: -6px;
       transition:
         transform 300ms cubic-bezier(0.2, 0.8, 0.3, 1),
         width 300ms cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -78,7 +94,7 @@ export class Tabs<T extends string = string> {
   readonly value = model.required<T>();
 
   private readonly tabs = viewChildren<ElementRef<HTMLButtonElement>>('tab');
-  protected readonly ind = signal({ x: 0, w: 0 });
+  protected readonly ind = signal({ x: 0, y: 0, w: 0 });
 
   private readonly activeIndex = computed(() =>
     this.options().findIndex((o) => o.value === this.value()),
@@ -88,9 +104,10 @@ export class Tabs<T extends string = string> {
     afterRenderEffect(() => {
       const el = this.tabs()[this.activeIndex()]?.nativeElement;
       if (!el) return;
-      const next = { x: el.offsetLeft, w: Math.max(40, el.offsetWidth) };
+      // La puntada va justo debajo de la pestaña activa (también si las pestañas pasan a otra línea).
+      const next = { x: el.offsetLeft, y: el.offsetTop + el.offsetHeight + 1, w: Math.max(40, el.offsetWidth) };
       const cur = this.ind();
-      if (cur.x !== next.x || cur.w !== next.w) this.ind.set(next);
+      if (cur.x !== next.x || cur.y !== next.y || cur.w !== next.w) this.ind.set(next);
     });
   }
 
