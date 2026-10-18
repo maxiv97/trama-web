@@ -231,7 +231,7 @@ export class WizardShell {
   protected readonly prevIcon = ChevronLeft;
   protected readonly nextIcon = ChevronRight;
 
-  protected readonly step = computed(() => this.steps()[this.current()]);
+  protected readonly step = computed<WizardStep | undefined>(() => this.steps()[this.current()]);
   protected readonly labels = computed(() => this.steps().map((s) => s.label));
   protected readonly isLast = computed(() => this.current() === this.steps().length - 1);
   protected readonly mobilePct = computed(() => {
