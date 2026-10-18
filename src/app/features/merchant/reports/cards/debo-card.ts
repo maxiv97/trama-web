@@ -7,7 +7,7 @@ import { MonthlyPayout } from '../../../../core/models/payout.model';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
 import { PayoutsService } from '../../../../core/services/payouts.service';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
+import { StackSegment, StackedBar } from '../../../../shared/components/charts/charts';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 
 type State =
@@ -17,53 +17,28 @@ type State =
 
 @Component({
   selector: 'app-debo-card',
-  imports: [RouterLink, MoneyPipe, LoadingSpinner, ErrorState],
+  imports: [StackedBar, RouterLink, ErrorState],
   template: `
-    <div id="rep-debo" class="t-card scroll-mt-4 p-5">
+    <div id="rep-debo" class="t-card scroll-mt-24 p-6">
       <div class="mb-4">
-        <h2 class="font-display text-lg font-semibold text-trama-dark">
+        <h2 class="text-title-3 text-trama-dark">
           ¿Cuánto debo y qué está vencido?
         </h2>
-        <p class="mt-1 text-sm text-trama-dark/50">Liquidaciones por estado, en el período filtrado.</p>
+        <p class="mt-1 text-sm text-trama-muted">Liquidaciones por estado, en el período filtrado.</p>
       </div>
 
       @if (isLoading()) {
-        <app-loading-spinner />
+        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar las liquidaciones." (retry)="reload()" />
       } @else {
-        <div class="mb-4 flex gap-6">
-          <div>
-            <div class="text-xs text-trama-dark/50">Vencido</div>
-            <div class="font-display text-xl font-semibold text-status-none">{{ totals().overdue | money }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-trama-dark/50">Pendiente</div>
-            <div class="font-display text-xl font-semibold text-trama-dark">{{ totals().pending | money }}</div>
-          </div>
-          <div>
-            <div class="text-xs text-trama-dark/50">Pagado</div>
-            <div class="font-display text-xl font-semibold text-trama-green-700">{{ totals().paid | money }}</div>
-          </div>
-        </div>
-
         @if (totals().total) {
-          <div class="mb-3 flex h-3 overflow-hidden rounded-full bg-trama-sand-100">
-            <span class="block bg-status-none" [style.width.%]="pct().overdue"></span>
-            <span class="block bg-trama-gold" [style.width.%]="pct().pending"></span>
-            <span class="block bg-trama-green-700" [style.width.%]="pct().paid"></span>
-          </div>
+          <app-stacked-bar [segments]="segments()" />
+        } @else {
+          <p class="text-sm text-trama-body">No hay liquidaciones en el período.</p>
         }
-
-        <div class="flex items-center justify-between">
-          <div class="flex flex-wrap gap-4 text-xs text-trama-dark/60">
-            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-sm bg-status-none"></span>Vencido</span>
-            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-sm bg-trama-gold"></span>Pendiente</span>
-            <span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-sm bg-trama-green-700"></span>Pagado</span>
-          </div>
-          <a routerLink="/m/payouts" class="text-sm font-semibold text-trama-brand hover:underline">
-            Ver detalle →
-          </a>
+        <div class="mt-5 flex justify-end">
+          <a routerLink="/m/payouts" class="t-link">Ver detalle</a>
         </div>
       }
     </div>
@@ -105,6 +80,17 @@ export class DeboCard {
       else if (group.status === 'pending') pending += group.pendingAmount;
     }
     return { overdue, pending, paid, total: overdue + pending + paid };
+  });
+
+  private readonly moneyPipe = new MoneyPipe();
+  protected readonly segments = computed<StackSegment[]>(() => {
+    const t = this.totals();
+    const m = (n: number): string => this.moneyPipe.transform(n);
+    return [
+      { label: 'Vencido', value: t.overdue, display: m(t.overdue), color: '#C0392B' },
+      { label: 'Pendiente', value: t.pending, display: m(t.pending), color: '#F2B636' },
+      { label: 'Pagado', value: t.paid, display: m(t.paid), color: '#2E7D54' },
+    ];
   });
 
   protected readonly pct = computed(() => {

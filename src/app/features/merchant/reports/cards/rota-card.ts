@@ -7,8 +7,8 @@ import { GarmentsService } from '../../../../core/services/garments.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
+import { BarDatum, BarRows } from '../../../../shared/components/charts/charts';
 import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -29,13 +29,13 @@ type State =
 
 @Component({
   selector: 'app-rota-card',
-  imports: [LoadingSpinner, ErrorState, EmptyState, DrillModal],
+  imports: [BarRows, ErrorState, EmptyState, DrillModal],
   template: `
-    <div id="rep-rota" class="t-card scroll-mt-4 p-5">
+    <div id="rep-rota" class="t-card scroll-mt-24 p-6">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="font-display text-lg font-semibold text-trama-dark">¿Qué stock no rota?</h2>
-          <p class="mt-1 text-sm text-trama-dark/50">Prendas en stock por antigüedad, en cantidad.</p>
+          <h2 class="text-title-3 text-trama-dark">¿Qué stock no rota?</h2>
+          <p class="mt-1 text-sm text-trama-muted">Prendas en stock por antigüedad, en cantidad.</p>
         </div>
         @if (totalStock()) {
           <button
@@ -48,31 +48,13 @@ type State =
       </div>
 
       @if (isLoading()) {
-        <app-loading-spinner />
+        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar la rotación." (retry)="reload()" />
       } @else if (report(); as r) {
         @if (totalStock()) {
-          <div class="space-y-2">
-            @for (bucket of r.stockAging; track bucket.bucket) {
-              <button
-                (click)="openDrill(bucket.bucket)"
-                [disabled]="!bucket.count"
-                class="flex w-full items-center gap-3 text-sm enabled:hover:opacity-80 disabled:cursor-default"
-              >
-                <span class="w-16 text-right text-trama-dark/60">{{ bucket.bucket }}</span>
-                <span class="h-5 flex-1 overflow-hidden rounded bg-trama-sand-100">
-                  <span
-                    class="block h-5 rounded"
-                    [class]="bucket.bucket === '+120' || bucket.bucket === '91-120' ? 'bg-status-none' : 'bg-trama-green-700'"
-                    [style.width.%]="barWidth(bucket.count)"
-                  ></span>
-                </span>
-                <span class="w-6 font-medium text-trama-dark">{{ bucket.count }}</span>
-              </button>
-            }
-          </div>
-          <div class="mt-4 border-t border-trama-sand-100 pt-3 text-sm text-trama-dark/60">
+          <app-bar-rows [data]="bars()" [labelWidth]="60" [clickable]="true" (pick)="openDrill($event)" />
+          <div class="mt-4 border-t border-trama-sand-100 pt-3 text-sm text-trama-body">
             <b class="text-trama-dark">{{ r.staleCount }}</b> prenda(s) llevan más de 90 días en stock.
             @if (r.avgDaysToSale !== null) {
               Días promedio a venta: <b class="text-trama-dark">{{ r.avgDaysToSale }}</b>.
@@ -85,6 +67,7 @@ type State =
 
       @if (drill(); as d) {
         <app-drill-modal
+          question="¿Qué stock no rota?"
           [title]="d.title"
           [rows]="d.rows"
           [csvName]="d.csvName"
@@ -123,6 +106,13 @@ export class RotaCard {
     const current = this.state();
     return current.status === 'loaded' ? current.data : null;
   });
+  protected readonly bars = computed<BarDatum[]>(() =>
+    (this.report()?.stockAging ?? []).map((b) => ({
+      label: b.bucket,
+      value: b.count,
+      alert: b.bucket === '+120' || b.bucket === '91-120',
+    })),
+  );
   protected readonly totalStock = computed(() =>
     (this.report()?.stockAging ?? []).reduce((sum, b) => sum + b.count, 0),
   );

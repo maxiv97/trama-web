@@ -6,7 +6,6 @@ import { DashboardFiltersService } from '../../../../core/services/dashboard-fil
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 
@@ -21,15 +20,15 @@ type State =
 
 @Component({
   selector: 'app-cedentes-card',
-  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [MoneyPipe, ErrorState, EmptyState],
   template: `
-    <div id="rep-cedentes" class="t-card scroll-mt-4 p-5">
+    <div id="rep-cedentes" class="t-card scroll-mt-24 p-6">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="font-display text-lg font-semibold text-trama-dark">
+          <h2 class="text-title-3 text-trama-dark">
             {{ sort() === 'ganancia' ? '¿Quiénes me dan más ganancia?' : '¿Qué cedentes venden mejor lo que recibo?' }}
           </h2>
-          <p class="mt-1 text-sm text-trama-dark/50">
+          <p class="mt-1 text-sm text-trama-muted">
             Ganancia del período; la tasa de venta muestra, de todo lo recibido, cuánto se vendió.
           </p>
         </div>
@@ -44,37 +43,37 @@ type State =
       </div>
 
       @if (isLoading()) {
-        <app-loading-spinner />
+        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (rows().length) {
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="border-b border-trama-sand-200 text-trama-dark/60">
+          <table class="t-table t-table-narrow">
+            <thead>
               <tr>
-                <th class="py-2 pr-4 font-medium">Cedente</th>
-                <th class="py-2 pr-4 font-medium">Recibidas</th>
-                <th class="py-2 pr-4 font-medium">Vendidas</th>
-                <th class="py-2 pr-4 font-medium">
+                <th>Cedente</th>
+                <th>Recibidas</th>
+                <th>Vendidas</th>
+                <th>
                   <button (click)="sortBy('rate')" [class]="thClass('rate')">Tasa de venta</button>
                 </th>
-                <th class="py-2 pr-4 font-medium">
+                <th>
                   <button (click)="sortBy('ganancia')" [class]="thClass('ganancia')">Ganancia</button>
                 </th>
-                <th class="py-2 font-medium">Le debo</th>
+                <th>Le debo</th>
               </tr>
             </thead>
             <tbody>
               @for (row of visible(); track row.consignorId) {
-                <tr class="border-b border-trama-sand-100 last:border-0">
-                  <td class="py-3 pr-4 font-medium text-trama-dark">{{ row.name }}</td>
-                  <td class="py-3 pr-4 text-trama-dark/70">{{ row.receivedCount }}</td>
-                  <td class="py-3 pr-4 text-trama-dark/70">{{ row.soldCount }}</td>
-                  <td class="py-3 pr-4 text-trama-dark/70">
+                <tr>
+                  <td class="font-bold">{{ row.name }}</td>
+                  <td class="text-trama-body">{{ row.receivedCount }}</td>
+                  <td class="text-trama-body">{{ row.soldCount }}</td>
+                  <td class="text-trama-body">
                     {{ row.sellThroughRate === null ? '—' : row.sellThroughRate + '%' }}
                   </td>
-                  <td class="py-3 pr-4 font-medium text-trama-green-700">{{ row.merchantProfit | money }}</td>
-                  <td class="py-3 text-trama-dark/70">{{ row.pendingAmount | money }}</td>
+                  <td class="t-amount">{{ row.merchantProfit | money }}</td>
+                  <td class="text-trama-body">{{ row.pendingAmount | money }}</td>
                 </tr>
               }
             </tbody>

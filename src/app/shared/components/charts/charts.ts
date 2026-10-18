@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 
 /*
  * Gráficos de Trama (handoff §4.13). Siguen siendo barras de HTML, sin ejes ni
@@ -25,7 +25,14 @@ export interface BarDatum {
   template: `
     <div class="space-y-3">
       @for (d of data(); track d.label; let i = $index) {
-        <div class="grid items-center gap-3" [style.grid-template-columns]="labelWidth() + 'px 1fr auto'">
+        <button
+          type="button"
+          class="row grid w-full items-center gap-3 rounded-lg text-left"
+          [style.grid-template-columns]="labelWidth() + 'px 1fr auto'"
+          [disabled]="!clickable() || !d.value"
+          [attr.aria-label]="d.label + ': ' + (d.display ?? d.value)"
+          (click)="pick.emit(d.label)"
+        >
           <span class="truncate text-right text-sm text-trama-body">{{ d.label }}</span>
           <span class="relative flex h-4 items-center">
             <span class="baste-track absolute inset-x-1 top-1/2 -translate-y-1/2"></span>
@@ -33,6 +40,7 @@ export interface BarDatum {
               class="grow-x relative block h-4 rounded-full"
               [class]="d.alert ? 'bg-status-none' : d.accent ? 'bg-trama-gold' : 'bg-trama-dark'"
               [style.width.%]="pct(d)"
+              [class.invisible]="!d.value"
               [style.animation-delay.ms]="150 + i * 80"
             ></span>
           </span>
@@ -41,11 +49,17 @@ export interface BarDatum {
             [class]="d.alert ? 'text-status-none' : 'text-trama-dark'"
             >{{ d.display ?? d.value }}</span
           >
-        </div>
+        </button>
       }
     </div>
   `,
   styles: `
+    .row:disabled {
+      cursor: default;
+    }
+    .row:not(:disabled):hover .grow-x {
+      filter: brightness(1.25);
+    }
     .baste-track {
       height: 3px;
       background-image: linear-gradient(to right, #d6cfbb 8px, transparent 8px);
@@ -62,6 +76,9 @@ export interface BarDatum {
 })
 export class BarRows {
   readonly data = input.required<BarDatum[]>();
+  /** Cada fila se puede tocar para ver el detalle (emite la etiqueta). */
+  readonly clickable = input(false);
+  readonly pick = output<string>();
   readonly labelWidth = input(64);
   protected readonly max = computed(() => Math.max(1, ...this.data().map((d) => d.value)));
   protected pct(d: BarDatum): number {
@@ -91,6 +108,7 @@ export class BarRows {
               class="grow-x relative block h-2 rounded-full"
               [class]="d.alert ? 'bg-status-none' : (i === 0 && accentFirst()) || d.accent ? 'bg-trama-gold' : 'bg-trama-sage'"
               [style.width.%]="pct(d)"
+              [class.invisible]="!d.value"
               [style.animation-delay.ms]="150 + i * 80"
             ></span>
           </span>

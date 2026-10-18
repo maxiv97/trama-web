@@ -7,6 +7,8 @@ import {
   FilterOption,
 } from '../../../../core/services/dashboard-filter-options.service';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
+import { Dropdown, DropdownOption } from '../../../../shared/components/dropdown/dropdown';
+import { Segmented } from '../../../../shared/components/tabs/tabs';
 
 interface PeriodPreset {
   key: string;
@@ -14,7 +16,7 @@ interface PeriodPreset {
 }
 
 const PERIODS: PeriodPreset[] = [
-  { key: 'all', label: 'Todo el período' },
+  { key: 'all', label: 'Todo' },
   { key: 'this-month', label: 'Este mes' },
   { key: 'last-month', label: 'Mes pasado' },
   { key: 'last-3', label: 'Últimos 3 meses' },
@@ -41,75 +43,30 @@ function rangeFor(key: string): { from?: string; to?: string } {
 
 @Component({
   selector: 'app-reports-filter-bar',
+  imports: [Segmented, Dropdown],
   template: `
     <div class="space-y-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <select
-          [value]="periodKey()"
-          (change)="onPeriod($any($event.target).value)"
-          aria-label="Período"
-          class="t-input"
-        >
-          @for (p of periods; track p.key) {
-            <option [value]="p.key">{{ p.label }}</option>
-          }
-        </select>
-
-        <select
-          [value]="filters.salesPointId() ?? ''"
-          (change)="filters.setSalesPoint($any($event.target).value || undefined)"
-          aria-label="Punto de venta"
-          class="t-input"
-        >
-          <option value="">Todos los puntos</option>
-          @for (o of salesPoints(); track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-
-        <select
-          [value]="filters.category() ?? ''"
-          (change)="filters.setCategory($any($event.target).value || undefined)"
-          aria-label="Categoría"
-          class="t-input"
-        >
-          <option value="">Todas las categorías</option>
-          @for (o of categories(); track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-
-        <select
-          [value]="filters.consignorId() ?? ''"
-          (change)="filters.setConsignor($any($event.target).value || undefined)"
-          aria-label="Cedente"
-          class="t-input"
-        >
-          <option value="">Todos los cedentes</option>
-          @for (o of consignors(); track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
+      <div class="flex flex-wrap items-center gap-3">
+        <app-segmented ariaLabel="Período" [onPage]="true" [options]="periodOptions" [value]="periodKey()" (valueChange)="onPeriod($event)" />
+        <div class="flex flex-1 flex-wrap gap-3">
+          <app-dropdown class="w-full sm:w-52" size="sm" [onPage]="true" ariaLabel="Punto de venta"
+            [options]="salesPointOptions()" [value]="filters.salesPointId() ?? ''" (valueChange)="filters.setSalesPoint($event || undefined)" />
+          <app-dropdown class="w-full sm:w-52" size="sm" [onPage]="true" ariaLabel="Categoría"
+            [options]="categoryOptions()" [value]="filters.category() ?? ''" (valueChange)="filters.setCategory($event || undefined)" />
+          <app-dropdown class="w-full sm:w-52" size="sm" [onPage]="true" ariaLabel="Cedente"
+            [options]="consignorOptions()" [value]="filters.consignorId() ?? ''" (valueChange)="filters.setConsignor($event || undefined)" />
+        </div>
       </div>
 
       @if (chips().length) {
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-semibold uppercase tracking-wide text-trama-dark/40">
-            Recorte activo
-          </span>
+          <span class="text-eyebrow">Recorte activo</span>
           @for (chip of chips(); track chip.key) {
-            <span
-              class="inline-flex items-center gap-1.5 rounded-full border border-trama-green-200 bg-trama-green-50 px-3 py-1 text-xs font-medium text-trama-green-700"
-            >
+            <span class="inline-flex items-center rounded-full bg-trama-green-50 px-3 py-1 text-[13px] font-bold text-trama-green-700">
               {{ chip.label }}
             </span>
           }
-          <button
-            (click)="clear()"
-            class="text-xs font-semibold text-trama-brand underline"
-          >
-            Limpiar
-          </button>
+          <button type="button" (click)="clear()" class="t-link">Limpiar</button>
         </div>
       }
     </div>
@@ -121,6 +78,19 @@ export class ReportsFilterBar {
   private readonly auth = inject(AuthService);
 
   protected readonly periods = PERIODS;
+  protected readonly periodOptions = PERIODS.map((p) => ({ value: p.key, label: p.label }));
+  protected readonly salesPointOptions = computed<DropdownOption[]>(() => [
+    { value: '', label: 'Todos los puntos' },
+    ...this.salesPoints().map((o) => ({ value: o.value, label: o.label })),
+  ]);
+  protected readonly categoryOptions = computed<DropdownOption[]>(() => [
+    { value: '', label: 'Todas las categorías' },
+    ...this.categories().map((o) => ({ value: o.value, label: o.label })),
+  ]);
+  protected readonly consignorOptions = computed<DropdownOption[]>(() => [
+    { value: '', label: 'Todos los cedentes' },
+    ...this.consignors().map((o) => ({ value: o.value, label: o.label })),
+  ]);
   protected readonly periodKey = signal<string>('all');
 
   protected readonly categories = toSignal(

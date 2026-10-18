@@ -1,5 +1,7 @@
 import { BarChart3 } from 'lucide-angular';
-import { Component } from '@angular/core';
+import { afterNextRender, Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { Tabs } from '../../../shared/components/tabs/tabs';
 import { CedentesCard } from './cards/cedentes-card';
 import { ConvieneCard } from './cards/conviene-card';
 import { DeboCard } from './cards/debo-card';
@@ -54,7 +56,7 @@ const INDEX: IndexEntry[] = [
 
 @Component({
   selector: 'app-reports',
-  imports: [PageHeader, 
+  imports: [PageHeader, Tabs, 
     ReportsFilterBar,
     DeboCard,
     PlazosCard,
@@ -76,41 +78,35 @@ const INDEX: IndexEntry[] = [
 
       <app-reports-filter-bar />
 
-      <div class="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav class="hidden self-start lg:sticky lg:top-4 lg:block">
-          <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-trama-dark/40">
-            ¿Qué querés saber?
-          </div>
-          <div class="space-y-4">
-            @for (entry of index; track entry.group) {
-              <div>
-                <div class="mb-1 text-xs font-medium text-trama-dark/50">{{ entry.group }}</div>
-                <div class="space-y-0.5">
-                  @for (q of entry.questions; track q.label) {
-                    <button
-                      type="button"
-                      (click)="jumpTo(q.card)"
-                      class="block w-full rounded-md px-2 py-1.5 text-left text-sm text-trama-dark/70 hover:bg-trama-sand-100"
-                    >
-                      {{ q.label }}
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        </nav>
+      <app-tabs [options]="tabOptions" [(value)]="tab" />
 
-        <div class="min-w-0 space-y-6">
-          <app-debo-card />
-          <app-plazos-card />
-          <app-tardo-card />
-          <app-conviene-card />
-          <app-pdv-card />
-          <app-rota-card />
-          <app-cedentes-card />
-          <app-discrepancias-card />
-        </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-eyebrow mr-1">¿Qué querés saber?</span>
+        @for (q of questions(); track q.label) {
+          <button type="button" class="t-chip !py-1.5 text-[13px]" (click)="jumpTo(q.card)">{{ q.label }}</button>
+        }
+      </div>
+
+      <div class="min-w-0 space-y-6">
+        @switch (tab()) {
+          @case ('Pagos y plazos') {
+            <app-debo-card />
+            <app-plazos-card />
+            <app-tardo-card />
+          }
+          @case ('Financiera') {
+            <app-conviene-card />
+            <app-pdv-card />
+          }
+          @case ('Stock y rotación') {
+            <app-rota-card />
+            <app-conviene-card />
+          }
+          @case ('Cedentes') {
+            <app-cedentes-card />
+            <app-discrepancias-card />
+          }
+        }
       </div>
     </div>
   `,
@@ -118,10 +114,38 @@ const INDEX: IndexEntry[] = [
 export class Reports {
   protected readonly headerIcon = BarChart3;
   protected readonly index = INDEX;
+  private readonly route = inject(ActivatedRoute);
+
+  protected readonly tabOptions = INDEX.map((e) => ({ value: e.group, label: e.group }));
+  /** Pestaña inicial: la que contiene la tarjeta del fragmento (#rep-plazos), si viene uno. */
+  protected readonly tab = signal(this.groupFor(this.route.snapshot.fragment) ?? INDEX[0].group);
+  protected readonly questions = computed(
+    () => INDEX.find((e) => e.group === this.tab())?.questions ?? [],
+  );
+
+  constructor() {
+    const fragment = this.route.snapshot.fragment;
+    if (fragment) afterNextRender(() => setTimeout(() => this.jumpTo(fragment), 400));
+  }
+
+  private groupFor(card: string | null): string | null {
+    if (!card) return null;
+    return INDEX.find((e) => e.questions.some((q) => q.card === card))?.group ?? null;
+  }
 
   // Scroll to the card instead of a fragment href — a `#anchor` link changes the route under
   // hash-based routing (as in the prod deploy) and bounces to the landing.
   protected jumpTo(cardId: string): void {
-    document.getElementById(cardId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(cardId);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    const group = this.groupFor(cardId);
+    if (group && group !== this.tab()) {
+      this.tab.set(group);
+      setTimeout(() => document.getElementById(cardId)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    }
   }
+
 }

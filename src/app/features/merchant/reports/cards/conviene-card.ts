@@ -8,7 +8,6 @@ import { GarmentsService } from '../../../../core/services/garments.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
@@ -24,16 +23,16 @@ type State =
 
 @Component({
   selector: 'app-conviene-card',
-  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState, DrillModal],
+  imports: [MoneyPipe, ErrorState, EmptyState, DrillModal],
   template: `
     <div
       id="rep-conviene"
-      class="t-card scroll-mt-4 p-5"
+      class="t-card scroll-mt-24 p-6"
     >
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="font-display text-lg font-semibold text-trama-dark">¿Qué me conviene recibir?</h2>
-          <p class="mt-1 text-sm text-trama-dark/50">
+          <h2 class="text-title-3 text-trama-dark">¿Qué me conviene recibir?</h2>
+          <p class="mt-1 text-sm text-trama-muted">
             Ganancia, conversión y días a venta del período filtrado; stock a hoy.
           </p>
         </div>
@@ -43,31 +42,31 @@ type State =
       </div>
 
       @if (isLoading()) {
-        <app-loading-spinner />
+        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (rows().length) {
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="border-b border-trama-sand-200 text-trama-dark/60">
+          <table class="t-table t-table-narrow">
+            <thead>
               <tr>
-                <th class="py-2 pr-4 font-medium">Categoría</th>
-                <th class="py-2 pr-4 font-medium">
+                <th>Categoría</th>
+                <th>
                   <button (click)="sortBy('ganancia')" [class]="thClass('ganancia')">Ganancia</button>
                 </th>
-                <th class="py-2 pr-4 font-medium">
+                <th>
                   <button (click)="sortBy('conversion')" [class]="thClass('conversion')">Conversión</button>
                 </th>
-                <th class="py-2 pr-4 font-medium">
+                <th>
                   <button (click)="sortBy('dias')" [class]="thClass('dias')">Días a venta</button>
                 </th>
-                <th class="py-2 font-medium">En stock</th>
+                <th>En stock</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.category) {
-                <tr class="border-b border-trama-sand-100 last:border-0">
-                  <td class="py-3 pr-4">
+                <tr>
+                  <td>
                     <button
                       (click)="openDrill(row.category)"
                       class="font-medium text-trama-dark hover:text-trama-brand hover:underline"
@@ -75,14 +74,14 @@ type State =
                       {{ row.category }}
                     </button>
                   </td>
-                  <td class="py-3 pr-4 font-medium text-trama-green-700">{{ row.merchantProfit | money }}</td>
-                  <td class="py-3 pr-4 text-trama-dark/70">
+                  <td class="t-amount">{{ row.merchantProfit | money }}</td>
+                  <td class="text-trama-body">
                     {{ row.conversion === null ? '—' : row.conversion + '%' }}
                   </td>
-                  <td class="py-3 pr-4 text-trama-dark/70">
+                  <td class="text-trama-body">
                     {{ row.avgDaysToSale === null ? '—' : row.avgDaysToSale + ' días' }}
                   </td>
-                  <td class="py-3 text-trama-dark/70">{{ row.inStockCount }}</td>
+                  <td class="text-trama-body">{{ row.inStockCount }}</td>
                 </tr>
               }
             </tbody>
@@ -94,6 +93,7 @@ type State =
 
       @if (drill(); as d) {
         <app-drill-modal
+          question="¿Qué me conviene recibir?"
           [title]="d.title"
           [rows]="d.rows"
           [csvName]="d.csvName"
