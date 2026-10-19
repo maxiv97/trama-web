@@ -150,18 +150,7 @@ type InventoryState =
             <table class="t-table">
               <thead>
                 <tr>
-                  <th class="w-10">
-                    @if (sellableCount() > 0) {
-                      <input
-                        type="checkbox"
-                        class="h-4 w-4 accent-trama-brand"
-                        [checked]="allSelected()"
-                        [indeterminate]="someSelected()"
-                        (change)="toggleAll()"
-                        aria-label="Seleccionar todas las prendas en stock"
-                      />
-                    }
-                  </th>
+                  <th class="w-10"></th>
                   <th>Prenda</th>
                   <th>Cedente</th>
                   <th>Punto de venta</th>
@@ -336,9 +325,6 @@ export class Inventory {
     const ids = this.sellableIds();
     return ids.length > 0 && ids.every((id) => this.selected().has(id));
   });
-  protected readonly someSelected = computed(
-    () => this.selectedCount() > 0 && !this.allSelected(),
-  );
 
   protected toggleAll(): void {
     if (this.allSelected()) this.clearSelection();
