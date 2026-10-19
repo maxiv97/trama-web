@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { GarmentStatus } from '../../../core/models/garment.model';
+import { Seam } from '../seam/seam';
 
 const STEPS = [
   'Cargada',
@@ -25,35 +26,24 @@ const STEP_INDEX: Record<GarmentStatus, number> = {
   cancelled: 1,
 };
 
-// Terminal-bad outcomes: the current step is painted red instead of green.
+// Resultados negativos: el anillo del paso actual pasa a rojo.
 const NEGATIVE: Partial<Record<GarmentStatus, boolean>> = {
   no_agreement: true,
   rejected: true,
 };
 
+/** Recorrido de la prenda (handoff §4.7): la costura de trazabilidad en 7 pasos. */
 @Component({
   selector: 'app-progress-tracker',
+  imports: [Seam],
   template: `
-    <ol class="flex items-center">
-      @for (step of steps; track step; let i = $index; let last = $last) {
-        <li class="flex items-center" [class.flex-1]="!last">
-          <div class="flex flex-col items-center">
-            <span
-              class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium"
-              [class]="circleClass(i)"
-              >{{ i + 1 }}</span
-            >
-            <span class="mt-1 whitespace-nowrap text-xs" [class]="labelClass(i)">{{ step }}</span>
-          </div>
-          @if (!last) {
-            <span
-              class="mx-2 h-0.5 flex-1"
-              [class]="i < currentIndex() ? 'bg-trama-brand' : 'bg-trama-sand-200'"
-            ></span>
-          }
-        </li>
-      }
-    </ol>
+    <app-seam
+      [steps]="steps"
+      [current]="currentIndex()"
+      [negative]="isNegative()"
+      [radius]="22"
+      [compactLabels]="true"
+    />
   `,
 })
 export class ProgressTracker {
@@ -61,20 +51,4 @@ export class ProgressTracker {
   protected readonly steps = STEPS;
   protected readonly currentIndex = computed(() => STEP_INDEX[this.currentStatus()]);
   protected readonly isNegative = computed(() => NEGATIVE[this.currentStatus()] ?? false);
-
-  protected circleClass(i: number): string {
-    const current = this.currentIndex();
-    if (i < current) return 'bg-trama-brand text-white';
-    if (i === current) {
-      return this.isNegative()
-        ? 'bg-status-none text-white ring-4 ring-status-none-soft'
-        : 'bg-trama-brand text-white ring-4 ring-trama-green-100';
-    }
-    return 'bg-trama-sand-200 text-trama-dark/50';
-  }
-
-  protected labelClass(i: number): string {
-    if (i === this.currentIndex() && this.isNegative()) return 'font-medium text-status-none';
-    return i <= this.currentIndex() ? 'font-medium text-trama-dark' : 'text-trama-dark/40';
-  }
 }

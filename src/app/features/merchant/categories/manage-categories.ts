@@ -1,3 +1,4 @@
+import { Tags } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -7,8 +8,10 @@ import { Category } from '../../../core/models/category.model';
 import { CategoriesService } from '../../../core/services/categories.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 interface BaseRow {
   label: string;
@@ -29,67 +32,61 @@ type CategoriesState =
 
 @Component({
   selector: 'app-manage-categories',
-  imports: [LoadingSpinner, ErrorState, EmptyState],
+  imports: [Dropdown, PageSkeleton, PageHeader, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="list" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las categorías." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-8">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 class="text-2xl font-semibold text-trama-dark">Categorías</h1>
-            <p class="mt-1 text-sm text-trama-dark/60">
-              Elegí qué categorías base ofrecés y sumá las tuyas propias.
-            </p>
-          </div>
-          <button
+        <app-page-header title="Categorías" section="Categorías" [icon]="headerIcon" lead="Elegí qué categorías base ofrecés y sumá las tuyas propias.">
+          <button actions
             type="button"
             (click)="openCreate()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+            class="t-btn t-btn-primary"
           >
             Agregar categoría
           </button>
-        </div>
+        </app-page-header>
 
         <!-- Categorías propias -->
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold tracking-wide text-trama-dark/60 uppercase">
+          <h2 class="text-eyebrow">
             Mis categorías
           </h2>
           @if (d.custom.length) {
             <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
               @for (category of d.custom; track category.id) {
-                <div class="space-y-2 rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <div class="t-card space-y-2 p-4">
                   <div class="flex items-start justify-between gap-3">
                     <div>
                       <p class="font-medium text-trama-dark">{{ category.label }}</p>
                       @if (category.parentLabel) {
-                        <p class="text-xs text-trama-dark/50">Consolida en: {{ category.parentLabel }}</p>
+                        <p class="text-[13px] font-semibold text-trama-body">Consolida en: {{ category.parentLabel }}</p>
                       }
                     </div>
                     <div class="flex gap-2">
                       <button
                         type="button"
                         (click)="openEdit(category)"
-                        class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                        class="t-btn t-btn-secondary t-btn-sm"
                       >
                         Editar
                       </button>
                       <button
                         type="button"
                         (click)="askDelete(category)"
-                        class="rounded-lg border border-status-none/30 px-3 py-1.5 text-xs font-medium text-status-none hover:bg-status-none-soft"
+                        class="t-btn t-btn-sm border-status-none/40 text-status-none hover:bg-status-none-soft"
                       >
                         Dar de baja
                       </button>
                     </div>
                   </div>
                   @if (category.subcategories.length) {
-                    <p class="text-sm text-trama-dark/70">{{ category.subcategories.join(' · ') }}</p>
+                    <p class="text-sm text-trama-body">{{ category.subcategories.join(' · ') }}</p>
                   } @else {
-                    <p class="text-sm text-trama-dark/40">Sin subcategorías</p>
+                    <p class="text-sm text-trama-muted">Sin subcategorías</p>
                   }
                 </div>
               }
@@ -101,16 +98,16 @@ type CategoriesState =
 
         <!-- Catálogo base -->
         <section class="space-y-3">
-          <h2 class="text-sm font-semibold tracking-wide text-trama-dark/60 uppercase">
+          <h2 class="text-eyebrow">
             Catálogo base
           </h2>
-          <p class="text-sm text-trama-dark/60">
+          <p class="text-sm text-trama-body">
             Las que no ofrecés no aparecen cuando un cedente te elige. No afecta a otros comercios.
           </p>
-          <div class="divide-y divide-trama-sand-100 overflow-hidden rounded-2xl border border-trama-sand-200 bg-white">
+          <div class="t-card divide-y divide-trama-sand-100 overflow-hidden">
             @for (row of d.base; track row.label) {
               <div class="flex items-center justify-between gap-3 px-4 py-3">
-                <span [class]="row.shown ? 'text-trama-dark' : 'text-trama-dark/40 line-through'">
+                <span [class]="row.shown ? 'text-trama-dark' : 'text-trama-muted line-through'">
                   {{ row.label }}
                 </span>
                 <button
@@ -120,7 +117,7 @@ type CategoriesState =
                   class="rounded-lg border px-3 py-1.5 text-xs font-medium disabled:opacity-40"
                   [class]="
                     row.shown
-                      ? 'border-trama-sand-200 text-trama-dark/70 hover:bg-trama-sand-100'
+                      ? 'border-trama-sand-200 text-trama-body hover:bg-trama-sand-100'
                       : 'border-trama-brand bg-trama-green-50 text-trama-brand hover:bg-trama-green-100'
                   "
                 >
@@ -134,57 +131,53 @@ type CategoriesState =
 
       <!-- Alta / edición -->
       @if (formOpen()) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="close()">
+        <div class="t-overlay" (click)="close()">
           <div
-            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-lg"
+            class="t-modal t-pop-in max-h-[90vh] w-full max-w-lg overflow-y-auto"
             (click)="$event.stopPropagation()"
           >
-            <h2 class="text-lg font-semibold text-trama-dark">
+            <h2 class="text-title-2 text-trama-dark">
               {{ editingId() ? 'Editar categoría' : 'Agregar categoría' }}
             </h2>
 
             <div class="mt-4 space-y-4">
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Nombre</span>
+              <label class="block">
+                <span class="t-label">Nombre</span>
                 <input
                   [value]="fLabel()"
                   (input)="fLabel.set($any($event.target).value)"
                   placeholder="Ej: Ropa de bebé"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input"
                 />
               </label>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Subcategorías</span>
-                <span class="block text-xs text-trama-dark/50">Una por línea (opcional).</span>
+              <label class="block">
+                <span class="t-label">Subcategorías</span>
+                <span class="block text-xs text-trama-muted">Una por línea (opcional).</span>
                 <textarea
                   [value]="fSubcategories()"
                   (input)="fSubcategories.set($any($event.target).value)"
                   rows="4"
                   placeholder="Bodys&#10;Enteritos&#10;Camperitas"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input"
                 ></textarea>
               </label>
 
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Consolidar en (para reportes)</span>
-                <span class="block text-xs text-trama-dark/50">
+              <label class="block">
+                <span class="t-label">Consolidar en (para reportes)</span>
+                <span class="block text-xs text-trama-muted">
                   Categoría base con la que se agrupa en las métricas. Opcional.
                 </span>
-                <select
+                <app-dropdown
+                  ariaLabel="Consolida en"
+                  [options]="parentDropdown()"
                   [value]="fParent()"
-                  (change)="fParent.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
-                >
-                  <option value="">Ninguna</option>
-                  @for (label of parentOptions(); track label) {
-                    <option [value]="label" [selected]="label === fParent()">{{ label }}</option>
-                  }
-                </select>
+                  (valueChange)="fParent.set($event)"
+                />
               </label>
 
               @if (formError()) {
-                <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none">
+                <p class="t-alert">
                   {{ formError() }}
                 </p>
               }
@@ -194,7 +187,7 @@ type CategoriesState =
               <button
                 type="button"
                 (click)="close()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -202,7 +195,7 @@ type CategoriesState =
                 type="button"
                 (click)="save()"
                 [disabled]="!fLabel().trim() || saving()"
-                class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                class="t-btn t-btn-primary"
               >
                 {{ saving() ? 'Guardando…' : 'Guardar' }}
               </button>
@@ -213,10 +206,10 @@ type CategoriesState =
 
       <!-- Confirmación de baja -->
       @if (deleting(); as target) {
-        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="deleting.set(null)">
-          <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
-            <h2 class="text-lg font-semibold text-trama-dark">Dar de baja la categoría</h2>
-            <p class="mt-2 text-sm text-trama-dark/70">
+        <div class="t-overlay" (click)="deleting.set(null)">
+          <div class="t-modal t-pop-in w-full max-w-sm" (click)="$event.stopPropagation()">
+            <h2 class="text-title-2 text-trama-dark">Dar de baja la categoría</h2>
+            <p class="mt-2 text-sm text-trama-body">
               "{{ target.label }}" dejará de ofrecerse a los cedentes. Las prendas que ya la usan no
               se modifican.
             </p>
@@ -224,7 +217,7 @@ type CategoriesState =
               <button
                 type="button"
                 (click)="deleting.set(null)"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -232,7 +225,7 @@ type CategoriesState =
                 type="button"
                 (click)="confirmDelete(target)"
                 [disabled]="saving()"
-                class="rounded-lg bg-status-none px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+                class="t-btn t-btn-danger"
               >
                 {{ saving() ? 'Dando de baja…' : 'Dar de baja' }}
               </button>
@@ -244,6 +237,12 @@ type CategoriesState =
   `,
 })
 export class ManageCategories {
+  protected readonly parentDropdown = computed<DropdownOption[]>(() => [
+    { value: '', label: 'Ninguna' },
+    ...this.parentOptions().map((label) => ({ value: label, label })),
+  ]);
+
+  protected readonly headerIcon = Tags;
   private readonly auth = inject(AuthService);
   private readonly categoriesService = inject(CategoriesService);
   private readonly toast = inject(ToastService);

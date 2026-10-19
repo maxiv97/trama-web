@@ -3,97 +3,100 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import {
   ArrowLeftRight,
-  FileText,
+  Bell,
+  Check,
   Handshake,
+  Inbox,
   LucideAngularModule,
   LucideIconData,
-  PackageCheck,
   Receipt,
-  ShoppingBag,
 } from 'lucide-angular';
+import { BlobIcon } from '../blob-icon/blob-icon';
+import { EnterDirective } from '../../directives/enter.directive';
+import { BlobTone, Hanger } from '../../icons/trama-icons';
 import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { Notification, NotificationType } from '../../../core/models/notification.model';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { EmptyState } from '../empty-state/empty-state';
 import { ErrorState } from '../error-state/error-state';
-import { LoadingSpinner } from '../loading-spinner/loading-spinner';
 import { ShortDatePipe } from '../../pipes/short-date.pipe';
+import { PageHeader } from '../page-header/page-header';
+import { PageSkeleton } from '../page-skeleton/page-skeleton';
 
 type ListState =
   | { status: 'loading'; data: null }
   | { status: 'error'; data: null }
   | { status: 'loaded'; data: Notification[] };
 
-const TYPE_ICON: Record<NotificationType, LucideIconData> = {
-  proposal: FileText,
-  counteroffer: ArrowLeftRight,
-  agreement: Handshake,
-  reception: PackageCheck,
-  sale: ShoppingBag,
-  payout: Receipt,
+/** Ícono y blob por tipo (handoff §4.17). */
+const TYPE_KIND: Record<NotificationType, { icon: LucideIconData; tone: BlobTone; label: string }> = {
+  proposal: { icon: Inbox, tone: 'gold', label: 'Propuesta' },
+  counteroffer: { icon: ArrowLeftRight, tone: 'warning', label: 'Contraoferta' },
+  agreement: { icon: Handshake, tone: 'success', label: 'Acuerdo' },
+  reception: { icon: Hanger, tone: 'cream', label: 'Recepción' },
+  sale: { icon: Receipt, tone: 'success', label: 'Venta' },
+  payout: { icon: Check, tone: 'sage', label: 'Pago' },
 };
 
 @Component({
   selector: 'app-notification-list',
-  imports: [LucideAngularModule, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [BlobIcon, EnterDirective, PageSkeleton, PageHeader, LucideAngularModule, ShortDatePipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="list" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las notificaciones." (retry)="retry()" />
     } @else if (data(); as notifications) {
       <div class="space-y-6">
-        <div class="flex items-center justify-between gap-4">
-          <h1 class="text-2xl font-semibold text-trama-dark">Notificaciones</h1>
+        <app-page-header title="Notificaciones" section="Notificaciones" [icon]="headerIcon" lead="Lo que pasó con tus prendas, propuestas y pagos.">
           @if (hasUnread()) {
-            <button
+            <button actions
               type="button"
               (click)="markAll()"
-              class="text-sm font-medium text-trama-brand hover:underline"
+              class="t-btn t-btn-ghost t-btn-sm"
             >
               Marcar todas como leídas
             </button>
           }
-        </div>
+        </app-page-header>
 
         @if (notifications.length) {
-          <div class="space-y-2">
-            @for (notification of notifications; track notification.id) {
-              <button
-                type="button"
-                (click)="open(notification)"
-                class="flex w-full items-start gap-3 rounded-2xl border p-4 text-left transition-colors"
-                [class]="
-                  notification.read
-                    ? 'border-trama-sand-200 bg-white hover:bg-trama-sand-50'
-                    : 'border-trama-brand/30 bg-trama-green-50 hover:bg-trama-green-100'
-                "
-              >
-                <span
-                  class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-trama-sand-100 text-trama-brand"
+          <ul class="t-card divide-y divide-trama-sand-100 p-2 sm:p-3">
+            @for (notification of notifications; track notification.id; let i = $index) {
+              <li [appEnter]="i">
+                <button
+                  type="button"
+                  (click)="open(notification)"
+                  class="flex w-full items-center gap-4 rounded-[14px] px-3 py-3.5 text-left transition-colors duration-150 hover:bg-trama-sand-50"
                 >
-                  <lucide-angular [img]="icon(notification.type)" [size]="18" />
-                </span>
-                <span class="min-w-0 flex-1">
-                  <span class="block text-sm text-trama-dark">{{ notification.text }}</span>
-                  <span class="mt-1 block text-xs text-trama-dark/50">{{
-                    notification.date | shortDate
-                  }}</span>
-                </span>
-                @if (!notification.read) {
-                  <span class="mt-1 h-2 w-2 shrink-0 rounded-full bg-trama-brand"></span>
-                }
-              </button>
+                  <app-blob-icon
+                    [icon]="kind(notification.type).icon"
+                    [tone]="kind(notification.type).tone"
+                    [size]="42"
+                    [iconSize]="20"
+                    [rotate]="(i % 4) * 25 - 30"
+                    [class.opacity-70]="notification.read"
+                  />
+                  <span class="min-w-0 flex-1" [class.opacity-70]="notification.read">
+                    <span class="block text-[15px] leading-snug text-trama-dark" [class]="notification.read ? 'font-medium' : 'font-bold'">{{ notification.text }}</span>
+                    <span class="mt-0.5 block text-[13px] text-trama-muted">{{ kind(notification.type).label }} · {{ notification.date | shortDate }}</span>
+                  </span>
+                  @if (!notification.read) {
+                    <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-trama-knot" aria-label="Sin leer"></span>
+                  }
+                </button>
+              </li>
             }
-          </div>
+          </ul>
         } @else {
-          <app-empty-state message="No tenés notificaciones." />
+          <app-empty-state [icon]="headerIcon" title="No tenés notificaciones" message="Cuando haya novedades sobre tus prendas, propuestas o pagos, te avisamos acá." />
         }
       </div>
     }
   `,
 })
 export class NotificationList {
+  protected readonly headerIcon = Bell;
   private readonly notifications = inject(NotificationsService);
   private readonly router = inject(Router);
 
@@ -125,8 +128,8 @@ export class NotificationList {
     (this.data() ?? []).some((notification) => !notification.read),
   );
 
-  protected icon(type: NotificationType): LucideIconData {
-    return TYPE_ICON[type];
+  protected kind(type: NotificationType): { icon: LucideIconData; tone: BlobTone; label: string } {
+    return TYPE_KIND[type];
   }
 
   protected open(notification: Notification): void {

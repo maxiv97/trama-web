@@ -20,7 +20,6 @@ import { ReportsService } from '../../../../core/services/reports.service';
 import { SalesService } from '../../../../core/services/sales.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadXlsx } from '../../../../shared/xlsx/to-xlsx';
 
@@ -31,21 +30,21 @@ type State =
 
 @Component({
   selector: 'app-pdv-card',
-  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [MoneyPipe, ErrorState, EmptyState],
   template: `
-    <div id="rep-pdv" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+    <div id="rep-pdv" class="t-card scroll-mt-24 p-6">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="font-display text-lg font-semibold text-trama-dark">
+          <h2 class="text-title-3 text-trama-dark">
             ¿Cuánto gané por punto de venta?
           </h2>
-          <p class="mt-1 text-sm text-trama-dark/50">Ganancia, ventas y ticket promedio del período.</p>
+          <p class="mt-1 text-sm text-trama-muted">Ganancia, ventas y ticket promedio del período.</p>
         </div>
         @if (rows().length) {
           <button
             (click)="exportXlsx()"
             [disabled]="exporting()"
-            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-50"
+            class="shrink-0 t-btn t-btn-secondary t-btn-sm"
           >
             {{ exporting() ? 'Generando…' : 'Excel' }}
           </button>
@@ -53,27 +52,27 @@ type State =
       </div>
 
       @if (isLoading()) {
-        <app-loading-spinner />
+        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (rows().length) {
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="border-b border-trama-sand-200 text-trama-dark/60">
+          <table class="t-table t-table-narrow">
+            <thead>
               <tr>
-                <th class="py-2 pr-4 font-medium">Punto de venta</th>
-                <th class="py-2 pr-4 font-medium">Ganancia</th>
-                <th class="py-2 pr-4 font-medium">Ventas</th>
-                <th class="py-2 font-medium">Ticket promedio</th>
+                <th>Punto de venta</th>
+                <th>Ganancia</th>
+                <th>Ventas</th>
+                <th>Ticket promedio</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.salesPointId) {
-                <tr class="border-b border-trama-sand-100 last:border-0">
-                  <td class="py-3 pr-4 font-medium text-trama-dark">{{ row.name }}</td>
-                  <td class="py-3 pr-4 font-medium text-trama-green-700">{{ row.merchantProfit | money }}</td>
-                  <td class="py-3 pr-4 text-trama-dark/70">{{ row.soldCount }}</td>
-                  <td class="py-3 text-trama-dark/70">
+                <tr>
+                  <td class="font-bold">{{ row.name }}</td>
+                  <td class="t-amount">{{ row.merchantProfit | money }}</td>
+                  <td class="text-trama-body">{{ row.soldCount }}</td>
+                  <td class="text-trama-body">
                     {{ row.soldCount ? (row.revenue / row.soldCount | money) : '—' }}
                   </td>
                 </tr>

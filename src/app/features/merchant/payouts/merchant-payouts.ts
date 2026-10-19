@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Receipt, ChevronRight, LucideAngularModule } from 'lucide-angular';
+import { Component, computed, inject, signal, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -8,7 +9,6 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { PayoutStatusBadge } from '../../../shared/components/payout-status-badge/payout-status-badge';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -16,6 +16,11 @@ import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { monthLabel } from '../../../core/utils/month.util';
 import { downloadPayoutPdf } from '../../../shared/pdf/payout-pdf';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { ChipOption, DataTable, pageOf } from '../../../shared/components/data-table/data-table';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
+import { Avatar } from '../../../shared/components/avatar/avatar';
 
 interface PayoutsData {
   rows: MonthlyPayout[];
@@ -29,101 +34,74 @@ type PayoutsState =
 
 @Component({
   selector: 'app-merchant-payouts',
-  imports: [StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [Avatar, LucideAngularModule, Dropdown, DataTable, PageSkeleton, PageHeader, StatCard, PayoutStatusBadge, MoneyPipe, ShortDatePipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las liquidaciones." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">Liquidaciones</h1>
+        <app-page-header title="Liquidaciones" section="Liquidaciones" [icon]="headerIcon" lead="Lo que le debés a cada cedente por las prendas vendidas, mes a mes.">
           @if (months().length) {
-            <select
-              [value]="activeMonth()"
-              (change)="selectedMonth.set($any($event.target).value)"
-              class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-            >
-              @for (month of months(); track month) {
-                <option [value]="month" [selected]="activeMonth() === month">
-                  {{ monthLabel(month) }}
-                </option>
-              }
-            </select>
+            <app-dropdown actions class="w-full md:w-52" [onPage]="true" [alignRight]="true" ariaLabel="Mes" [options]="monthOptions()" [value]="activeMonth()" (valueChange)="selectedMonth.set($event)" />
           }
-        </div>
+        </app-page-header>
 
         @if (monthRows().length) {
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <app-stat-card title="Total a pagar" [value]="summary().total | money" />
+          <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <app-stat-card title="Total a pagar" [value]="summary().total | money" [highlight]="true" />
             <app-stat-card title="Pendiente" [value]="summary().pending | money" />
-            <app-stat-card title="Vencido" [value]="summary().overdue | money" color="red" />
-            <app-stat-card title="Pagado" [value]="summary().paid | money" color="green" />
+            <app-stat-card title="Vencido" [value]="summary().overdue | money" [color]="summary().overdue ? 'red' : 'default'" />
+            <app-stat-card title="Pagado" [value]="summary().paid | money" />
           </div>
 
-          <p class="text-sm text-trama-dark/60">
-            {{ summary().consignors }}
-            {{ summary().consignors === 1 ? 'cedente' : 'cedentes' }} ·
-            {{ summary().garments }}
-            {{ summary().garments === 1 ? 'prenda vendida' : 'prendas vendidas' }}
-          </p>
-
           @if (summary().overdueCount > 0) {
-            <div
-              class="rounded-2xl border border-status-none/20 bg-status-none-soft px-5 py-3 text-sm font-medium text-status-none"
-            >
-              {{ summary().overdueCount }}
-              {{ summary().overdueCount === 1 ? 'liquidación vencida' : 'liquidaciones vencidas' }}
-              en este mes.
+            <div class="t-alert">
+              <strong>{{ summary().overdueCount }} {{ summary().overdueCount === 1 ? 'liquidación vencida' : 'liquidaciones vencidas' }} en este mes.</strong>
+              Pagalas cuanto antes: el cedente ya lo ve como atrasado.
             </div>
           }
 
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
-            <table class="w-full text-left text-sm">
-              <thead class="border-b border-trama-sand-200 text-trama-dark/60">
+          <app-data-table [total]="monthRows().length" [shown]="monthRows().length" noun="liquidaciones" [showFooter]="true">
+            <p toolbar class="text-sm text-trama-body">
+              {{ summary().consignors }} {{ summary().consignors === 1 ? 'cedente' : 'cedentes' }} ·
+              {{ summary().garments }} {{ summary().garments === 1 ? 'prenda vendida' : 'prendas vendidas' }}
+            </p>
+            <table class="t-table">
+              <thead>
                 <tr>
-                  <th class="px-4 py-3 font-medium">Cedente</th>
-                  <th class="px-4 py-3 font-medium">Prendas</th>
-                  <th class="px-4 py-3 font-medium">Monto</th>
-                  <th class="px-4 py-3 font-medium">Estado</th>
-                  <th class="px-4 py-3 font-medium">Vencimiento</th>
-                  <th class="px-4 py-3"></th>
+                  <th>Cedente</th>
+                  <th class="t-num">Prendas</th>
+                  <th class="t-num">Monto</th>
+                  <th>Estado</th>
+                  <th>Vencimiento</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 @for (row of monthRows(); track row.key) {
-                  <tr
-                    class="border-b border-trama-sand-100 last:border-0"
-                    [class.bg-status-none-soft]="row.status === 'overdue'"
-                  >
-                    <td class="px-4 py-3">
-                      <div class="font-medium text-trama-dark">{{ row.counterpartName }}</div>
-                      @if (row.counterpartDni) {
-                        <div class="text-trama-dark/50">DNI {{ row.counterpartDni }}</div>
-                      }
+                  <tr>
+                    <td class="t-cell-main">
+                      <div class="flex items-center gap-3">
+                        <app-avatar [name]="row.counterpartName" [size]="38" />
+                        <span class="min-w-0">
+                          <span class="block truncate font-bold">{{ row.counterpartName }}</span>
+                          @if (row.counterpartDni) {
+                            <span class="t-meta">DNI {{ row.counterpartDni }}</span>
+                          }
+                        </span>
+                      </div>
                     </td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.lines.length }}</td>
-                    <td class="px-4 py-3 font-medium text-trama-dark">{{ row.totalAmount | money }}</td>
-                    <td class="px-4 py-3"><app-payout-status-badge [status]="row.status" /></td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.dueDate | shortDate }}</td>
-                    <td class="px-4 py-3">
+                    <td data-label="Prendas" class="t-num t-amount">{{ row.lines.length }}</td>
+                    <td data-label="Monto" class="t-num t-amount">{{ row.totalAmount | money }}</td>
+                    <td data-label="Estado"><app-payout-status-badge [status]="row.status" /></td>
+                    <td data-label="Vencimiento" class="whitespace-nowrap" [class]="row.status === 'overdue' ? 'font-bold text-status-none' : 't-muted'">{{ row.dueDate | shortDate }}</td>
+                    <td class="t-cell-action">
                       <div class="flex justify-end gap-2">
-                        <button
-                          type="button"
-                          (click)="download(row)"
-                          class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
-                        >
-                          Descargar
-                        </button>
+                        <button type="button" (click)="download(row)" class="t-btn t-btn-secondary t-btn-sm">Descargar</button>
                         @if (row.status !== 'paid') {
-                          <button
-                            type="button"
-                            (click)="openSettle(row)"
-                            class="rounded-lg bg-trama-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-trama-green-700"
-                          >
-                            Marcar pagada
-                          </button>
+                          <button type="button" (click)="openSettle(row)" class="t-btn t-btn-primary t-btn-sm">Marcar pagada</button>
                         }
                       </div>
                     </td>
@@ -131,43 +109,36 @@ type PayoutsState =
                 }
               </tbody>
             </table>
-          </div>
+          </app-data-table>
         } @else {
-          <app-empty-state message="No hay liquidaciones en este mes." />
+          <app-empty-state [icon]="headerIcon" title="No hay liquidaciones en este mes" message="Cuando vendas prendas consignadas, acá vas a ver cuánto le debés a cada cedente." />
         }
       </div>
 
       @if (settling(); as row) {
-        <div
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          (click)="closeSettle()"
-        >
-          <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
-            <h2 class="text-lg font-semibold text-trama-dark">Marcar liquidación pagada</h2>
-            <p class="mt-1 text-sm text-trama-dark/60">
+        <div class="t-overlay" (click)="closeSettle()">
+          <div class="t-modal t-pop-in w-full max-w-md" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+            <h2 class="text-title-2 text-trama-dark">Marcar liquidación pagada</h2>
+            <p class="mt-1.5 text-[15px] text-trama-body">
               {{ row.counterpartName }} · {{ monthLabel(row.month) }} ·
-              {{ row.pendingAmount | money }}
+              <strong class="font-display font-bold text-trama-dark">{{ row.pendingAmount | money }}</strong>
             </p>
 
-            <div class="mt-4 space-y-4">
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Método de pago</span>
-                <select
-                  [value]="paymentMethod()"
-                  (change)="paymentMethod.set($any($event.target).value)"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="transfer">Transferencia</option>
-                  <option value="cash">Efectivo</option>
-                </select>
-              </label>
-              <label class="block text-sm">
-                <span class="text-trama-dark/70">Nº de comprobante</span>
+            <div class="mt-5 space-y-4">
+              <div>
+                <span class="t-label">Método de pago</span>
+                <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Método de pago">
+                  <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'transfer'" (click)="paymentMethod.set('transfer')">Transferencia</button>
+                  <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'cash'" (click)="paymentMethod.set('cash')">Efectivo</button>
+                </div>
+              </div>
+              <label class="block">
+                <span class="t-label">Nº de comprobante</span>
                 <input
                   [value]="receiptNumber()"
                   (input)="receiptNumber.set($any($event.target).value)"
                   placeholder="Opcional"
-                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                  class="t-input"
                 />
               </label>
             </div>
@@ -177,7 +148,7 @@ type PayoutsState =
                 type="button"
                 (click)="closeSettle()"
                 [disabled]="acting()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100 disabled:opacity-40"
+                class="t-btn t-btn-ghost"
               >
                 Cancelar
               </button>
@@ -185,7 +156,7 @@ type PayoutsState =
                 type="button"
                 (click)="confirmSettle()"
                 [disabled]="acting()"
-                class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                class="t-btn t-btn-primary"
               >
                 {{ acting() ? 'Registrando…' : 'Registrar pago' }}
               </button>
@@ -197,6 +168,11 @@ type PayoutsState =
   `,
 })
 export class MerchantPayouts {
+  protected readonly chevIcon = ChevronRight;
+  protected readonly monthOptions = computed<DropdownOption[]>(() =>
+    this.months().map((m) => ({ value: m, label: this.monthLabel(m) })),
+  );
+  protected readonly headerIcon = Receipt;
   private readonly auth = inject(AuthService);
   private readonly payoutsService = inject(PayoutsService);
   private readonly merchantsService = inject(MerchantsService);

@@ -1,9 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { LogoIcon } from '../../../shared/components/logo/logo';
+import { CollageHero } from './collage-hero';
+import { BLOB_PATH } from '../../../shared/icons/trama-icons';
+import { Stitch } from '../../../shared/components/stitch/stitch';
 
 interface Step {
   n: string;
+  hover: string;
   title: string;
   body: string;
 }
@@ -19,16 +23,19 @@ interface Audience {
 const STEPS: Step[] = [
   {
     n: '1',
+    hover: 'rotate(-12deg) scale(1.15)',
     title: 'El cedente carga su prenda',
     body: 'Subís fotos, descripción y el precio que querés recibir. La propuesta llega al comercio.',
   },
   {
     n: '2',
+    hover: 'translateY(-6px) scale(1.15)',
     title: 'El comercio revisa y acuerda',
     body: 'Acepta o envía una contraoferta. Cuando ambos coinciden, los precios quedan congelados.',
   },
   {
     n: '3',
+    hover: 'rotate(14deg) scale(1.15)',
     title: 'Se vende y se liquida',
     body: 'El comercio registra la venta y se calcula automáticamente tu liquidación.',
   },
@@ -59,133 +66,73 @@ const AUDIENCES: Audience[] = [
   },
 ];
 
-const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
-
 @Component({
   selector: 'app-landing',
-  imports: [RouterLink, LogoIcon],
+  imports: [RouterLink, LogoIcon, CollageHero],
   template: `
     <div class="min-h-screen bg-trama-sand-50 text-trama-dark">
-      <!-- barra superior -->
-      <header class="mx-auto flex max-w-[1240px] items-center justify-between px-5 py-5 md:px-[7vw]">
-        <a routerLink="/" class="flex items-center gap-2.5 font-display text-[22px] font-bold tracking-tight">
-          <app-logo-icon [size]="30" />
-          Trama
-        </a>
-        <a
-          routerLink="/login"
-          class="rounded-[9px] border border-trama-dark/20 px-[18px] py-2 text-sm font-semibold hover:bg-white"
-          >Ingresar</a
-        >
-      </header>
-
-      <!-- hero -->
-      <section
-        class="mx-auto grid max-w-[1240px] items-center gap-12 px-5 pt-6 pb-16 md:px-[7vw] lg:grid-cols-[1.05fr_.95fr] lg:gap-14"
-      >
-        <div>
-          <span
-            class="mb-5 inline-flex items-center gap-2 rounded-full bg-trama-green-50 px-3 py-1.5 text-[12.5px] font-semibold text-trama-green-700"
-          >
-            <span class="size-1.5 rounded-full bg-trama-brand"></span>
-            Consignación de indumentaria, trazable
-          </span>
-          <h1
-            class="mb-5 font-display text-[38px] leading-[1.06] font-semibold tracking-[-.025em] text-balance md:text-[52px]"
-          >
-            Gestioná tus consignaciones de indumentaria de forma simple y trazable
-          </h1>
-          <p class="mb-8 max-w-[520px] text-lg leading-relaxed text-trama-dark/70">
-            Conectá tus prendas en desuso con comercios que las venden por vos. Vos ponés el precio
-            que querés recibir, el comercio se encarga del resto y cada paso queda registrado: desde
-            el acuerdo hasta la liquidación.
-          </p>
-          <div class="flex flex-wrap gap-3.5">
-            <a routerLink="/register" [queryParams]="{ rol: 'cedente' }" [class]="primaryBtn"
-              >Registrarme como cedente</a
-            >
-            <a routerLink="/register" [queryParams]="{ rol: 'comercio' }" [class]="secondaryBtn"
-              >Registrarme como comercio</a
-            >
-          </div>
-        </div>
-
-        <!-- ilustración: tarjeta de un artículo consignado -->
-        <div
-          class="relative overflow-hidden rounded-[20px] border border-black/[.08] bg-[repeating-linear-gradient(135deg,#dceddf_0_14px,#d4e7d8_14px_28px)] p-6 sm:p-8"
-          aria-hidden="true"
-        >
-          <div class="ml-auto w-full max-w-[340px] rounded-2xl bg-white p-5 shadow-[0_10px_30px_rgba(0,0,0,.12)]">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-[11px] font-semibold tracking-wide text-trama-muted uppercase">Artículo</p>
-                <p class="font-display text-lg font-semibold">Campera de lana · Talle M</p>
-              </div>
-              <span class="rounded-full bg-status-sold-soft px-2.5 py-1 text-xs font-semibold text-status-sold"
-                >Vendido</span
-              >
-            </div>
-            <div class="my-4 h-px bg-trama-sand-50"></div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <p class="text-[11px] font-semibold text-trama-muted">Precio cedente</p>
-                <p class="font-display text-2xl font-bold tabular-nums">$15.000</p>
-              </div>
-              <div>
-                <p class="text-[11px] font-semibold text-trama-muted">Precio de venta</p>
-                <p class="font-display text-2xl font-bold text-trama-teal tabular-nums">$50.000</p>
-              </div>
-            </div>
-            <ol class="mt-5 flex items-center">
-              @for (s of track; track s; let i = $index, last = $last) {
-                <li class="flex flex-1 flex-col items-center gap-1.5 last:flex-none">
-                  <div class="flex w-full items-center">
-                    <span
-                      class="size-3 shrink-0 rounded-full"
-                      [class]="i < 4 ? 'bg-trama-brand' : 'border-2 border-trama-brand bg-white'"
-                    ></span>
-                    @if (!last) {
-                      <span class="h-0.5 flex-1" [class]="i < 3 ? 'bg-trama-brand' : 'bg-trama-sand-50'"></span>
-                    }
-                  </div>
-                </li>
-              }
-            </ol>
-            <div class="mt-1.5 flex justify-between text-[10.5px] font-medium text-trama-muted">
-              @for (s of track; track s) {
-                <span>{{ s }}</span>
-              }
-            </div>
-          </div>
-          <div
-            class="mt-4 w-full max-w-[260px] rounded-2xl bg-trama-sidebar p-4 text-white shadow-[0_10px_30px_rgba(0,0,0,.18)]"
-          >
-            <p class="text-[11px] font-semibold text-white/60">Liquidación al cedente</p>
-            <p class="font-display text-xl font-bold tabular-nums">$15.000</p>
-            <p class="mt-1 text-xs text-white/60">Calculada automáticamente al registrar la venta</p>
-          </div>
-        </div>
-      </section>
+      <app-collage-hero />
 
       <!-- cómo funciona -->
-      <section class="border-t border-black/[.06] bg-white">
-        <div class="mx-auto max-w-[1240px] px-5 py-16 md:px-[7vw]">
-          <p class="mb-2.5 text-[13px] font-bold tracking-[.08em] text-trama-brand uppercase">
-            ¿Cómo funciona?
-          </p>
-          <h2 class="mb-10 font-display text-[28px] font-semibold tracking-[-.02em] md:text-[34px]">
+      <section class="bg-trama-paper">
+        <div class="mx-auto max-w-[1280px] px-5 py-16 sm:px-10 lg:px-20">
+          <p class="text-eyebrow">¿Cómo funciona?</p>
+          <h2 class="mt-2 font-display text-[30px] font-bold tracking-[-0.02em] md:text-[36px]">
             Tres pasos, de la percha a la liquidación
           </h2>
-          <div class="grid gap-6 md:grid-cols-3">
-            @for (s of steps; track s.n) {
-              <div class="rounded-2xl border border-black/[.05] bg-trama-sand-100 p-7">
-                <div
-                  class="mb-[18px] inline-flex size-10 items-center justify-center rounded-[10px] bg-trama-dark font-display text-lg font-bold text-white"
-                >
-                  {{ s.n }}
-                </div>
-                <h3 class="mb-2 font-display text-[19px] font-semibold">{{ s.title }}</h3>
-                <p class="text-[14.5px] leading-normal text-trama-dark/70">{{ s.body }}</p>
+          <div class="mt-9 grid gap-6 md:grid-cols-3">
+            @for (s of steps; track s.n; let i = $index) {
+              <div
+                class="step flex flex-col gap-3.5 rounded-[22px] bg-trama-sand-50 p-7"
+                [style.--hover]="s.hover"
+              >
+                <span class="ico inline-flex h-[72px] w-[72px]" aria-hidden="true">
+                  <svg viewBox="-32 -32 64 64" width="72" height="72">
+                    @switch (i) {
+                      @case (0) {
+                        <path [attr.d]="blob" fill="#F2B636" />
+                        <path
+                          d="M-14,-16 L-6,-19 Q0,-14 6,-19 L14,-16 L20,-6 L13,-2 L13,18 Q0,21 -13,18 L-13,-2 L-20,-6 Z"
+                          fill="#1F3A2B"
+                          stroke="#1F3A2B"
+                          stroke-width="3"
+                          stroke-linejoin="round"
+                        />
+                      }
+                      @case (1) {
+                        <path [attr.d]="blob" fill="#E07A3A" />
+                        <path
+                          d="M-14,-2 L14,-2 L13,18 L-13,18 Z"
+                          fill="#1F3A2B"
+                          stroke="#1F3A2B"
+                          stroke-width="3"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M-18,-14 L18,-14 L20,-4 Q15,1 10,-4 Q5,1 0,-4 Q-5,1 -10,-4 Q-15,1 -20,-4 Z"
+                          fill="#F6F0E2"
+                          stroke="#F6F0E2"
+                          stroke-width="2"
+                          stroke-linejoin="round"
+                        />
+                      }
+                      @default {
+                        <path [attr.d]="blob" fill="#A7B48F" />
+                        <circle cx="-7" cy="6" r="12" fill="#F2B636" />
+                        <path
+                          d="M10,18 L10,-2 M10,4 C2,2 -2,-6 0,-14 C8,-10 10,-4 10,4 M10,0 C18,-2 22,-10 20,-18 C12,-14 10,-8 10,0"
+                          fill="#1F3A2B"
+                          stroke="#1F3A2B"
+                          stroke-width="3"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      }
+                    }
+                  </svg>
+                </span>
+                <h3 class="font-display text-[21px] font-semibold">{{ s.title }}</h3>
+                <p class="text-base leading-normal text-trama-body">{{ s.body }}</p>
               </div>
             }
           </div>
@@ -193,18 +140,16 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
       </section>
 
       <!-- para quién -->
-      <section class="mx-auto max-w-[1240px] px-5 py-16 md:px-[7vw]">
+      <section class="mx-auto max-w-[1280px] px-5 py-16 sm:px-10 lg:px-20">
         <div class="grid gap-6 md:grid-cols-2">
           @for (a of audiences; track a.rol) {
-            <div class="flex flex-col rounded-2xl border border-black/[.06] bg-white p-7 md:p-8">
-              <p class="mb-2.5 text-[13px] font-bold tracking-[.08em] text-trama-brand uppercase">{{ a.tag }}</p>
-              <h3 class="mb-5 font-display text-2xl leading-tight font-semibold tracking-[-.015em]">
-                {{ a.title }}
-              </h3>
-              <ul class="mb-7 space-y-3">
+            <div class="t-card flex flex-col p-7 md:p-9">
+              <p class="text-eyebrow">{{ a.tag }}</p>
+              <h3 class="text-title-2 mt-2 text-trama-dark">{{ a.title }}</h3>
+              <ul class="mb-7 mt-5 space-y-3">
                 @for (p of a.points; track p) {
-                  <li class="flex gap-3 text-[15px] leading-normal text-trama-dark/75">
-                    <span class="mt-2 size-1.5 shrink-0 rounded-full bg-trama-gold"></span>
+                  <li class="flex gap-3 text-[15px] leading-normal text-trama-body">
+                    <span class="mt-2 size-2 shrink-0 rounded-full bg-trama-knot"></span>
                     {{ p }}
                   </li>
                 }
@@ -212,8 +157,8 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
               <a
                 routerLink="/register"
                 [queryParams]="{ rol: a.rol }"
-                class="mt-auto self-start"
-                [class]="a.rol === 'cedente' ? primaryBtn : secondaryBtn"
+                class="t-btn t-btn-pill mt-auto self-start"
+                [class]="a.rol === 'cedente' ? 't-btn-primary' : 't-btn-secondary'"
                 >{{ a.cta }}</a
               >
             </div>
@@ -222,43 +167,53 @@ const TRACK = ['Propuesta', 'Acordado', 'En stock', 'Vendido', 'Liquidado'];
       </section>
 
       <!-- llamado final -->
-      <section class="bg-trama-brand text-white">
+      <section class="bg-trama-dark text-trama-sand-50">
         <div
-          class="mx-auto flex max-w-[1240px] flex-col items-start justify-between gap-6 px-5 py-14 md:flex-row md:items-center md:px-[7vw]"
+          class="mx-auto flex max-w-[1280px] flex-col items-start justify-between gap-6 px-5 py-14 sm:px-10 md:flex-row md:items-center lg:px-20"
         >
           <div>
-            <h2 class="font-display text-[28px] font-semibold tracking-[-.02em]">¿Ya tenés cuenta?</h2>
-            <p class="mt-1.5 text-white/80">Ingresá para seguir tus artículos y liquidaciones.</p>
+            <h2 class="font-display text-[30px] font-bold tracking-[-0.02em]">¿Ya tenés cuenta?</h2>
+            <p class="mt-1.5 text-trama-sand-50/75">
+              Ingresá para seguir tus artículos y liquidaciones.
+            </p>
           </div>
           <a
             routerLink="/login"
-            class="rounded-[11px] bg-white px-[26px] py-3.5 text-[15.5px] font-semibold text-trama-brand hover:bg-trama-sand-100"
+            class="t-btn t-btn-pill bg-trama-gold !px-7 !py-3.5 text-trama-dark hover:brightness-105"
             >Ingresar</a
           >
         </div>
       </section>
 
       <!-- pie -->
-      <footer class="bg-[#121711] text-[#ebefe4]/60">
+      <footer class="border-t border-trama-sand-50/10 bg-trama-dark text-trama-sand-50/60">
         <div
-          class="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-8 text-[13px] md:px-[7vw]"
+          class="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-5 py-8 text-[13px] sm:px-10 lg:px-20"
         >
-          <div class="flex items-center gap-2 font-display font-bold text-[#ebefe3]">
-            <app-logo-icon [size]="22" /> Trama
+          <div class="flex items-center gap-2 font-display font-bold text-trama-sand-50">
+            <app-logo-icon [size]="24" [decorative]="true" /> Trama
           </div>
           <div>Práctica Profesionalizante 3 · Instituto Cervantes · 2026</div>
         </div>
       </footer>
     </div>
   `,
+  styles: `
+    .ico {
+      transition: transform 400ms cubic-bezier(0.3, 1.6, 0.5, 1);
+    }
+    .step:hover .ico {
+      transform: var(--hover);
+    }
+  `,
 })
 export class Landing {
   protected readonly steps = STEPS;
   protected readonly audiences = AUDIENCES;
-  protected readonly track = TRACK;
-
-  protected readonly primaryBtn =
-    'inline-block rounded-[11px] bg-trama-brand px-[22px] py-3.5 text-[15px] font-semibold text-white shadow-[0_6px_18px_rgba(46,125,84,.28)] hover:bg-trama-green-700';
-  protected readonly secondaryBtn =
-    'inline-block rounded-[11px] border border-trama-dark/20 bg-white px-[22px] py-3.5 text-[15px] font-semibold text-trama-dark hover:bg-trama-sand-100';
+  protected readonly blob = BLOB_PATH;
+  protected readonly sampleKpis = [
+    { label: 'Ticket promedio', value: '$13.000' },
+    { label: 'Vendidas', value: '37' },
+    { label: 'En stock', value: '214' },
+  ];
 }

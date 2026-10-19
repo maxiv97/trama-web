@@ -1,3 +1,5 @@
+import { PhotoUploader } from '../../../shared/components/photo-uploader/photo-uploader';
+import { TableThumb } from '../../../shared/components/data-table/data-table';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -26,8 +28,11 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { compressImage } from '../../../core/utils/image.util';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Hanger } from '../../../shared/icons/trama-icons';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 interface ReviewData {
   garment: Garment;
@@ -53,54 +58,70 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
 
 @Component({
   selector: 'app-register-reception',
-  imports: [LoadingSpinner, ErrorState],
+  styles: `
+    .opt {
+      border: 2px solid var(--color-trama-sand-100);
+      background: var(--color-trama-paper);
+      transition: border-color 150ms, background-color 150ms;
+    }
+    .opt:hover {
+      border-color: var(--color-trama-thread-light);
+    }
+    .opt-on,
+    .opt-on:hover {
+      border-color: var(--color-trama-dark);
+      background: var(--color-trama-sand-50);
+    }
+  `,
+  imports: [PhotoUploader, TableThumb, Dropdown, PageSkeleton, PageHeader, ErrorState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="form" />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="mx-auto max-w-2xl space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Registrar recepción</h1>
+        <app-page-header title="Registrar recepción" section="Inventario" [icon]="headerIcon" lead="Revisá la prenda que te trajeron y confirmá en qué estado llegó." />
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-          <p class="font-medium text-trama-dark">{{ d.garment.name }}</p>
-          <p class="text-sm text-trama-dark/60">
-            Condición declarada por el cedente:
-            <span class="text-trama-dark/80">{{ conditionLabel(d.garment.condition) }}</span>
-          </p>
+        <div class="t-card flex items-center gap-4 p-5">
+          <app-table-thumb [photo]="d.garment.photos[0]" [seed]="d.garment.id" [size]="56" />
+          <div class="min-w-0">
+            <p class="text-title-3 truncate text-trama-dark">{{ d.garment.name }}</p>
+            <p class="text-sm text-trama-body">
+              Estado declarado por el cedente: <strong class="text-trama-dark">{{ conditionLabel(d.garment.condition) }}</strong>
+            </p>
+          </div>
         </div>
 
         <div class="space-y-3">
-          <p class="text-sm font-medium text-trama-dark">Resultado del control</p>
+          <p class="t-label">Resultado del control</p>
           <div class="grid gap-3 sm:grid-cols-3">
             @for (option of resultOptions; track option.value) {
               <button
                 type="button"
                 (click)="result.set(option.value)"
-                class="rounded-xl border p-4 text-left"
-                [class]="
-                  result() === option.value
-                    ? 'border-trama-brand bg-trama-green-50'
-                    : 'border-trama-sand-200 hover:border-trama-brand'
-                "
+                role="radio"
+                [attr.aria-checked]="result() === option.value"
+                class="opt rounded-2xl p-4 text-left"
+                [class.opt-on]="result() === option.value"
               >
-                <span class="block font-medium text-trama-dark">{{ option.label }}</span>
-                <span class="mt-1 block text-xs text-trama-dark/60">{{ option.hint }}</span>
+                <span class="block text-[15px] font-bold text-trama-dark">{{ option.label }}</span>
+                <span class="mt-1 block text-[13px] text-trama-body">{{ option.hint }}</span>
               </button>
             }
           </div>
         </div>
 
         @if (needsDetail()) {
-          <div class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-4">
+          <div class="t-card space-y-5 p-5">
             <div>
-              <p class="mb-2 text-sm font-medium text-trama-dark">Discrepancias</p>
+              <p class="t-label">Discrepancias</p>
               <div class="grid gap-2 sm:grid-cols-2">
                 @for (option of discrepancyOptions; track option.value) {
-                  <label class="flex items-center gap-2 text-sm text-trama-dark/80">
+                  <label class="flex cursor-pointer items-center gap-2.5 text-[15px] text-trama-dark">
                     <input
                       type="checkbox"
+                      class="t-check"
                       [checked]="discrepancies().includes(option.value)"
                       (change)="toggleDiscrepancy(option.value)"
                     />
@@ -110,61 +131,30 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
               </div>
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Detalle</label>
+              <label class="t-label">Detalle</label>
               <textarea
                 rows="3"
                 [value]="detail()"
                 (input)="detail.set($any($event.target).value)"
-                class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                class="t-input"
               ></textarea>
             </div>
             <div>
-              <p class="mb-1 text-sm font-medium text-trama-dark">Evidencia fotográfica</p>
-              <label
-                class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-dark/60 hover:border-trama-brand"
-              >
-                Subí fotos de la evidencia
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  class="hidden"
-                  (change)="onEvidenceSelected($event)"
-                />
-              </label>
-              @if (evidence().length) {
-                <div class="mt-3 grid grid-cols-4 gap-2">
-                  @for (photo of evidence(); track $index) {
-                    <div class="relative aspect-square overflow-hidden rounded-lg">
-                      <img [src]="photo" alt="" class="h-full w-full object-cover" />
-                      <button
-                        type="button"
-                        (click)="removeEvidence($index)"
-                        class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-[10px] text-white"
-                        aria-label="Eliminar"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  }
-                </div>
-              }
+              <p class="t-label">Evidencia fotográfica <span class="font-medium text-trama-muted">(opcional)</span></p>
+              <app-photo-uploader [(photos)]="evidence" [max]="4" [suggestions]="['Evidencia', 'Detalle', 'Otra', 'Otra']" />
             </div>
           </div>
         }
 
         <div>
-          <label class="mb-1 block text-sm font-medium text-trama-dark">Punto de venta receptor</label>
-          <select
+          <label class="t-label">Punto de venta receptor</label>
+          <app-dropdown
+            placeholder="Elegí un punto de venta"
+            ariaLabel="Punto de venta receptor"
+            [options]="salesPointOptions(d.merchant?.salesPoints ?? [])"
             [value]="salesPointId()"
-            (change)="salesPointId.set($any($event.target).value)"
-            class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-          >
-            <option value="">Elegí un punto de venta</option>
-            @for (point of d.merchant?.salesPoints ?? []; track point.id) {
-              <option [value]="point.id">{{ point.name }} — {{ point.address }}</option>
-            }
-          </select>
+            (valueChange)="salesPointId.set($event)"
+          />
         </div>
 
         <div class="flex justify-end">
@@ -172,7 +162,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
             type="button"
             (click)="confirm()"
             [disabled]="!canConfirm() || acting()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            class="t-btn t-btn-primary"
           >
             {{ acting() ? 'Confirmando…' : 'Confirmar recepción' }}
           </button>
@@ -182,6 +172,11 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
   `,
 })
 export class RegisterReception {
+  protected salesPointOptions(points: { id: string; name: string; address: string }[]): DropdownOption[] {
+    return points.map((p) => ({ value: p.id, label: p.name, hint: p.address }));
+  }
+
+  protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly garmentsService = inject(GarmentsService);

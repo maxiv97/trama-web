@@ -1,3 +1,4 @@
+import { Shirt } from 'lucide-angular';
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
@@ -10,13 +11,16 @@ import { CategoriesService } from '../../../core/services/categories.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
+import { PhotoUploader } from '../../../shared/components/photo-uploader/photo-uploader';
 import { SEASONS } from '../../../core/models/garment-taxonomy';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { compressImage } from '../../../core/utils/image.util';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
@@ -27,143 +31,112 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
 
 @Component({
   selector: 'app-edit-garment',
-  imports: [ReactiveFormsModule, RouterLink, MoneyPipe, LoadingSpinner, ErrorState],
+  imports: [PhotoUploader, Dropdown, PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, MoneyPipe, ErrorState],
   template: `
     @if (loading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="form" />
     } @else if (error()) {
       <app-error-state message="No pudimos cargar la consignación." link="/c" linkLabel="Volver al panel" />
     } @else {
       <div class="mx-auto max-w-2xl space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Editar consignación</h1>
+        <app-page-header title="Editar consignación" section="Mis prendas" [icon]="headerIcon" lead="Mientras está en revisión podés corregir las fotos, los datos y el precio." />
 
-        <div class="space-y-5 rounded-2xl border border-trama-sand-200 bg-white p-6">
+        <div class="t-card space-y-6 p-6 sm:p-8">
           <!-- Fotos -->
           <div>
-            <span class="mb-1 block text-sm font-medium text-trama-dark">Fotos</span>
-            <label
-              (dragover)="$event.preventDefault()"
-              (drop)="onDrop($event)"
-              class="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-trama-sand-200 py-6 text-center text-sm text-trama-dark/60 hover:border-trama-brand"
-            >
-              Arrastrá o hacé click para agregar
-              <input type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
-            </label>
-            @if (photos().length) {
-              <div class="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-4">
-                @for (photo of photos(); track $index) {
-                  <div class="relative aspect-square overflow-hidden rounded-lg">
-                    <img [src]="photo" alt="" class="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      (click)="removePhoto($index)"
-                      class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
-                      aria-label="Eliminar foto"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                }
-              </div>
-            }
+            <span class="t-label">Fotos</span>
+            <app-photo-uploader [(photos)]="photos" [invalid]="showErrors() && !photos().length" />
             @if (showErrors() && !photos().length) {
-              <p class="mt-1 text-xs text-status-none">Dejá al menos una foto.</p>
+              <p class="t-error">Dejá al menos una foto.</p>
             }
           </div>
 
-          <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <form [formGroup]="form" class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
             <div class="sm:col-span-2">
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+              <label class="t-label">Nombre</label>
               <input formControlName="name" [class]="inputClass" />
               @if (showError('name')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('name') }}</p>
+                <p class="t-error">{{ errorMessage('name') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
-              <select formControlName="category" [class]="inputClass">
-                <option value="">Elegí una categoría</option>
-                @for (category of categories(); track category.id) {
-                  <option [value]="category.label">{{ category.label }}</option>
-                }
-              </select>
+              <label class="t-label">Categoría</label>
+              <app-dropdown formControlName="category" placeholder="Elegí una categoría" ariaLabel="Categoría" [invalid]="showError('category')"
+                [options]="categoryOptions()" />
               @if (showError('category')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('category') }}</p>
+                <p class="t-error">{{ errorMessage('category') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
-              <select formControlName="subcategory" [class]="inputClass">
-                <option value="">Elegí una subcategoría</option>
-                @for (subcategory of subcategories(); track subcategory) {
-                  <option [value]="subcategory">{{ subcategory }}</option>
-                }
-              </select>
+              <label class="t-label">Subcategoría</label>
+              <app-dropdown formControlName="subcategory" placeholder="Elegí una subcategoría" ariaLabel="Subcategoría" [invalid]="showError('subcategory')"
+                [options]="subcategoryOptions()" />
               @if (showError('subcategory')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('subcategory') }}</p>
+                <p class="t-error">{{ errorMessage('subcategory') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
+              <label class="t-label">Marca</label>
               <input formControlName="brand" [class]="inputClass" />
               @if (showError('brand')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('brand') }}</p>
+                <p class="t-error">{{ errorMessage('brand') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
+              <label class="t-label">Talle</label>
               <input formControlName="size" [class]="inputClass" />
               @if (showError('size')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('size') }}</p>
+                <p class="t-error">{{ errorMessage('size') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
+              <label class="t-label">Color</label>
               <input formControlName="color" [class]="inputClass" />
               @if (showError('color')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('color') }}</p>
+                <p class="t-error">{{ errorMessage('color') }}</p>
               }
             </div>
             <div>
-              <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
-              <select formControlName="season" [class]="inputClass">
-                <option value="">Elegí una temporada</option>
-                @for (season of seasons; track season) {
-                  <option [value]="season">{{ season }}</option>
-                }
-              </select>
+              <label class="t-label">Temporada</label>
+              <app-dropdown formControlName="season" placeholder="Elegí una temporada" ariaLabel="Temporada" [invalid]="showError('season')"
+                [options]="seasonOptions" />
               @if (showError('season')) {
-                <p class="mt-1 text-xs text-status-none">{{ errorMessage('season') }}</p>
+                <p class="t-error">{{ errorMessage('season') }}</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
-              <div class="flex flex-wrap gap-3">
+              <span class="t-label">Condición</span>
+              <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Estado de la prenda">
                 @for (condition of conditions; track condition.value) {
-                  <label class="flex items-center gap-2 text-sm text-trama-dark/80">
-                    <input type="radio" formControlName="condition" [value]="condition.value" />
+                  <button
+                    type="button"
+                    role="radio"
+                    class="t-chip"
+                    [attr.aria-checked]="form.controls.condition.value === condition.value"
+                    (click)="form.controls.condition.setValue(condition.value); form.controls.condition.markAsTouched()"
+                  >
                     {{ condition.label }}
-                  </label>
+                  </button>
                 }
               </div>
               @if (showError('condition')) {
-                <p class="mt-1 text-xs text-status-none">Elegí la condición de la prenda.</p>
+                <p class="t-error">Elegí la condición de la prenda.</p>
               }
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1 block text-sm font-medium text-trama-dark"
-                >Descripción <span class="text-trama-dark/40">(opcional)</span></label
+              <label class="t-label"
+                >Descripción <span class="text-trama-muted">(opcional)</span></label
               >
               <textarea formControlName="description" rows="3" [class]="inputClass"></textarea>
             </div>
             <div class="sm:col-span-2">
-              <label class="mb-1 block text-sm font-medium text-trama-dark">¿Cuánto querés recibir?</label>
+              <label class="t-label">¿Cuánto querés recibir?</label>
               <input type="number" formControlName="consignorPrice" min="1" [class]="inputClass" />
               @if (showError('consignorPrice')) {
-                <p class="mt-1 text-xs text-status-none">Ingresá un monto mayor a cero.</p>
+                <p class="t-error">Ingresá un monto mayor a cero.</p>
               }
               @if (salePrice() !== null) {
-                <p class="mt-2 text-sm text-trama-dark/70">
+                <p class="mt-2 text-sm text-trama-body">
                   El comercio lo venderá a
                   <span class="font-semibold text-trama-brand">{{ salePrice() | money }}</span>
                 </p>
@@ -172,7 +145,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
           </form>
 
           @if (submitError()) {
-            <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
+            <p class="t-alert" role="alert">
               {{ submitError() }}
             </p>
           }
@@ -181,7 +154,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
         <div class="flex items-center justify-between">
           <a
             [routerLink]="['/c/garment', garmentId]"
-            class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+            class="t-btn t-btn-ghost"
           >
             Cancelar
           </a>
@@ -189,7 +162,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
             type="button"
             (click)="save()"
             [disabled]="saving()"
-            class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            class="t-btn t-btn-primary"
           >
             {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
           </button>
@@ -199,6 +172,15 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   `,
 })
 export class EditGarment {
+  protected readonly categoryOptions = computed<DropdownOption[]>(() =>
+    this.categories().map((c) => ({ value: c.label, label: c.label })),
+  );
+  protected readonly subcategoryOptions = computed<DropdownOption[]>(() =>
+    this.subcategories().map((sub) => ({ value: sub, label: sub })),
+  );
+  protected readonly seasonOptions: DropdownOption[] = SEASONS.map((season) => ({ value: season, label: season }));
+
+  protected readonly headerIcon = Shirt;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
@@ -210,7 +192,7 @@ export class EditGarment {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly inputClass =
-    'w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm';
+    't-input';
   protected readonly seasons = SEASONS;
   protected readonly conditions = CONDITIONS;
 
@@ -333,31 +315,6 @@ export class EditGarment {
     if (errors['required']) return 'Este campo es obligatorio.';
     if (errors['min']) return `El mínimo es ${errors['min'].min}.`;
     return 'Revisá este dato.';
-  }
-
-  protected onFilesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) this.addFiles(input.files);
-    input.value = '';
-  }
-
-  protected onDrop(event: DragEvent): void {
-    event.preventDefault();
-    if (event.dataTransfer?.files) this.addFiles(event.dataTransfer.files);
-  }
-
-  protected removePhoto(index: number): void {
-    this.photos.update((list) => list.filter((_, i) => i !== index));
-  }
-
-  private addFiles(files: FileList): void {
-    Array.from(files)
-      .filter((file) => file.type.startsWith('image/'))
-      .forEach((file) => {
-        compressImage(file)
-          .then((photo) => this.photos.update((list) => [...list, photo]))
-          .catch(() => this.toast.show('No pudimos procesar una de las fotos', 'error'));
-      });
   }
 
   protected save(): void {

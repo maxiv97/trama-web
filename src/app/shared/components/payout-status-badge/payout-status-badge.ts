@@ -16,9 +16,10 @@ const STATUS_META: Record<PayoutStatus, StatusMeta> = {
   selector: 'app-payout-status-badge',
   template: `
     <span
-      class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+      class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-[11px] py-1 text-[13px] font-semibold leading-tight"
       [class]="meta().badgeClass"
     >
+      <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
       {{ meta().label }}
     </span>
   `,

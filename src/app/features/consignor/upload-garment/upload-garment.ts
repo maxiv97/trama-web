@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
@@ -19,6 +19,14 @@ import { calculateSalePrice } from '../../../core/utils/price.util';
 import { distanceKm } from '../../../core/utils/geo.util';
 import { compressImage } from '../../../core/utils/image.util';
 import { SEASONS } from '../../../core/models/garment-taxonomy';
+import { LucideAngularModule, Search } from 'lucide-angular';
+import { WizardShell, WizardStep, WizardSummaryRow } from '../../../shared/components/wizard-shell/wizard-shell';
+import { PhotoUploader } from '../../../shared/components/photo-uploader/photo-uploader';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
+import { Avatar } from '../../../shared/components/avatar/avatar';
+import { VerifiedBadge } from '../../../shared/components/verified-badge/verified-badge';
+import { ResultScreen } from '../../../shared/components/result-screen/result-screen';
+
 
 interface MerchantOption {
   merchantId: string;
@@ -27,6 +35,7 @@ interface MerchantOption {
   neighborhood: string;
   commission: number;
   distance: number | null;
+  verified: boolean;
   scheduleDays: string;
   scheduleHours: string;
 }
@@ -43,382 +52,304 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'fair', label: 'Regular' },
 ];
 
-const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
+const STEPS: WizardStep[] = [
+  { label: 'Fotos', title: 'Mostrá bien la prenda', lead: 'Frente, espalda y etiqueta. Con buena luz se vende más rápido.' },
+  { label: 'Comercio', title: '¿A qué comercio la enviás?', lead: 'Te mostramos primero los que están más cerca tuyo.' },
+  { label: 'Descripción', title: 'Contanos cómo es', lead: 'Estos datos los ve el comercio antes de aceptarla.' },
+  { label: 'Precio', title: '¿Cuánto querés recibir?', lead: 'Vos ponés lo que querés cobrar; el comercio suma su comisión.' },
+];
+
+interface Draft {
+  step: number;
+  selection: Selection | null;
+  form: Record<string, unknown>;
+  photos?: string[];
+  videoName: string | null;
+}
 
 @Component({
   selector: 'app-upload-garment',
-  imports: [ReactiveFormsModule, DecimalPipe, MoneyPipe],
+  imports: [ReactiveFormsModule, DecimalPipe, MoneyPipe, LucideAngularModule, WizardShell, PhotoUploader, Dropdown, Avatar, VerifiedBadge, ResultScreen],
+  styles: `
+    .opt {
+      border: 2px solid var(--color-trama-sand-100);
+      transition: border-color 150ms, background-color 150ms;
+    }
+    .opt:hover {
+      border-color: var(--color-trama-thread-light);
+    }
+    .opt-on,
+    .opt-on:hover {
+      border-color: var(--color-trama-dark);
+      background: var(--color-trama-sand-50);
+    }
+    .radio {
+      border: 2px solid var(--color-trama-thread-faint);
+    }
+    .opt-on .radio {
+      border-color: var(--color-trama-dark);
+      background: var(--color-trama-dark);
+    }
+    .opt-on .dot {
+      background: var(--color-trama-gold);
+    }
+    .amount {
+      background: var(--color-trama-sand-50);
+      border: 1.5px solid transparent;
+      outline: 3px solid transparent;
+      transition: all 150ms;
+    }
+    .amount:focus-within {
+      background: var(--color-trama-paper);
+      border-color: var(--color-trama-brand);
+      outline-color: var(--color-trama-green-50);
+    }
+    .amount-error {
+      border-color: var(--color-status-none);
+      outline-color: var(--color-status-none-soft);
+    }
+  `,
   template: `
-    <div class="mx-auto max-w-2xl space-y-6">
-      <h1 class="text-2xl font-semibold text-trama-dark">Cargar artículo</h1>
+    <app-wizard-shell
+      eyebrow="Cargar artículo"
+      summaryTitle="Tu propuesta"
+      finishLabel="Enviar propuesta"
+      busyLabel="Enviando…"
+      doneTitle="Propuesta enviada"
+      [steps]="steps"
+      [current]="step() - 1"
+      [summary]="summary()"
+      [busy]="submitting()"
+      [done]="submitted()"
+      [status]="savedAt() ? 'Guardado automáticamente' : ''"
+      (next)="step() < 4 ? next() : submit()"
+      (back)="back()"
+      (stepChange)="goToStep($event + 1)"
+    >
+      @if (submitError()) {
+        <div class="t-alert mb-5" role="alert">{{ submitError() }}</div>
+      } @else if (showErrors() && !canAdvance()) {
+        <div class="t-alert mb-5" role="alert">Revisá los campos marcados antes de seguir.</div>
+      }
+
+      @switch (step()) {
+        @case (1) {
+          <app-photo-uploader [(photos)]="photos" [invalid]="showErrors() && !photos().length" (failed)="photoFailed($event)" />
+          @if (showErrors() && !photos().length) {
+            <p class="t-error">Subí al menos una foto para seguir.</p>
+          }
+
+          <div class="mt-6">
+            <span class="t-label">Video <span class="font-medium text-trama-muted">(opcional)</span></span>
+            @if (videoName(); as name) {
+              <div class="flex items-center justify-between gap-3 rounded-[11px] bg-trama-sand-50 px-4 py-3 text-sm">
+                <span class="truncate text-trama-dark">{{ name }}</span>
+                <button type="button" (click)="removeVideo()" class="t-link shrink-0">Quitar</button>
+              </div>
+            } @else {
+              <label class="flex cursor-pointer items-center justify-center rounded-[11px] px-4 py-3 text-sm font-semibold text-trama-body transition-colors hover:bg-trama-sand-50 hover:text-trama-dark" style="border: 2px dashed #C9C2AE">
+                Subí un video de tu prenda
+                <input type="file" accept="video/*" class="sr-only" (change)="onVideoSelected($event)" />
+              </label>
+            }
+          </div>
+        }
+        @case (2) {
+          <div class="relative">
+            <lucide-angular class="pointer-events-none absolute left-3.5 top-0 flex h-full items-center text-trama-muted" [img]="searchIcon" [size]="18" />
+            <input
+              type="search"
+              [value]="search()"
+              (input)="search.set($any($event.target).value)"
+              placeholder="Buscá por nombre o barrio"
+              aria-label="Buscar comercio"
+              class="t-input"
+              style="padding-left: 42px"
+            />
+          </div>
+
+          @if (merchantOptions().length) {
+            <div class="mt-4 space-y-2.5" role="radiogroup" aria-label="Comercio">
+              @for (option of merchantOptions(); track option.merchantId) {
+                <button
+                  type="button"
+                  role="radio"
+                  [attr.aria-checked]="selection()?.merchantId === option.merchantId"
+                  (click)="select(option)"
+                  class="opt flex w-full items-center gap-4 rounded-2xl px-[18px] py-4 text-left"
+                  [class.opt-on]="selection()?.merchantId === option.merchantId"
+                >
+                  <app-avatar kind="merchant" [name]="option.businessName" [size]="48" />
+                  <span class="min-w-0 flex-1">
+                    <span class="flex items-center gap-1.5">
+                      <span class="truncate text-[16px] font-bold text-trama-dark">{{ option.businessName }}</span>
+                      @if (option.verified) {
+                        <app-verified-badge [size]="16" />
+                      }
+                    </span>
+                    <span class="block truncate text-[13px] text-trama-body">
+                      {{ option.neighborhood }}@if (option.distance !== null) { · a {{ option.distance | number: '1.1-1' }} km} · comisión {{ 100 - option.commission }} %
+                    </span>
+                    @if (option.scheduleDays) {
+                      <span class="block truncate text-[12px] text-trama-muted">Recibe {{ option.scheduleDays }} {{ option.scheduleHours }}</span>
+                    }
+                  </span>
+                  <span class="radio flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full">
+                    <span class="dot h-2.5 w-2.5 rounded-full"></span>
+                  </span>
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="mt-6 rounded-2xl bg-trama-sand-50 px-4 py-6 text-center text-sm text-trama-body">
+              No encontramos comercios con "{{ search() }}". Probá con otro barrio.
+            </p>
+          }
+          @if (showErrors() && !selection()) {
+            <p class="t-error">Elegí un comercio para seguir.</p>
+          }
+        }
+        @case (3) {
+          <form [formGroup]="form" class="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <label class="t-label" for="g-name">Nombre</label>
+              <input id="g-name" formControlName="name" placeholder="Ej: Campera de jean azul" class="t-input" [class.t-input-error]="showError('name')" />
+              @if (showError('name')) {
+                <p class="t-error">{{ errorMessage('name') }}</p>
+              }
+            </div>
+            <div>
+              <span class="t-label">Categoría</span>
+              <app-dropdown formControlName="category" placeholder="Elegí una categoría" ariaLabel="Categoría" [options]="categoryOptions()" [invalid]="showError('category')" />
+              @if (showError('category')) {
+                <p class="t-error">{{ errorMessage('category') }}</p>
+              }
+            </div>
+            <div>
+              <span class="t-label">Subcategoría</span>
+              <app-dropdown formControlName="subcategory" placeholder="Elegí una subcategoría" ariaLabel="Subcategoría" [options]="subcategoryOptions()" [invalid]="showError('subcategory')" />
+              @if (showError('subcategory')) {
+                <p class="t-error">{{ errorMessage('subcategory') }}</p>
+              }
+            </div>
+            <div>
+              <label class="t-label" for="g-brand">Marca</label>
+              <input id="g-brand" formControlName="brand" class="t-input" [class.t-input-error]="showError('brand')" />
+              @if (showError('brand')) {
+                <p class="t-error">{{ errorMessage('brand') }}</p>
+              }
+            </div>
+            <div>
+              <label class="t-label" for="g-size">Talle</label>
+              <input id="g-size" formControlName="size" class="t-input" [class.t-input-error]="showError('size')" />
+              @if (showError('size')) {
+                <p class="t-error">{{ errorMessage('size') }}</p>
+              }
+            </div>
+            <div>
+              <label class="t-label" for="g-color">Color</label>
+              <input id="g-color" formControlName="color" class="t-input" [class.t-input-error]="showError('color')" />
+              @if (showError('color')) {
+                <p class="t-error">{{ errorMessage('color') }}</p>
+              }
+            </div>
+            <div>
+              <span class="t-label">Temporada</span>
+              <app-dropdown formControlName="season" placeholder="Elegí una temporada" ariaLabel="Temporada" [options]="seasonOptions" [invalid]="showError('season')" />
+              @if (showError('season')) {
+                <p class="t-error">{{ errorMessage('season') }}</p>
+              }
+            </div>
+            <div class="sm:col-span-2">
+              <span class="t-label">Estado</span>
+              <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Estado de la prenda">
+                @for (condition of conditions; track condition.value) {
+                  <button
+                    type="button"
+                    role="radio"
+                    class="t-chip"
+                    [attr.aria-checked]="form.controls.condition.value === condition.value"
+                    (click)="form.controls.condition.setValue(condition.value); form.controls.condition.markAsTouched()"
+                  >
+                    {{ condition.label }}
+                  </button>
+                }
+              </div>
+              @if (showError('condition')) {
+                <p class="t-error">Elegí el estado de la prenda.</p>
+              }
+            </div>
+            <div class="sm:col-span-2">
+              <label class="t-label" for="g-desc">Descripción <span class="font-medium text-trama-muted">(opcional)</span></label>
+              <textarea id="g-desc" formControlName="description" rows="3" class="t-input" placeholder="Detalles, uso, medidas…"></textarea>
+            </div>
+          </form>
+        }
+        @case (4) {
+          <form [formGroup]="form" class="max-w-[460px]">
+            <label class="t-label" for="g-price">Lo que querés recibir</label>
+            <div
+              class="amount flex items-baseline gap-2 rounded-[11px] px-4 py-3"
+              [class.amount-error]="showError('consignorPrice')"
+            >
+              <span class="font-display text-[22px] font-bold text-trama-muted">$</span>
+              <input
+                id="g-price"
+                type="number"
+                inputmode="numeric"
+                formControlName="consignorPrice"
+                min="1"
+                placeholder="0"
+                class="w-full bg-transparent font-display text-[30px] font-extrabold tabular-nums text-trama-dark outline-none"
+              />
+            </div>
+            @if (showError('consignorPrice')) {
+              <p class="t-error">Ingresá un monto mayor a cero.</p>
+            }
+
+            @if (breakdown(); as b) {
+              <div class="t-summary mt-5 space-y-2.5 !p-5 text-[15px]">
+                <div class="flex justify-between gap-3">
+                  <span class="text-trama-body">Vos recibís</span>
+                  <span class="font-display font-bold tabular-nums text-trama-dark">{{ b.consignor | money }}</span>
+                </div>
+                <div class="flex justify-between gap-3">
+                  <span class="text-trama-body">Comisión de {{ b.merchantName }} ({{ b.pct }} %)</span>
+                  <span class="font-display font-bold tabular-nums text-trama-dark">{{ b.commission | money }}</span>
+                </div>
+                <div class="border-t-2 border-dashed border-trama-thread-light pt-2.5">
+                  <div class="flex items-baseline justify-between gap-3">
+                    <span class="font-semibold text-trama-dark">Precio de venta sugerido</span>
+                    <span class="font-display text-[20px] font-extrabold tabular-nums text-trama-dark">{{ b.sale | money }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+            <p class="mt-4 text-sm text-trama-body">El comercio puede aceptar este precio o mandarte una contraoferta.</p>
+          </form>
+        }
+      }
 
       @if (submitted()) {
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-8 text-center">
-          <div
-            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-trama-green-50 text-3xl text-trama-brand"
-          >
-            ✓
+      <app-result-screen
+        result
+        title="Propuesta enviada"
+        [body]="sentMerchantName() + ' ya la tiene para revisar. Te avisamos cuando la acepte o te mande una contraoferta.'"
+      >
+        @if (sent(); as r) {
+          <div summary class="t-summary space-y-1.5 text-left text-sm">
+            <div class="flex justify-between gap-3"><span class="text-trama-body">Prenda</span><span class="truncate font-bold text-trama-dark">{{ r.name }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-trama-body">Talle</span><span class="font-bold text-trama-dark">{{ r.size }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-trama-body">Precio pedido</span><span class="font-display font-bold tabular-nums text-trama-dark">{{ r.price | money }}</span></div>
+            <div class="flex justify-between gap-3"><span class="text-trama-body">Código</span><span class="font-mono text-[13px] font-bold text-trama-dark">{{ r.code }}</span></div>
           </div>
-          <h2 class="mt-4 font-display text-xl font-semibold text-trama-dark">¡Propuesta enviada!</h2>
-          <p class="mx-auto mt-2 max-w-sm text-sm text-trama-dark/70">
-            Le llegó a <span class="font-medium text-trama-dark">{{ sentMerchantName() }}</span> para
-            revisar. Te avisamos apenas responda.
-          </p>
-          <div class="mt-7 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              (click)="reset()"
-              class="rounded-lg bg-trama-brand px-5 py-2.5 text-sm font-medium text-white hover:bg-trama-green-700"
-            >
-              Cargar otra prenda
-            </button>
-            <button
-              type="button"
-              (click)="viewGarment()"
-              class="rounded-lg border border-trama-sand-200 px-5 py-2.5 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
-            >
-              Ver la propuesta
-            </button>
-            <button
-              type="button"
-              (click)="goHome()"
-              class="rounded-lg px-5 py-2.5 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
-            >
-              Volver al inicio
-            </button>
-          </div>
-        </div>
-      } @else {
-
-      <ol class="flex items-center">
-        @for (label of steps; track label; let i = $index; let last = $last) {
-          <li class="flex items-center" [class.flex-1]="!last">
-            <div class="flex flex-col items-center">
-              <span
-                class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium"
-                [class]="circleClass(i + 1)"
-                >{{ i + 1 }}</span
-              >
-              <span class="mt-1 whitespace-nowrap text-xs" [class]="labelClass(i + 1)">{{
-                label
-              }}</span>
-            </div>
-            @if (!last) {
-              <span
-                class="mx-2 h-0.5 flex-1"
-                [class]="i + 1 < step() ? 'bg-trama-brand' : 'bg-trama-sand-200'"
-              ></span>
-            }
-          </li>
         }
-      </ol>
-
-      <div class="rounded-2xl border border-trama-sand-200 bg-white p-6">
-        @switch (step()) {
-          @case (1) {
-            <div class="space-y-4">
-              <p class="text-sm text-trama-dark/70">
-                Subí al menos una foto de tu prenda. Cuantas más subas, mejor podrá evaluarla el
-                comercio.
-              </p>
-              <label
-                (dragover)="$event.preventDefault()"
-                (drop)="onDrop($event)"
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-trama-sand-200 py-10 text-center text-trama-dark/60 hover:border-trama-brand"
-              >
-                <span class="text-sm">Arrastrá tus fotos acá o hacé click para elegir</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  class="hidden"
-                  (change)="onFilesSelected($event)"
-                />
-              </label>
-              @if (showErrors() && !photos().length) {
-                <p class="text-xs text-status-none">Subí al menos una foto para continuar.</p>
-              }
-
-              @if (photos().length) {
-                <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  @for (photo of photos(); track $index) {
-                    <div class="relative aspect-square overflow-hidden rounded-lg">
-                      <img [src]="photo" alt="" class="h-full w-full object-cover" />
-                      <button
-                        type="button"
-                        (click)="removePhoto($index)"
-                        class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
-                        aria-label="Eliminar foto"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  }
-                </div>
-                <p class="text-xs text-trama-dark/50">{{ photos().length }} foto(s) cargada(s).</p>
-              }
-
-              <div>
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Video (opcional)</span>
-                @if (videoName(); as name) {
-                  <div
-                    class="flex items-center justify-between rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                  >
-                    <span class="truncate text-trama-dark/80">{{ name }}</span>
-                    <button
-                      type="button"
-                      (click)="removeVideo()"
-                      class="ml-2 shrink-0 text-xs text-trama-dark/50 hover:text-status-none"
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                } @else {
-                  <label
-                    class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-dark/60 hover:border-trama-brand"
-                  >
-                    Subí un video de tu prenda
-                    <input
-                      type="file"
-                      accept="video/*"
-                      class="hidden"
-                      (change)="onVideoSelected($event)"
-                    />
-                  </label>
-                }
-              </div>
-            </div>
-          }
-          @case (2) {
-            <div class="space-y-4">
-              <input
-                type="search"
-                [value]="search()"
-                (input)="search.set($any($event.target).value)"
-                placeholder="Buscar por nombre o barrio"
-                class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-              />
-              @if (merchantOptions().length) {
-                <div class="space-y-3">
-                  @for (option of merchantOptions(); track option.merchantId) {
-                    <button
-                      type="button"
-                      (click)="select(option)"
-                      class="flex w-full flex-col gap-1 rounded-xl border p-4 text-left"
-                      [class]="
-                        selection()?.merchantId === option.merchantId
-                          ? 'border-trama-brand bg-trama-green-50'
-                          : 'border-trama-sand-200 hover:border-trama-brand'
-                      "
-                    >
-                      <div class="flex items-center justify-between">
-                        <span class="font-medium text-trama-dark">{{ option.businessName }}</span>
-                        @if (option.distance !== null) {
-                          <span class="text-xs text-trama-dark/60"
-                            >{{ option.distance | number: '1.1-1' }} km</span
-                          >
-                        }
-                      </div>
-                      <span class="text-sm text-trama-dark/70">{{ option.neighborhood }}</span>
-                      <span class="text-xs text-trama-dark/60"
-                        >Comisión cedente: {{ option.commission }}% · Recepción:
-                        {{ option.scheduleDays }} {{ option.scheduleHours }}</span
-                      >
-                    </button>
-                  }
-                </div>
-              } @else {
-                <p class="py-8 text-center text-sm text-trama-dark/60">
-                  No encontramos comercios para tu búsqueda.
-                </p>
-              }
-              @if (showErrors() && !selection()) {
-                <p class="text-xs text-status-none">Elegí un comercio para continuar.</p>
-              }
-            </div>
-          }
-          @case (3) {
-            <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
-                <input
-                  formControlName="name"
-                  placeholder="Ej: Campera de jean azul"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-                @if (showError('name')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('name') }}</p>
-                }
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
-                <select
-                  formControlName="category"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una categoría</option>
-                  @for (category of categories(); track category.id) {
-                    <option [value]="category.label">{{ category.label }}</option>
-                  }
-                </select>
-                @if (showError('category')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('category') }}</p>
-                }
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
-                <select
-                  formControlName="subcategory"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una subcategoría</option>
-                  @for (subcategory of subcategories(); track subcategory) {
-                    <option [value]="subcategory">{{ subcategory }}</option>
-                  }
-                </select>
-                @if (showError('subcategory')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('subcategory') }}</p>
-                }
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
-                <input
-                  formControlName="brand"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-                @if (showError('brand')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('brand') }}</p>
-                }
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
-                <input
-                  formControlName="size"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-                @if (showError('size')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('size') }}</p>
-                }
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
-                <input
-                  formControlName="color"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-                @if (showError('color')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('color') }}</p>
-                }
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
-                <select
-                  formControlName="season"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una temporada</option>
-                  @for (season of seasons; track season) {
-                    <option [value]="season">{{ season }}</option>
-                  }
-                </select>
-                @if (showError('season')) {
-                  <p class="mt-1 text-xs text-status-none">{{ errorMessage('season') }}</p>
-                }
-              </div>
-              <div class="sm:col-span-2">
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
-                <div class="flex flex-wrap gap-3">
-                  @for (condition of conditions; track condition.value) {
-                    <label class="flex items-center gap-2 text-sm text-trama-dark/80">
-                      <input type="radio" formControlName="condition" [value]="condition.value" />
-                      {{ condition.label }}
-                    </label>
-                  }
-                </div>
-                @if (showError('condition')) {
-                  <p class="mt-1 text-xs text-status-none">Elegí la condición de la prenda.</p>
-                }
-              </div>
-              <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark"
-                  >Descripción <span class="text-trama-dark/40">(opcional)</span></label
-                >
-                <textarea
-                  formControlName="description"
-                  rows="3"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                ></textarea>
-              </div>
-            </form>
-          }
-          @case (4) {
-            <form [formGroup]="form" class="space-y-4">
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark"
-                  >¿Cuánto querés recibir?</label
-                >
-                <input
-                  type="number"
-                  formControlName="consignorPrice"
-                  min="1"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-                @if (showError('consignorPrice')) {
-                  <p class="mt-1 text-xs text-status-none">Ingresá un monto mayor a cero.</p>
-                }
-              </div>
-              @if (salePrice() !== null) {
-                <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
-                  El comercio lo venderá a
-                  <span class="font-semibold text-trama-brand">{{ salePrice() | money }}</span>
-                </div>
-              }
-            </form>
-          }
-        }
-      </div>
-
-      @if (showErrors() && !canAdvance()) {
-        <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
-          Revisá los campos marcados antes de continuar.
-        </p>
+        <button actions type="button" (click)="reset()" class="t-btn t-btn-primary">Cargar otra prenda</button>
+        <button actions type="button" (click)="viewGarment()" class="t-btn t-btn-secondary">Ver seguimiento</button>
+        <button exit type="button" (click)="goHome()" class="t-link">Volver al panel</button>
+      </app-result-screen>
       }
-      @if (submitError()) {
-        <p class="rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
-          {{ submitError() }}
-        </p>
-      }
-
-      <div class="flex items-center justify-between">
-        <button
-          type="button"
-          (click)="back()"
-          [disabled]="step() === 1"
-          class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 disabled:opacity-40"
-        >
-          Anterior
-        </button>
-        @if (step() < 4) {
-          <button
-            type="button"
-            (click)="next()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-          >
-            Siguiente
-          </button>
-        } @else {
-          <button
-            type="button"
-            (click)="submit()"
-            [disabled]="submitting()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
-          >
-            {{ submitting() ? 'Enviando…' : 'Enviar propuesta' }}
-          </button>
-        }
-      </div>
-      }
-    </div>
+    </app-wizard-shell>
   `,
 })
 export class UploadGarment {
@@ -451,6 +382,10 @@ export class UploadGarment {
   protected readonly submitted = signal(false);
   protected readonly sentGarmentId = signal<string | null>(null);
   protected readonly sentMerchantName = signal('');
+  protected readonly sent = signal<{ name: string; size: string; price: number; code: string } | null>(null);
+  protected readonly savedAt = signal<number | null>(null);
+  protected readonly searchIcon = Search;
+  protected readonly seasonOptions: DropdownOption[] = SEASONS.map((x) => ({ value: x, label: x }));
 
   protected readonly form = this.fb.group({
     name: ['', Validators.required],
@@ -504,6 +439,7 @@ export class UploadGarment {
           businessName: merchant.businessName,
           neighborhood: merchant.location.neighborhood,
           commission: merchant.commissionConfig.consignorPercentage,
+          verified: merchant.verified,
           distance,
           scheduleDays: nearest?.receptionSchedule.days ?? '',
           scheduleHours: nearest?.receptionSchedule.hours ?? '',
@@ -522,43 +458,133 @@ export class UploadGarment {
     this.merchants().find((merchant) => merchant.id === this.selection()?.merchantId),
   );
 
-  protected readonly salePrice = computed(() => {
+
+  protected readonly categoryOptions = computed<DropdownOption[]>(() =>
+    this.categories().map((c) => ({
+      value: c.label,
+      label: c.label,
+      hint: c.subcategories?.length ? c.subcategories.slice(0, 3).join(', ') : undefined,
+    })),
+  );
+  protected readonly subcategoryOptions = computed<DropdownOption[]>(() =>
+    this.subcategories().map((sub) => ({ value: sub, label: sub })),
+  );
+
+  private readonly formValue = toSignal(this.form.valueChanges, { initialValue: this.form.getRawValue() });
+
+  /** Resumen "Tu propuesta" del costado. */
+  protected readonly summary = computed<WizardSummaryRow[]>(() => {
+    const v = this.formValue();
+    const n = this.photos().length;
+    const price = Number(v.consignorPrice);
+    return [
+      { label: 'Fotos', value: n ? `${n} ${n === 1 ? 'foto' : 'fotos'}` : null },
+      { label: 'Comercio', value: this.selectedMerchant()?.businessName ?? null },
+      { label: 'Prenda', value: v.name ? [v.name, v.size].filter(Boolean).join(' · ') : null },
+      { label: 'Querés recibir', value: price > 0 ? this.money.transform(price) : null },
+    ];
+  });
+
+  /** Desglose del precio: lo que recibe el cedente, la comisión y el precio de venta. */
+  protected readonly breakdown = computed(() => {
     const price = Number(this.priceValue());
     const merchant = this.selectedMerchant();
     if (!price || !merchant) return null;
-    return calculateSalePrice(price, merchant.commissionConfig.consignorPercentage);
+    const sale = calculateSalePrice(price, merchant.commissionConfig.consignorPercentage);
+    return {
+      consignor: price,
+      sale,
+      commission: sale - price,
+      pct: merchant.commissionConfig.merchantPercentage ?? 100 - merchant.commissionConfig.consignorPercentage,
+      merchantName: merchant.businessName,
+    };
   });
+
+  private readonly money = new MoneyPipe();
+  private readonly draftKey = `trama.draft.upload.${this.auth.user()?.id ?? 'anon'}`;
 
   constructor() {
     this.form.controls.category.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.form.controls.subcategory.setValue(''));
+    this.restoreDraft();
+    // Guardado automático: cada cambio de paso, selección, fotos o campos.
+    effect(() => {
+      this.step();
+      this.selection();
+      this.photos();
+      this.videoName();
+      this.formValue();
+      if (!this.submitted()) untracked(() => this.saveDraft());
+    });
   }
 
-  protected circleClass(index: number): string {
-    const current = this.step();
-    if (index < current) return 'bg-trama-brand text-white';
-    if (index === current) return 'bg-trama-brand text-white ring-4 ring-trama-green-100';
-    return 'bg-trama-sand-200 text-trama-dark/50';
+  protected goToStep(n: number): void {
+    if (n >= 1 && n < this.step()) {
+      this.showErrors.set(false);
+      this.step.set(n);
+    }
   }
 
-  protected labelClass(index: number): string {
-    return index <= this.step() ? 'font-medium text-trama-dark' : 'text-trama-dark/40';
+  protected photoFailed(name: string): void {
+    this.toast.show(`No pudimos procesar ${name}`, 'error');
   }
 
-  protected onFilesSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files) this.addFiles(input.files);
-    input.value = '';
+  private saveDraft(): void {
+    const draft: Draft = {
+      step: this.step(),
+      selection: this.selection(),
+      form: this.form.getRawValue(),
+      photos: this.photos(),
+      videoName: this.videoName(),
+    };
+    try {
+      localStorage.setItem(this.draftKey, JSON.stringify(draft));
+    } catch {
+      // Si las fotos no entran en el almacenamiento, se guardan solo los datos.
+      try {
+        localStorage.setItem(this.draftKey, JSON.stringify({ ...draft, photos: undefined }));
+      } catch {
+        return;
+      }
+    }
+    this.savedAt.set(Date.now());
   }
 
-  protected onDrop(event: DragEvent): void {
-    event.preventDefault();
-    if (event.dataTransfer?.files) this.addFiles(event.dataTransfer.files);
+  private restoreDraft(): void {
+    let draft: Draft | null = null;
+    try {
+      const raw = localStorage.getItem(this.draftKey);
+      draft = raw ? (JSON.parse(raw) as Draft) : null;
+    } catch {
+      draft = null;
+    }
+    if (!draft) return;
+    if (draft.selection) {
+      this.selection.set(draft.selection);
+      this.loadCategories(draft.selection.merchantId, draft.form);
+    } else {
+      this.form.patchValue(draft.form, { emitEvent: false });
+    }
+    if (draft.photos?.length) this.photos.set(draft.photos);
+    this.videoName.set(draft.videoName ?? null);
+    this.step.set(Math.min(Math.max(1, draft.step || 1), 4));
   }
 
-  protected removePhoto(index: number): void {
-    this.photos.update((list) => list.filter((_, i) => i !== index));
+  private clearDraft(): void {
+    try {
+      localStorage.removeItem(this.draftKey);
+    } catch {
+      /* sin almacenamiento */
+    }
+    this.savedAt.set(null);
+  }
+
+  private scrollToFirstError(): void {
+    setTimeout(() => {
+      const el = document.querySelector('.t-error, .t-input-error, [aria-invalid="true"]');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }
 
   protected onVideoSelected(event: Event): void {
@@ -570,16 +596,6 @@ export class UploadGarment {
 
   protected removeVideo(): void {
     this.videoName.set(null);
-  }
-
-  private addFiles(files: FileList): void {
-    Array.from(files)
-      .filter((file) => file.type.startsWith('image/'))
-      .forEach((file) => {
-        compressImage(file)
-          .then((photo) => this.photos.update((list) => [...list, photo]))
-          .catch(() => this.toast.show('No pudimos procesar una de las fotos', 'error'));
-      });
   }
 
   protected select(option: MerchantOption): void {
@@ -594,12 +610,19 @@ export class UploadGarment {
     }
   }
 
-  private loadCategories(merchantId: string): void {
+  private loadCategories(merchantId: string, restore?: Record<string, unknown>): void {
     this.categoriesService
       .forMerchant(merchantId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (categories) => this.categories.set(categories),
+        next: (categories) => {
+          this.categories.set(categories);
+          if (restore) {
+            this.form.patchValue(restore, { emitEvent: false });
+            this.form.controls.subcategory.setValue((restore['subcategory'] as string) ?? '', { emitEvent: false });
+            this.form.updateValueAndValidity();
+          }
+        },
         error: () => this.toast.show('No pudimos cargar las categorías del comercio', 'error'),
       });
   }
@@ -651,7 +674,9 @@ export class UploadGarment {
 
   private revealErrors(): void {
     if (this.step() === 3) this.form.markAllAsTouched();
+    if (this.step() === 4) this.form.controls.consignorPrice.markAsTouched();
     this.showErrors.set(true);
+    this.scrollToFirstError();
   }
 
   protected submit(): void {
@@ -705,6 +730,13 @@ export class UploadGarment {
           this.submitting.set(false);
           this.sentGarmentId.set(garment.id);
           this.sentMerchantName.set(merchant.businessName);
+          this.sent.set({
+            name: raw.name ?? '',
+            size: raw.size ?? '',
+            price: consignorPrice,
+            code: garment.id.slice(-6).toUpperCase(),
+          });
+          this.clearDraft();
           this.submitted.set(true);
         },
         error: (err: HttpErrorResponse) => {
@@ -727,6 +759,8 @@ export class UploadGarment {
     this.submitError.set('');
     this.sentGarmentId.set(null);
     this.submitted.set(false);
+    this.sent.set(null);
+    this.clearDraft();
     this.step.set(1);
   }
 

@@ -1,4 +1,6 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Inbox, ChevronRight, LucideAngularModule } from 'lucide-angular';
+import { FilterSheet } from '../../../shared/components/filter-sheet/filter-sheet';
+import { Component, computed, inject, signal, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
@@ -20,12 +22,15 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { buildProposalRows, PROPOSAL_STATUSES, ProposalRow } from './proposal-rows';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { ChipOption, DataTable, FilterChips, pageOf, PersonCell, SearchField, TableThumb } from '../../../shared/components/data-table/data-table';
+import { Dropdown, DropdownOption } from '../../../shared/components/dropdown/dropdown';
 
 type StatusFilter = 'all' | GarmentStatus;
 
@@ -58,153 +63,114 @@ type ProposalsState =
 
 @Component({
   selector: 'app-merchant-proposals',
-  imports: [
+  imports: [FilterSheet, LucideAngularModule, Dropdown, PersonCell, TableThumb, SearchField, FilterChips, DataTable, PageSkeleton, PageHeader, 
     RouterLink,
     StatCard,
     StatusBadge,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
     EmptyState,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="table" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar las propuestas." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <h1 class="text-2xl font-semibold text-trama-dark">Propuestas</h1>
+        <app-page-header title="Propuestas" section="Propuestas" [icon]="headerIcon" lead="Lo que te ofrecen los cedentes. Aceptá, contraofertá o rechazá cada prenda." />
 
-        @if (d.toReviewCount > 0 && statusFilter() !== 'under_review') {
-          <button
-            type="button"
-            (click)="statusFilter.set('under_review')"
-            class="flex w-full items-center justify-between rounded-2xl border border-status-pending/20 bg-status-pending-soft px-5 py-3 text-left hover:brightness-95"
-          >
-            <span class="text-sm font-medium text-trama-dark">
-              {{ d.toReviewCount }}
-              {{ d.toReviewCount === 1 ? 'propuesta para revisar' : 'propuestas para revisar' }}
-            </span>
-            <span class="text-sm font-medium text-trama-brand">Ver</span>
-          </button>
-        }
-
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <app-stat-card title="Por revisar" [value]="d.toReviewCount" />
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 [&>:first-child]:col-span-2 md:[&>:first-child]:col-span-1">
+          <app-stat-card title="Por revisar" [value]="d.toReviewCount" [highlight]="true" />
           <app-stat-card title="Esperando al cedente" [value]="d.counterofferCount" />
           <app-stat-card title="Valor de venta en revisión" [value]="d.toReviewValue | money" />
         </div>
 
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <input
-            type="search"
-            [value]="search()"
-            (input)="search.set($any($event.target).value)"
-            placeholder="Buscar por nombre"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-          />
-          <select
-            [value]="statusFilter()"
-            (change)="statusFilter.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-          >
-            @for (option of statusFilters; track option.value) {
-              <option [value]="option.value" [selected]="statusFilter() === option.value">
-                {{ option.label }}
-              </option>
-            }
-          </select>
-          <select
-            [value]="consignorFilter()"
-            (change)="consignorFilter.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-          >
-            <option value="all" [selected]="consignorFilter() === 'all'">Todos los cedentes</option>
-            @for (option of d.consignors; track option.id) {
-              <option [value]="option.id" [selected]="consignorFilter() === option.id">
-                {{ option.name }}
-              </option>
-            }
-          </select>
-          <select
-            [value]="salesPointFilter()"
-            (change)="salesPointFilter.set($any($event.target).value)"
-            class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-          >
-            <option value="all">Todos los puntos</option>
-            @for (option of d.salesPoints; track option.id) {
-              <option [value]="option.id">{{ option.name }}</option>
-            }
-          </select>
-        </div>
+        @if (d.rows.length) {
+          <app-data-table [total]="filteredRows().length" [shown]="pageRows().length" noun="propuestas" [(page)]="page">
+            <div toolbar class="hidden w-full sm:block">
+              <app-filter-chips [options]="statusChips()" [(value)]="statusFilter" />
+            </div>
+            <div toolbar class="flex w-full gap-2 sm:flex-wrap sm:gap-3">
+              <app-dropdown class="hidden sm:block sm:w-56" size="sm" ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
+              <app-dropdown class="hidden sm:block sm:w-56" size="sm" ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
+              <app-search-field class="min-w-0 flex-1 sm:flex-none" [(value)]="search" placeholder="Buscar por nombre" />
+              <app-filter-sheet class="shrink-0 sm:hidden" [count]="activeFilterCount()" [results]="filteredRows().length" noun="propuestas" (clear)="clearFilters()">
+                <div>
+                  <p class="t-label">Estado</p>
+                  <app-filter-chips [options]="statusChips()" [(value)]="statusFilter" />
+                </div>
+                <div>
+                  <p class="t-label">Cedente</p>
+                  <app-dropdown ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
+                </div>
+                <div>
+                  <p class="t-label">Punto de venta</p>
+                  <app-dropdown ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
+                </div>
+              </app-filter-sheet>
+            </div>
 
-        @if (filteredRows().length) {
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
-            <table class="w-full text-left text-sm">
-              <thead class="border-b border-trama-sand-200 text-trama-dark/60">
-                <tr>
-                  <th class="px-4 py-3 font-medium">Prenda</th>
-                  <th class="px-4 py-3 font-medium">Categoría</th>
-                  <th class="px-4 py-3 font-medium">Cedente</th>
-                  <th class="px-4 py-3 font-medium">Punto de venta</th>
-                  <th class="px-4 py-3 font-medium">Estado</th>
-                  <th class="px-4 py-3 font-medium">Para el cedente</th>
-                  <th class="px-4 py-3 font-medium">Precio venta</th>
-                  <th class="px-4 py-3 font-medium">Fecha</th>
-                  <th class="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of filteredRows(); track row.garmentId) {
-                  <tr
-                    (click)="open(row)"
-                    class="cursor-pointer border-b border-trama-sand-100 last:border-0 hover:bg-trama-sand-50"
-                  >
-                    <td class="px-4 py-3">
-                      <div class="flex items-center gap-3">
-                        @if (row.photo) {
-                          <img [src]="row.photo" alt="" class="h-10 w-10 rounded-lg object-cover" />
-                        } @else {
-                          <div class="h-10 w-10 rounded-lg bg-trama-sand-100"></div>
-                        }
-                        <span class="font-medium text-trama-dark">{{ row.name }}</span>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.category }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.consignorName }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.salesPointName }}</td>
-                    <td class="px-4 py-3"><app-status-badge [status]="row.status" /></td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.consignorPrice | money }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.salePrice | money }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.createdAt | shortDate }}</td>
-                    <td class="px-4 py-3 text-right">
-                      @if (row.status === 'under_review' && row.proposalId) {
-                        <a
-                          [routerLink]="['/m/proposal', row.proposalId]"
-                          (click)="$event.stopPropagation()"
-                          class="inline-block rounded-lg bg-trama-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-trama-green-700"
-                        >
-                          Revisar
-                        </a>
-                      }
-                    </td>
+            @if (filteredRows().length) {
+              <table class="t-table">
+                <thead>
+                  <tr>
+                    <th>Prenda</th>
+                    <th>Cedente</th>
+                    <th>Estado</th>
+                    <th class="t-num">Para el cedente</th>
+                    <th class="t-num">Precio venta</th>
+                    <th></th>
+                    <th></th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        } @else if (d.rows.length) {
-          <app-empty-state message="No hay propuestas que coincidan con los filtros." />
+                </thead>
+                <tbody>
+                  @for (row of pageRows(); track row.garmentId) {
+                    <tr class="t-row-link" (click)="open(row)">
+                      <td class="t-cell-main">
+                        <div class="flex items-center gap-3">
+                          <app-table-thumb [photo]="row.photo" [seed]="row.garmentId" />
+                          <span class="min-w-0 max-w-[240px]">
+                            <span class="block truncate font-bold">{{ row.name }}</span>
+                            <span class="t-meta truncate">{{ row.category }} · {{ row.createdAt | shortDate }}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label="Cedente"><app-person-cell [name]="row.consignorName" /></td>
+                      <td data-label="Estado"><app-status-badge [status]="row.status" /></td>
+                      <td data-label="Para el cedente" class="t-num t-amount">{{ row.consignorPrice | money }}</td>
+                      <td data-label="Precio venta" class="t-num t-amount">{{ row.salePrice | money }}</td>
+                      <td class="t-cell-action text-right">
+                        @if (row.status === 'under_review' && row.proposalId) {
+                          <a
+                            [routerLink]="['/m/proposal', row.proposalId]"
+                            (click)="$event.stopPropagation()"
+                            class="t-btn t-btn-primary t-btn-sm"
+                          >
+                            Revisar
+                          </a>
+                        }
+                      </td>
+                      <td class="t-chev"><lucide-angular [img]="chevIcon" [size]="18" /></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            } @else {
+              <app-empty-state [compact]="true" [icon]="headerIcon" title="No hay propuestas acá" message="Probá con otro estado, cedente o punto de venta." />
+            }
+          </app-data-table>
         } @else {
-          <app-empty-state message="Todavía no recibiste propuestas de cedentes." />
+          <app-empty-state [icon]="headerIcon" title="Todavía no hay propuestas" message="Cuando un cedente te ofrezca una prenda, la vas a ver acá para aceptarla, contraofertar o rechazarla." />
         }
       </div>
     }
   `,
 })
 export class MerchantProposals {
+  protected readonly chevIcon = ChevronRight;
+  protected readonly headerIcon = Inbox;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
@@ -221,6 +187,43 @@ export class MerchantProposals {
     this.route.snapshot.queryParamMap.get('consignor') ?? 'all',
   );
   protected readonly salesPointFilter = signal('all');
+  /** Vuelve a la primera página cuando cambia algún filtro. */
+  protected readonly page = linkedSignal({
+    source: () => [this.search(), this.statusFilter(), this.consignorFilter(), this.salesPointFilter()],
+    computation: () => 0,
+  });
+
+  protected readonly statusChips = computed<ChipOption<StatusFilter>[]>(() => {
+    const rows = this.data()?.rows ?? [];
+    return STATUS_FILTERS.map((o) => ({
+      ...o,
+      count: o.value === 'all' ? rows.length : rows.filter((r) => r.status === o.value).length,
+    }));
+  });
+
+  protected readonly consignorOptions = computed<DropdownOption[]>(() => [
+    { value: 'all', label: 'Todos los cedentes' },
+    ...(this.data()?.consignors ?? []).map((c) => ({ value: c.id, label: c.name })),
+  ]);
+
+  protected readonly salesPointOptions = computed<DropdownOption[]>(() => [
+    { value: 'all', label: 'Todos los puntos' },
+    ...(this.data()?.salesPoints ?? []).map((p) => ({ value: p.id, label: p.name })),
+  ]);
+
+  protected readonly activeFilterCount = computed(
+    () =>
+      [this.statusFilter() !== 'all', this.consignorFilter() !== 'all', this.salesPointFilter() !== 'all'].filter(Boolean)
+        .length,
+  );
+
+  protected clearFilters(): void {
+    this.statusFilter.set('all');
+    this.consignorFilter.set('all');
+    this.salesPointFilter.set('all');
+  }
+
+  protected readonly pageRows = computed(() => pageOf(this.filteredRows(), this.page()));
 
   private readonly reload = new BehaviorSubject<void>(undefined);
 

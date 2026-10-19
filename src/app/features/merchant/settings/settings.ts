@@ -1,3 +1,4 @@
+import { Settings as SettingsIcon } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -7,27 +8,27 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Merchant } from '../../../core/models/user.model';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 @Component({
   selector: 'app-settings',
-  imports: [ReactiveFormsModule, RouterLink, LoadingSpinner, ErrorState],
+  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, ErrorState],
   template: `
     @if (loading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="form" />
     } @else if (error()) {
       <app-error-state message="No pudimos cargar la configuración." (retry)="retry()" />
     } @else {
       <form [formGroup]="form" (ngSubmit)="save()" class="mx-auto max-w-2xl space-y-6">
-        <div class="flex items-center justify-between gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">Configuración</h1>
-          <div class="flex gap-3">
+        <app-page-header title="Configuración" section="Configuración" [icon]="headerIcon" lead="Los datos de tu comercio y las condiciones que ven los cedentes.">
+          <div actions class="flex gap-3">
             @if (form.dirty) {
               <button
                 type="button"
                 (click)="discard()"
-                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+                class="t-btn t-btn-ghost"
               >
                 Descartar cambios
               </button>
@@ -35,159 +36,159 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
             <button
               type="submit"
               [disabled]="form.invalid || form.pristine || saving()"
-              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+              class="t-btn t-btn-primary"
             >
               {{ saving() ? 'Guardando…' : 'Guardar' }}
             </button>
           </div>
-        </div>
+        </app-page-header>
 
-        <section formGroupName="profile" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-          <h2 class="text-sm font-semibold text-trama-dark">Datos del comercio</h2>
+        <section formGroupName="profile" class="t-card space-y-4 p-5">
+          <h2 class="text-title-3 text-trama-dark">Datos del comercio</h2>
 
-          <label class="block text-sm">
-            <span class="text-trama-dark/70">Nombre del negocio</span>
+          <label class="block">
+            <span class="t-label">Nombre del negocio</span>
             <input
               formControlName="businessName"
-              class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+              class="t-input"
             />
             @if (invalid('profile', 'businessName')) {
-              <span class="mt-1 block text-xs text-status-none">Ingresá el nombre del negocio.</span>
+              <span class="t-error">Ingresá el nombre del negocio.</span>
             }
           </label>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Email</span>
+            <label class="block">
+              <span class="t-label">Email</span>
               <input
                 formControlName="email"
                 type="email"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('profile', 'email')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá un email válido.</span>
+                <span class="t-error">Ingresá un email válido.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Teléfono</span>
+            <label class="block">
+              <span class="t-label">Teléfono</span>
               <input
                 formControlName="phone"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('profile', 'phone')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá el teléfono.</span>
+                <span class="t-error">Ingresá el teléfono.</span>
               }
             </label>
           </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Barrio</span>
+            <label class="block">
+              <span class="t-label">Barrio</span>
               <input
                 formControlName="neighborhood"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('profile', 'neighborhood')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá el barrio.</span>
+                <span class="t-error">Ingresá el barrio.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Ciudad</span>
+            <label class="block">
+              <span class="t-label">Ciudad</span>
               <input
                 formControlName="city"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('profile', 'city')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá la ciudad.</span>
+                <span class="t-error">Ingresá la ciudad.</span>
               }
             </label>
           </div>
         </section>
 
-        <section formGroupName="commission" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-          <h2 class="text-sm font-semibold text-trama-dark">Comisión</h2>
-          <p class="text-xs text-trama-dark/50">
+        <section formGroupName="commission" class="t-card space-y-4 p-5">
+          <h2 class="text-title-3 text-trama-dark">Comisión</h2>
+          <p class="text-[13px] font-semibold text-trama-body">
             El porcentaje del comercio se calcula como el complemento del cedente.
           </p>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">% para el cedente</span>
+            <label class="block">
+              <span class="t-label">% para el cedente</span>
               <input
                 formControlName="consignorPercentage"
                 type="number"
                 min="0"
                 max="100"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('commission', 'consignorPercentage')) {
-                <span class="mt-1 block text-xs text-status-none">Ingresá un valor entre 0 y 100.</span>
+                <span class="t-error">Ingresá un valor entre 0 y 100.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">% para el comercio</span>
+            <label class="block">
+              <span class="t-label">% para el comercio</span>
               <input
                 [value]="merchantPercentage()"
                 disabled
-                class="mt-1 w-full rounded-lg border border-trama-sand-100 bg-trama-sand-100 px-3 py-2 text-sm text-trama-dark/60"
+                class="mt-1 w-full rounded-lg border border-trama-sand-100 bg-trama-sand-100 px-3 py-2 text-sm text-trama-body"
               />
             </label>
           </div>
         </section>
 
-        <section formGroupName="terms" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
-          <h2 class="text-sm font-semibold text-trama-dark">Términos de consignación</h2>
+        <section formGroupName="terms" class="t-card space-y-4 p-5">
+          <h2 class="text-title-3 text-trama-dark">Términos de consignación</h2>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Ventana de venta (meses)</span>
+            <label class="block">
+              <span class="t-label">Ventana de venta (meses)</span>
               <input
                 formControlName="saleWindowMonths"
                 type="number"
                 min="1"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('terms', 'saleWindowMonths')) {
-                <span class="mt-1 block text-xs text-status-none">Mínimo 1 mes.</span>
+                <span class="t-error">Mínimo 1 mes.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Gracia (meses)</span>
+            <label class="block">
+              <span class="t-label">Gracia (meses)</span>
               <input
                 formControlName="graceMonths"
                 type="number"
                 min="0"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('terms', 'graceMonths')) {
-                <span class="mt-1 block text-xs text-status-none">No puede ser negativo.</span>
+                <span class="t-error">No puede ser negativo.</span>
               }
             </label>
-            <label class="block text-sm">
-              <span class="text-trama-dark/70">Día de pago</span>
+            <label class="block">
+              <span class="t-label">Día de pago</span>
               <input
                 formControlName="payoutDay"
                 type="number"
                 min="1"
                 max="28"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+                class="t-input"
               />
               @if (invalid('terms', 'payoutDay')) {
-                <span class="mt-1 block text-xs text-status-none">Entre 1 y 28.</span>
+                <span class="t-error">Entre 1 y 28.</span>
               }
             </label>
           </div>
         </section>
 
-        <section class="flex items-center justify-between gap-3 rounded-2xl border border-trama-sand-200 bg-white p-5">
+        <section class="t-card flex items-center justify-between gap-3 p-5">
           <div>
-            <h2 class="text-sm font-semibold text-trama-dark">Puntos de venta</h2>
-            <p class="text-sm text-trama-dark/60">
+            <h2 class="text-title-3 text-trama-dark">Puntos de venta</h2>
+            <p class="text-sm text-trama-body">
               {{ salesPointsCount() }}
               {{ salesPointsCount() === 1 ? 'punto configurado' : 'puntos configurados' }}
             </p>
           </div>
           <a
             routerLink="/m/sales-points"
-            class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
+            class="t-btn t-btn-secondary"
           >
             Administrar
           </a>
@@ -197,6 +198,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
   `,
 })
 export class Settings {
+  protected readonly headerIcon = SettingsIcon;
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly merchantsService = inject(MerchantsService);

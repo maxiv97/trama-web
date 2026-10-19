@@ -1,4 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
+import { ChevronRight, LucideAngularModule, Shirt } from 'lucide-angular';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -10,14 +11,18 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { PayoutsService } from '../../../core/services/payouts.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { Greeting } from '../../../shared/components/greeting/greeting';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { EnterDirective } from '../../../shared/directives/enter.directive';
+import { ChipOption, DataTable, pageOf, PersonCell, TableThumb } from '../../../shared/components/data-table/data-table';
 
 interface GarmentRow {
   id: string;
   name: string;
+  photo?: string;
   category: string;
   status: GarmentStatus;
   agreedSalePrice?: number;
@@ -27,6 +32,7 @@ interface GarmentRow {
 interface PanelData {
   activeCount: number;
   pendingCount: number;
+  counterCount: number;
   pendingPayout: number;
   totalPaidOut: number;
   rows: GarmentRow[];
@@ -39,63 +45,69 @@ type PanelState =
 
 @Component({
   selector: 'app-consignor-panel',
-  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [LucideAngularModule, PersonCell, TableThumb, DataTable, EnterDirective, PageSkeleton, Greeting, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="dashboard" />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar tu panel." (retry)="retry()" />
     } @else if (data(); as data) {
-      <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h1 class="font-display text-2xl font-semibold text-trama-dark">Mi panel</h1>
-          <a
-            routerLink="/c/upload"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-            >Cargar artículo</a
-          >
+      <div class="space-y-8">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+          <app-greeting eyebrow="Cedente · Mi panel" [name]="firstName()" [summary]="greetingSummary()" />
+          <a routerLink="/c/upload" class="t-btn t-btn-primary" [appEnter]="2">Cargar artículo</a>
         </div>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
-          <app-stat-card title="Artículos activos" [value]="data.activeCount" />
+        <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4" [appEnter]="3">
+          <app-stat-card title="Artículos activos" [value]="data.activeCount" [dark]="true" />
           <app-stat-card title="Pendientes de acuerdo" [value]="data.pendingCount" />
           <app-stat-card title="Liquidación pendiente" [value]="data.pendingPayout | money" />
           <app-stat-card title="Total liquidado" [value]="data.totalPaidOut | money" />
         </div>
 
         @if (data.rows.length) {
-          <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
-            <table class="w-full text-left text-sm">
-              <thead class="border-b border-trama-sand-200 text-trama-dark/60">
-                <tr>
-                  <th class="px-4 py-3 font-medium">Prenda</th>
-                  <th class="px-4 py-3 font-medium">Categoría</th>
-                  <th class="px-4 py-3 font-medium">Estado</th>
-                  <th class="px-4 py-3 font-medium">Precio acordado</th>
-                  <th class="px-4 py-3 font-medium">Comercio</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of data.rows; track row.id) {
-                  <tr
-                    [routerLink]="['/c/garment', row.id]"
-                    class="cursor-pointer border-b border-trama-sand-100 last:border-0 hover:bg-trama-sand-50"
-                  >
-                    <td class="px-4 py-3 font-medium text-trama-dark">{{ row.name }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.category }}</td>
-                    <td class="px-4 py-3"><app-status-badge [status]="row.status" /></td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.agreedSalePrice | money }}</td>
-                    <td class="px-4 py-3 text-trama-dark/70">{{ row.merchantName }}</td>
+          <section class="space-y-3" [appEnter]="4">
+            <h2 class="text-title-3 text-trama-dark">Mis prendas</h2>
+            <app-data-table [total]="data.rows.length" [shown]="pageRows().length" noun="prendas" [(page)]="page">
+              <table class="t-table">
+                <thead>
+                  <tr>
+                    <th>Prenda</th>
+                    <th>Comercio</th>
+                    <th>Estado</th>
+                    <th class="t-num">Precio acordado</th>
+                    <th></th>
                   </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  @for (row of pageRows(); track row.id) {
+                    <tr class="t-row-link" [routerLink]="['/c/garment', row.id]">
+                      <td class="t-cell-main">
+                        <div class="flex items-center gap-3">
+                          <app-table-thumb [photo]="row.photo" [seed]="row.id" />
+                          <span class="min-w-0 max-w-[280px]">
+                            <span class="block truncate font-bold">{{ row.name }}</span>
+                            <span class="t-meta">{{ row.category }}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td data-label="Comercio"><app-person-cell kind="merchant" [name]="row.merchantName" /></td>
+                      <td data-label="Estado"><app-status-badge [status]="row.status" /></td>
+                      <td data-label="Precio acordado" class="t-num t-amount">{{ row.agreedSalePrice | money }}</td>
+                      <td class="t-chev"><lucide-angular [img]="chevIcon" [size]="18" /></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </app-data-table>
+          </section>
         } @else {
           <app-empty-state
-            message="Todavía no cargaste ninguna prenda."
+            [icon]="shirtIcon"
+            title="Todavía no hay prendas acá"
+            message="Cargá una prenda, elegí el comercio y seguí desde acá cada paso hasta que la cobres."
             link="/c/upload"
-            linkLabel="Cargá tu primera prenda"
+            linkLabel="Cargar prenda"
           />
         }
       </div>
@@ -103,6 +115,10 @@ type PanelState =
   `,
 })
 export class ConsignorPanel {
+  protected readonly page = signal(0);
+  protected readonly pageRows = computed(() => pageOf(this.data()?.rows ?? [], this.page()));
+  protected readonly shirtIcon = Shirt;
+  protected readonly chevIcon = ChevronRight;
   private readonly auth = inject(AuthService);
   private readonly garmentsService = inject(GarmentsService);
   private readonly payoutsService = inject(PayoutsService);
@@ -131,6 +147,24 @@ export class ConsignorPanel {
     return current.status === 'loaded' ? current.data : null;
   });
 
+  protected readonly firstName = computed(() => (this.auth.user()?.name ?? '').split(' ')[0]);
+
+  protected readonly greetingSummary = computed(() => {
+    const d = this.data();
+    if (!d) return '';
+    if (d.counterCount) {
+      return d.counterCount === 1
+        ? 'Tenés 1 contraoferta para responder.'
+        : `Tenés ${d.counterCount} contraofertas para responder.`;
+    }
+    if (d.pendingCount) {
+      return d.pendingCount === 1
+        ? '1 prenda está esperando la respuesta del comercio.'
+        : `${d.pendingCount} prendas están esperando la respuesta del comercio.`;
+    }
+    return d.rows.length ? 'Todo al día: no hay nada pendiente de tu lado.' : 'Cargá tu primera prenda para empezar.';
+  });
+
   protected retry(): void {
     this.reload.next();
   }
@@ -147,6 +181,7 @@ export class ConsignorPanel {
         const rows: GarmentRow[] = garments.map((garment) => ({
           id: garment.id,
           name: garment.name,
+          photo: garment.photos[0],
           category: garment.category,
           status: garment.status,
           agreedSalePrice: agreements.find((agreement) => agreement.garmentId === garment.id)
@@ -162,6 +197,7 @@ export class ConsignorPanel {
           pendingCount: garments.filter(
             (garment) => garment.status === 'under_review' || garment.status === 'counteroffer',
           ).length,
+          counterCount: garments.filter((garment) => garment.status === 'counteroffer').length,
           pendingPayout: payouts
             .filter((payout) => payout.status !== 'paid')
             .reduce((total, payout) => total + payout.totalAmount, 0),

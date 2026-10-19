@@ -1,3 +1,4 @@
+import { Route } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -30,7 +31,6 @@ import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
@@ -39,6 +39,8 @@ import { Timeline } from '../../../shared/components/timeline/timeline';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface TrackingData {
   garment: Garment;
@@ -58,7 +60,7 @@ type TrackingState =
 
 @Component({
   selector: 'app-merchant-garment-tracking',
-  imports: [
+  imports: [PageSkeleton, PageHeader, 
     RouterLink,
     PhotoGallery,
     ProgressTracker,
@@ -68,23 +70,21 @@ type TrackingState =
     ConfirmModal,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="detail" />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
-          <app-status-badge [status]="d.garment.status" />
-          <span class="text-sm text-trama-dark/50"
-            >Cargada el {{ d.garment.createdAt | shortDate }}</span
-          >
-        </div>
+        <app-page-header [title]="d.garment.name" section="Seguimiento" [icon]="headerIcon">
+          <div lead class="mt-3 flex flex-wrap items-center gap-3">
+            <app-status-badge [status]="d.garment.status" />
+            <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
+          </div>
+        </app-page-header>
 
         <div class="grid gap-6 md:grid-cols-3">
           <div class="md:col-span-1">
@@ -93,73 +93,73 @@ type TrackingState =
 
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-xs text-trama-dark/50">Precio del cedente</p>
-                <p class="mt-1 text-lg font-semibold text-trama-dark">
+              <div class="t-card p-4">
+                <p class="text-[13px] font-semibold text-trama-body">Precio del cedente</p>
+                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
-                <p class="mt-1 text-lg font-semibold text-trama-dark">
+              <div class="t-card p-4">
+                <p class="text-[13px] font-semibold text-trama-body">Precio de venta acordado</p>
+                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
                 </p>
               </div>
             </div>
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-              <p class="text-xs text-trama-dark/50">Cedente</p>
+            <div class="t-card p-4">
+              <p class="text-[13px] font-semibold text-trama-body">Cedente</p>
               <p class="mt-1 text-sm text-trama-dark">
                 {{ d.consignor?.name ?? '—' }}
                 @if (d.consignor?.dni) {
-                  <span class="text-trama-dark/50">· DNI {{ d.consignor?.dni }}</span>
+                  <span class="text-trama-muted">· DNI {{ d.consignor?.dni }}</span>
                 }
               </p>
             </div>
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
             @switch (d.garment.status) {
               @case ('agreed') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">
+                  <p class="text-[15px] font-bold text-trama-dark">
                     Acuerdo confirmado. Cuando recibas la prenda, registrá la recepción.
                   </p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'reception']"
-                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    class="t-btn t-btn-primary"
                     >Registrar recepción</a
                   >
                 </div>
               }
               @case ('in_stock') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">La prenda está en stock.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">La prenda está en stock.</p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    class="t-btn t-btn-primary"
                     >Registrar venta</a
                   >
                 </div>
               }
               @case ('with_remarks') {
                 <div class="space-y-3 rounded-2xl border border-status-pending/20 bg-status-pending-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">Recibida con observaciones.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">Recibida con observaciones.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    class="t-btn t-btn-primary"
                     >Registrar venta</a
                   >
                 </div>
               }
               @case ('rejected') {
                 <div class="space-y-2 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">
+                  <p class="text-[15px] font-bold text-trama-dark">
                     Recepción rechazada. La prenda se devuelve al cedente.
                   </p>
                   @if (d.reception; as reception) {
@@ -169,17 +169,17 @@ type TrackingState =
               }
               @case ('sold') {
                 <div class="space-y-4 rounded-2xl border border-status-sold/20 bg-status-sold-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">Prenda vendida.</p>
+                  <p class="text-[15px] font-bold text-trama-dark">Prenda vendida.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-dark/50">Le corresponde al cedente</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Le corresponde al cedente</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Tu comisión</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
@@ -188,27 +188,23 @@ type TrackingState =
                     <button
                       type="button"
                       (click)="payingOut.set(true)"
-                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                      class="t-btn t-btn-primary"
                     >
                       Marcar liquidación pagada
                     </button>
                   } @else {
-                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-white p-4">
+                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-trama-paper p-4">
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark"
+                        <label class="t-label"
                           >Método de pago</label
                         >
-                        <select
-                          [value]="paymentMethod()"
-                          (change)="paymentMethod.set($any($event.target).value)"
-                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                        >
-                          <option value="transfer">Transferencia</option>
-                          <option value="cash">Efectivo</option>
-                        </select>
+                        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Método de pago">
+                          <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'transfer'" (click)="paymentMethod.set('transfer')">Transferencia</button>
+                          <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'cash'" (click)="paymentMethod.set('cash')">Efectivo</button>
+                        </div>
                       </div>
                       <div>
-                        <label class="mb-1 block text-sm font-medium text-trama-dark"
+                        <label class="t-label"
                           >Nº de comprobante</label
                         >
                         <input
@@ -216,7 +212,7 @@ type TrackingState =
                           [value]="receiptNumber()"
                           (input)="receiptNumber.set($any($event.target).value)"
                           placeholder="Opcional"
-                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                          class="t-input"
                         />
                       </div>
                       <div class="flex gap-3">
@@ -224,7 +220,7 @@ type TrackingState =
                           type="button"
                           (click)="confirmingPayout.set(true)"
                           [disabled]="acting()"
-                          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                          class="t-btn t-btn-primary"
                         >
                           {{ acting() ? 'Registrando…' : 'Registrar pago' }}
                         </button>
@@ -232,7 +228,7 @@ type TrackingState =
                           type="button"
                           (click)="payingOut.set(false)"
                           [disabled]="acting()"
-                          class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-40"
+                          class="t-btn t-btn-secondary"
                         >
                           Cancelar
                         </button>
@@ -242,25 +238,25 @@ type TrackingState =
                 </div>
               }
               @case ('paid_out') {
-                <div class="space-y-2 rounded-2xl border border-trama-sand-200 bg-white p-5">
-                  <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
+                <div class="t-card space-y-2 p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">Liquidación pagada.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-dark/50">Le pagaste al cedente</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Le pagaste al cedente</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Tu comisión</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
                   </div>
                   @if (d.sale; as sale) {
                     @if (sale.paidAt) {
-                      <p class="text-sm text-trama-dark/70">
+                      <p class="text-sm text-trama-body">
                         {{ methodLabel(sale.paymentMethod) }}
                         @if (sale.receiptNumber) {
                           · Comp. {{ sale.receiptNumber }}
@@ -273,27 +269,27 @@ type TrackingState =
               }
               @case ('under_review') {
                 <div class="rounded-2xl bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-dark/70">Propuesta en revisión.</p>
+                  <p class="text-sm text-trama-body">Propuesta en revisión.</p>
                 </div>
               }
               @case ('counteroffer') {
                 <div class="rounded-2xl border border-status-counter/20 bg-status-counter-soft p-5">
-                  <p class="text-sm text-trama-dark/70">
+                  <p class="text-sm text-trama-body">
                     Contraoferta enviada. Esperando la respuesta del cedente.
                   </p>
                 </div>
               }
               @case ('no_agreement') {
                 <div class="rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-dark/70">No hubo acuerdo con el cedente.</p>
+                  <p class="text-sm text-trama-body">No hubo acuerdo con el cedente.</p>
                 </div>
               }
             }
           </div>
         </div>
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
+        <div class="t-card p-5">
+          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
@@ -310,6 +306,7 @@ type TrackingState =
   `,
 })
 export class MerchantGarmentTracking {
+  protected readonly headerIcon = Route;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly proposalsService = inject(ProposalsService);

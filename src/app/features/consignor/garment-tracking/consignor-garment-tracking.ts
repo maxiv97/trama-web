@@ -1,3 +1,4 @@
+import { Route } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -29,7 +30,6 @@ import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
@@ -37,6 +37,8 @@ import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface TrackingData {
   garment: Garment;
@@ -57,7 +59,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
 @Component({
   selector: 'app-consignor-garment-tracking',
-  imports: [
+  imports: [PageSkeleton, PageHeader, 
     ProgressTracker,
     ReceptionRemarks,
     Timeline,
@@ -66,24 +68,22 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
     ConfirmModal,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
     RouterLink,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="detail" />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/c" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <div class="flex flex-wrap items-center gap-3">
-          <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
-          <app-status-badge [status]="d.garment.status" />
-          <span class="text-sm text-trama-dark/50"
-            >Cargada el {{ d.garment.createdAt | shortDate }}</span
-          >
-        </div>
+        <app-page-header [title]="d.garment.name" section="Seguimiento" [icon]="headerIcon">
+          <div lead class="mt-3 flex flex-wrap items-center gap-3">
+            <app-status-badge [status]="d.garment.status" />
+            <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
+          </div>
+        </app-page-header>
 
         <div class="grid gap-6 md:grid-cols-3">
           <div class="md:col-span-1">
@@ -92,33 +92,33 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-xs text-trama-dark/50">Precio que pediste</p>
-                <p class="mt-1 text-lg font-semibold text-trama-dark">
+              <div class="t-card p-4">
+                <p class="text-[13px] font-semibold text-trama-body">Precio que pediste</p>
+                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
-                <p class="mt-1 text-lg font-semibold text-trama-dark">
+              <div class="t-card p-4">
+                <p class="text-[13px] font-semibold text-trama-body">Precio de venta acordado</p>
+                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
                 </p>
               </div>
             </div>
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
             @switch (d.garment.status) {
               @case ('under_review') {
                 <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-dark/80">
+                  <p class="text-sm text-trama-body">
                     Tu propuesta está siendo evaluada por el comercio. Podés editarla mientras tanto.
                   </p>
                   <a
                     [routerLink]="['/c/garment', d.garment.id, 'edit']"
-                    class="shrink-0 rounded-lg border border-trama-brand px-4 py-2 text-sm font-medium text-trama-brand hover:bg-trama-green-50"
+                    class="shrink-0 t-btn t-btn-secondary"
                   >
                     Editar consignación
                   </a>
@@ -126,20 +126,20 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('counteroffer') {
                 <div class="space-y-4 rounded-2xl border border-status-counter/20 bg-status-counter-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">
+                  <p class="text-[15px] font-bold text-trama-dark">
                     El comercio te hizo una contraoferta.
                   </p>
                   @if (d.proposal?.counteroffer; as counter) {
                     <div class="grid grid-cols-2 gap-4">
                       <div>
-                        <p class="text-xs text-trama-dark/50">Recibirías</p>
-                        <p class="text-lg font-semibold text-trama-dark">
+                        <p class="text-[13px] font-semibold text-trama-body">Recibirías</p>
+                        <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                           {{ counter.consignorPrice | money }}
                         </p>
                       </div>
                       <div>
-                        <p class="text-xs text-trama-dark/50">Se vendería a</p>
-                        <p class="text-lg font-semibold text-trama-dark">
+                        <p class="text-[13px] font-semibold text-trama-body">Se vendería a</p>
+                        <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                           {{ counter.salePrice | money }}
                         </p>
                       </div>
@@ -150,7 +150,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       type="button"
                       (click)="openAccept()"
                       [disabled]="acting()"
-                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                      class="t-btn t-btn-primary"
                     >
                       Aceptar
                     </button>
@@ -158,7 +158,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       type="button"
                       (click)="openReject()"
                       [disabled]="acting()"
-                      class="rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
+                      class="t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
                     >
                       Rechazar
                     </button>
@@ -167,23 +167,23 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('agreed') {
                 <div class="space-y-2 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">
+                  <p class="text-[15px] font-bold text-trama-dark">
                     ¡Acuerdo confirmado! Coordiná la entrega:
                   </p>
                   @if (d.salesPoint; as point) {
-                    <p class="text-sm text-trama-dark/80">
+                    <p class="text-sm text-trama-body">
                       <span class="font-medium">{{ point.name }}</span> — {{ point.address }}
                     </p>
-                    <p class="text-sm text-trama-dark/70">
+                    <p class="text-sm text-trama-body">
                       Recepción: {{ point.receptionSchedule.days }}
                       {{ point.receptionSchedule.hours }}
                     </p>
-                    <p class="text-sm text-trama-dark/70">
+                    <p class="text-sm text-trama-body">
                       {{ point.receptionSchedule.instructions }}
                     </p>
                   }
                   @if (d.agreement; as agreement) {
-                    <p class="text-sm text-trama-dark/70">
+                    <p class="text-sm text-trama-body">
                       Plazo de entrega: hasta {{ agreement.saleDeadline | shortDate }}
                     </p>
                   }
@@ -191,7 +191,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('rejected') {
                 <div class="space-y-3 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-sm text-trama-dark/80">El comercio rechazó la recepción.</p>
+                  <p class="text-sm text-trama-body">El comercio rechazó la recepción.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
@@ -199,7 +199,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                     type="button"
                     (click)="openRedeliver()"
                     [disabled]="acting()"
-                    class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                    class="t-btn t-btn-primary"
                   >
                     Coordinar nueva entrega
                   </button>
@@ -207,7 +207,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('with_remarks') {
                 <div class="space-y-3 rounded-2xl border border-status-pending/20 bg-status-pending-soft p-5">
-                  <p class="text-sm text-trama-dark/80">
+                  <p class="text-sm text-trama-body">
                     Tu prenda está en el comercio, recibida con observaciones.
                   </p>
                   @if (d.reception; as reception) {
@@ -217,22 +217,22 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('in_stock') {
                 <div class="rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm text-trama-dark/80">Tu prenda está en el comercio, en venta.</p>
+                  <p class="text-sm text-trama-body">Tu prenda está en el comercio, en venta.</p>
                 </div>
               }
               @case ('sold') {
                 <div class="space-y-2 rounded-2xl border border-status-sold/20 bg-status-sold-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">¡Tu prenda fue vendida!</p>
+                  <p class="text-[15px] font-bold text-trama-dark">¡Tu prenda fue vendida!</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-xs text-trama-dark/50">Te corresponde</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Te corresponde</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-xs text-trama-dark/50">Comisión del comercio</p>
-                      <p class="text-lg font-semibold text-trama-dark">
+                      <p class="text-[13px] font-semibold text-trama-body">Comisión del comercio</p>
+                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
@@ -241,16 +241,16 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('paid_out') {
                 <div class="space-y-2 rounded-2xl border border-status-settled/20 bg-status-settled-soft p-5">
-                  <p class="text-sm font-medium text-trama-dark">¡Recibiste tu pago!</p>
+                  <p class="text-[15px] font-bold text-trama-dark">¡Recibiste tu pago!</p>
                   <div>
-                    <p class="text-xs text-trama-dark/50">Cobraste</p>
-                    <p class="text-lg font-semibold text-trama-dark">
+                    <p class="text-[13px] font-semibold text-trama-body">Cobraste</p>
+                    <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
                       {{ settlementConsignor() | money }}
                     </p>
                   </div>
                   @if (d.sale; as sale) {
                     @if (sale.paidAt) {
-                      <p class="text-sm text-trama-dark/70">
+                      <p class="text-sm text-trama-body">
                         {{ methodLabel(sale.paymentMethod) }}
                         @if (sale.receiptNumber) {
                           · Comp. {{ sale.receiptNumber }}
@@ -263,7 +263,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('no_agreement') {
                 <div class="rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-dark/70">No hubo acuerdo con el comercio.</p>
+                  <p class="text-sm text-trama-body">No hubo acuerdo con el comercio.</p>
                 </div>
               }
             }
@@ -271,10 +271,10 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
         </div>
 
         @if (canCancel()) {
-          <div class="flex items-center justify-between gap-3 rounded-2xl border border-status-none/20 bg-white p-5">
+          <div class="flex items-center justify-between gap-3 rounded-2xl border border-status-none/20 bg-trama-paper p-5">
             <div>
-              <p class="text-sm font-medium text-trama-dark">¿Ya no querés consignar esta prenda?</p>
-              <p class="text-xs text-trama-dark/50">
+              <p class="text-[15px] font-bold text-trama-dark">¿Ya no querés consignar esta prenda?</p>
+              <p class="text-[13px] font-semibold text-trama-body">
                 Podés darla de baja mientras el comercio no la haya recibido.
               </p>
             </div>
@@ -282,15 +282,15 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               type="button"
               (click)="openCancel()"
               [disabled]="acting()"
-              class="shrink-0 rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
+              class="shrink-0 t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
             >
               Cancelar prenda
             </button>
           </div>
         }
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
+        <div class="t-card p-5">
+          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
@@ -308,6 +308,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
   `,
 })
 export class ConsignorGarmentTracking {
+  protected readonly headerIcon = Route;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly proposalsService = inject(ProposalsService);
@@ -404,7 +405,7 @@ export class ConsignorGarmentTracking {
     }
   });
 
-  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
+  protected readonly modalColor = computed<'green' | 'red'>(() =>
     this.activeModal() === 'reject' || this.activeModal() === 'cancel' ? 'red' : 'green',
   );
 

@@ -27,7 +27,6 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
-import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
@@ -35,6 +34,9 @@ import { StatusBadge } from '../../../shared/components/status-badge/status-badg
 import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { Hanger } from '../../../shared/icons/trama-icons';
 
 interface DetailData {
   garment: Garment;
@@ -53,7 +55,7 @@ type DetailState =
 
 @Component({
   selector: 'app-garment-detail',
-  imports: [
+  imports: [PageSkeleton, PageHeader, 
     RouterLink,
     PhotoGallery,
     ProgressTracker,
@@ -62,12 +64,11 @@ type DetailState =
     StatusBadge,
     MoneyPipe,
     ShortDatePipe,
-    LoadingSpinner,
     ErrorState,
   ],
   template: `
     @if (isLoading()) {
-      <app-loading-spinner />
+      <app-page-skeleton layout="detail" />
     } @else if (isError()) {
       <app-error-state
         message="No encontramos este artículo."
@@ -77,14 +78,13 @@ type DetailState =
     } @else if (data(); as d) {
       <div class="space-y-6">
         <div>
-          <a routerLink="/m/inventory" class="text-sm text-trama-brand">← Inventario</a>
-          <div class="mt-2 flex flex-wrap items-center gap-3">
-            <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
-            <app-status-badge [status]="d.garment.status" />
-            <span class="text-sm text-trama-dark/50"
-              >Cargada el {{ d.garment.createdAt | shortDate }}</span
-            >
-          </div>
+          <a routerLink="/m/inventory" class="t-link inline-flex items-center gap-1 no-underline hover:underline">← Inventario</a>
+          <app-page-header class="mt-4" [title]="d.garment.name" section="Inventario" [icon]="headerIcon">
+            <div lead class="mt-3 flex flex-wrap items-center gap-3">
+              <app-status-badge [status]="d.garment.status" />
+              <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
+            </div>
+          </app-page-header>
         </div>
 
         <div class="grid gap-6 md:grid-cols-3">
@@ -93,66 +93,66 @@ type DetailState =
           </div>
 
           <div class="space-y-6 md:col-span-2">
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-              <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Datos de la prenda</h2>
+            <div class="t-card p-5">
+              <h2 class="mb-4 text-title-3 text-trama-dark">Datos de la prenda</h2>
               <dl class="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
                 <div>
-                  <dt class="text-trama-dark/50">Categoría</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.category }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Categoría</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.category }}</dd>
                 </div>
                 @if (d.garment.subcategory) {
                   <div>
-                    <dt class="text-trama-dark/50">Subcategoría</dt>
-                    <dd class="text-trama-dark/80">{{ d.garment.subcategory }}</dd>
+                    <dt class="text-[13px] text-trama-muted">Subcategoría</dt>
+                    <dd class="font-semibold text-trama-dark">{{ d.garment.subcategory }}</dd>
                   </div>
                 }
                 <div>
-                  <dt class="text-trama-dark/50">Marca</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.brand }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Marca</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.brand }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Talle</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.size }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Talle</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.size }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Color</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.color }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Color</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.color }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Temporada</dt>
-                  <dd class="text-trama-dark/80">{{ d.garment.season }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Temporada</dt>
+                  <dd class="font-semibold text-trama-dark">{{ d.garment.season }}</dd>
                 </div>
                 <div>
-                  <dt class="text-trama-dark/50">Estado</dt>
-                  <dd class="text-trama-dark/80">{{ conditionLabel(d.garment.condition) }}</dd>
+                  <dt class="text-[13px] text-trama-muted">Estado</dt>
+                  <dd class="font-semibold text-trama-dark">{{ conditionLabel(d.garment.condition) }}</dd>
                 </div>
               </dl>
               @if (d.garment.description) {
                 <div class="mt-4 border-t border-trama-sand-100 pt-4">
-                  <dt class="text-sm text-trama-dark/50">Descripción</dt>
-                  <dd class="mt-1 text-sm text-trama-dark/80">{{ d.garment.description }}</dd>
+                  <dt class="text-sm text-trama-muted">Descripción</dt>
+                  <dd class="mt-1 text-sm text-trama-body">{{ d.garment.description }}</dd>
                 </div>
               }
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-xs text-trama-dark/50">Cedente</p>
+              <div class="t-card p-4">
+                <p class="text-[13px] font-semibold text-trama-body">Cedente</p>
                 @if (d.consignor; as consignor) {
                   <p class="mt-1 text-sm text-trama-dark">{{ consignor.name }}</p>
                   @if (consignor.dni) {
-                    <p class="text-xs text-trama-dark/50">DNI {{ consignor.dni }}</p>
+                    <p class="text-[13px] font-semibold text-trama-body">DNI {{ consignor.dni }}</p>
                   }
                 } @else {
                   <p class="mt-1 text-sm text-trama-dark">—</p>
                 }
               </div>
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-xs text-trama-dark/50">Punto de venta</p>
+              <div class="t-card p-4">
+                <p class="text-[13px] font-semibold text-trama-body">Punto de venta</p>
                 @if (d.salesPoint; as salesPoint) {
                   <p class="mt-1 text-sm text-trama-dark">{{ salesPoint.name }}</p>
                   @if (salesPoint.address) {
-                    <p class="text-xs text-trama-dark/50">{{ salesPoint.address }}</p>
+                    <p class="text-[13px] font-semibold text-trama-body">{{ salesPoint.address }}</p>
                   }
                 } @else {
                   <p class="mt-1 text-sm text-trama-dark">—</p>
@@ -161,23 +161,23 @@ type DetailState =
             </div>
 
             @if (d.agreement; as agreement) {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-                <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Precios acordados</h2>
+              <div class="t-card p-5">
+                <h2 class="mb-4 text-title-3 text-trama-dark">Precios acordados</h2>
                 <div class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
                   <div>
-                    <p class="text-trama-dark/50">Precio del cedente</p>
+                    <p class="text-trama-muted">Precio del cedente</p>
                     <p class="mt-1 font-semibold text-trama-dark">
                       {{ agreement.agreedConsignorPrice | money }}
                     </p>
                   </div>
                   <div>
-                    <p class="text-trama-dark/50">Precio de venta</p>
+                    <p class="text-trama-muted">Precio de venta</p>
                     <p class="mt-1 font-semibold text-trama-dark">
                       {{ agreement.agreedSalePrice | money }}
                     </p>
                   </div>
                   <div>
-                    <p class="text-trama-dark/50">Comisión</p>
+                    <p class="text-trama-muted">Comisión</p>
                     <p class="mt-1 font-semibold text-trama-dark">
                       {{ agreement.appliedCommission }}%
                     </p>
@@ -187,9 +187,9 @@ type DetailState =
             }
 
             @if (d.reception; as reception) {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-                <h2 class="mb-3 text-sm font-medium text-trama-dark/60">Recepción</h2>
-                <p class="text-sm text-trama-dark/80">
+              <div class="t-card p-5">
+                <h2 class="mb-3 text-title-3 text-trama-dark">Recepción</h2>
+                <p class="text-sm text-trama-body">
                   Comprobante {{ reception.receiptNumber }} ·
                   {{ reception.receivedAt | shortDate }}
                 </p>
@@ -197,34 +197,34 @@ type DetailState =
               </div>
             }
 
-            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+            <div class="t-card p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
             @if (d.garment.status === 'agreed') {
               <a
                 [routerLink]="['/m/garment', d.garment.id, 'reception']"
-                class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                class="t-btn t-btn-primary"
                 >Registrar recepción</a
               >
             } @else if (d.garment.status === 'in_stock' || d.garment.status === 'with_remarks') {
               <a
                 [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                class="t-btn t-btn-primary"
                 >Registrar venta</a
               >
             } @else if (d.garment.status === 'sold') {
               <a
                 [routerLink]="['/m/garment', d.garment.id]"
-                class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                class="t-btn t-btn-primary"
                 >Ver liquidación</a
               >
             } @else if (d.garment.status === 'paid_out') {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-                <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
+              <div class="t-card p-5">
+                <p class="text-[15px] font-bold text-trama-dark">Liquidación pagada.</p>
                 @if (d.sale; as sale) {
                   @if (sale.paidAt) {
-                    <p class="mt-1 text-sm text-trama-dark/70">
+                    <p class="mt-1 text-sm text-trama-body">
                       {{ methodLabel(sale.paymentMethod) }}
                       @if (sale.receiptNumber) {
                         · Comp. {{ sale.receiptNumber }}
@@ -238,8 +238,8 @@ type DetailState =
           </div>
         </div>
 
-        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
+        <div class="t-card p-5">
+          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
@@ -247,6 +247,7 @@ type DetailState =
   `,
 })
 export class GarmentDetail {
+  protected readonly headerIcon = Hanger;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly consignorsService = inject(ConsignorsService);
