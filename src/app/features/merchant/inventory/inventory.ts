@@ -10,6 +10,8 @@ import { AgreementsService } from '../../../core/services/agreements.service';
 import { ConsignorsService } from '../../../core/services/consignors.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
+import { SalesService } from '../../../core/services/sales.service';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
@@ -42,6 +44,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 
 interface InventoryRow {
   id: string;
+  code?: string;
   name: string;
   photo?: string;
   consignorId: string;
@@ -109,7 +112,7 @@ type InventoryState =
           <div toolbar class="flex w-full gap-2 sm:flex-wrap sm:gap-3">
             <app-dropdown class="hidden sm:block sm:w-56" size="sm" ariaLabel="Cedente" [options]="consignorOptions()" [(value)]="consignorFilter" />
             <app-dropdown class="hidden sm:block sm:w-56" size="sm" ariaLabel="Punto de venta" [options]="salesPointOptions()" [(value)]="salesPointFilter" />
-            <app-search-field class="min-w-0 flex-1 sm:flex-none" [(value)]="search" placeholder="Buscar por nombre" />
+            <app-search-field class="min-w-0 flex-1 sm:flex-none" [(value)]="search" placeholder="Buscar por nombre, código o cedente" />
             <app-filter-sheet class="shrink-0 sm:hidden" [count]="activeFilterCount()" [results]="filteredRows().length" noun="prendas" (clear)="clearFilters()">
               <div>
                 <p class="t-label">Estado</p>
@@ -126,10 +129,23 @@ type InventoryState =
             </app-filter-sheet>
           </div>
 
+          @if (selectedCount() > 0) {
+            <div class="mb-3 flex flex-wrap items-center gap-3 rounded-xl border border-trama-brand/30 bg-trama-green-50 px-4 py-3">
+              <span class="text-sm font-semibold text-trama-dark">
+                {{ selectedCount() }} {{ selectedCount() === 1 ? 'prenda seleccionada' : 'prendas seleccionadas' }}
+              </span>
+              <button type="button" (click)="bulkOpen.set(true)" class="t-btn t-btn-primary t-btn-sm">
+                Marcar como vendidas
+              </button>
+              <button type="button" (click)="clearSelection()" class="t-btn t-btn-sm">Cancelar</button>
+            </div>
+          }
+
           @if (filteredRows().length) {
             <table class="t-table">
               <thead>
                 <tr>
+                  <th class="w-10"></th>
                   <th>Prenda</th>
                   <th>Cedente</th>
                   <th>Punto de venta</th>
@@ -142,6 +158,17 @@ type InventoryState =
               <tbody>
                 @for (row of pageRows(); track row.id) {
                   <tr class="t-row-link" [routerLink]="['/m/inventory', row.id]">
+                    <td class="w-10" (click)="$event.stopPropagation()">
+                      @if (sellable(row.status)) {
+                        <input
+                          type="checkbox"
+                          class="h-4 w-4 accent-trama-brand"
+                          [checked]="isSelected(row.id)"
+                          (change)="toggle(row.id)"
+                          [attr.aria-label]="'Seleccionar ' + row.name"
+                        />
+                      }
+                    </td>
                     <td class="t-cell-main">
                       <div class="flex items-center gap-3">
                         <app-table-thumb [photo]="row.photo" [seed]="row.id" />
@@ -176,6 +203,39 @@ type InventoryState =
           }
         </app-data-table>
       </div>
+
+      @if (bulkOpen()) {
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" (click)="bulkOpen.set(false)">
+          <div class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
+            <h2 class="text-title-3 text-trama-dark">
+              Marcar {{ selectedCount() }} {{ selectedCount() === 1 ? 'prenda' : 'prendas' }} como vendidas
+            </h2>
+            <p class="mt-2 text-sm text-trama-muted">
+              Se registran al precio de venta acordado de cada prenda.
+            </p>
+            <label class="mt-4 block text-sm">
+              <span class="t-label">Fecha de venta</span>
+              <input
+                type="date"
+                class="t-input mt-1"
+                [value]="bulkDate()"
+                (change)="bulkDate.set($any($event.target).value)"
+              />
+            </label>
+            <div class="mt-6 flex justify-end gap-3">
+              <button type="button" (click)="bulkOpen.set(false)" class="t-btn">Cancelar</button>
+              <button
+                type="button"
+                (click)="confirmBulk()"
+                [disabled]="bulkSaving()"
+                class="t-btn t-btn-primary"
+              >
+                {{ bulkSaving() ? 'Registrando…' : 'Marcar vendidas' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     }
   `,
 })
@@ -188,8 +248,16 @@ export class Inventory {
   private readonly consignorsService = inject(ConsignorsService);
   private readonly merchantsService = inject(MerchantsService);
   private readonly agreementsService = inject(AgreementsService);
+  private readonly salesService = inject(SalesService);
+  private readonly toast = inject(ToastService);
 
   protected readonly statusFilters = STATUS_FILTERS;
+
+  // Selección para marcar varias prendas como vendidas a la vez.
+  protected readonly selected = signal<Set<string>>(new Set());
+  protected readonly bulkOpen = signal(false);
+  protected readonly bulkDate = signal(new Date().toISOString().slice(0, 10));
+  protected readonly bulkSaving = signal(false);
 
   protected readonly search = signal('');
   protected readonly statusFilter = signal<StatusFilter>('all');
@@ -233,6 +301,53 @@ export class Inventory {
     this.salesPointFilter.set('all');
   }
 
+  protected readonly selectedCount = computed(() => this.selected().size);
+
+  // Una prenda se puede marcar vendida si está en stock (con o sin observaciones).
+  protected sellable(status: GarmentStatus): boolean {
+    return status === 'in_stock' || status === 'with_remarks';
+  }
+
+  protected isSelected(id: string): boolean {
+    return this.selected().has(id);
+  }
+
+  protected toggle(id: string): void {
+    this.selected.update((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  protected clearSelection(): void {
+    this.selected.set(new Set());
+  }
+
+  protected confirmBulk(): void {
+    const ids = [...this.selected()];
+    if (!ids.length || this.bulkSaving()) return;
+    this.bulkSaving.set(true);
+    this.salesService.bulkCreate(ids, this.bulkDate()).subscribe({
+      next: (result) => {
+        this.bulkSaving.set(false);
+        this.bulkOpen.set(false);
+        this.selected.set(new Set());
+        const ok = result.sold.length;
+        const message = result.failed.length
+          ? `${ok} marcadas como vendidas · ${result.failed.length} no se pudieron`
+          : `${ok} ${ok === 1 ? 'prenda marcada' : 'prendas marcadas'} como vendidas`;
+        this.toast.show(message, result.failed.length ? 'error' : 'success');
+        this.reload.next();
+      },
+      error: () => {
+        this.bulkSaving.set(false);
+        this.toast.show('No pudimos registrar las ventas', 'error');
+      },
+    });
+  }
+
   protected readonly pageRows = computed(() => pageOf(this.filteredRows(), this.page()));
 
   private readonly reload = new BehaviorSubject<void>(undefined);
@@ -272,7 +387,13 @@ export class Inventory {
       if (status !== 'all' && row.status !== status) return false;
       if (consignor !== 'all' && row.consignorId !== consignor) return false;
       if (salesPoint !== 'all' && row.salesPointId !== salesPoint) return false;
-      if (term && !row.name.toLowerCase().includes(term)) return false;
+      if (
+        term &&
+        !row.name.toLowerCase().includes(term) &&
+        !(row.code ?? '').toLowerCase().includes(term) &&
+        !row.consignorName.toLowerCase().includes(term)
+      )
+        return false;
       return true;
     });
   });
@@ -309,12 +430,13 @@ export class Inventory {
             const agreement = agreementByGarment.get(garment.id);
             return {
               id: garment.id,
+              code: garment.code,
               name: garment.name,
               photo: garment.photos[0],
               consignorId: garment.consignorId,
               consignorName: consignorName.get(garment.consignorId) ?? '—',
               consignorVerified: consignorVerified.get(garment.consignorId) ?? false,
-              meta: [garment.category, garment.size].filter(Boolean).join(' · '),
+              meta: [garment.code, garment.category, garment.size].filter(Boolean).join(' · '),
               salesPointId: garment.salesPointId,
               salesPointName: garment.salesPointId
                 ? (salesPointName.get(garment.salesPointId) ?? '—')
