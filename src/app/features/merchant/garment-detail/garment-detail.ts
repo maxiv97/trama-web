@@ -82,6 +82,9 @@ type DetailState =
           <app-page-header class="mt-4" [title]="d.garment.name" section="Inventario" [icon]="headerIcon">
             <div lead class="mt-3 flex flex-wrap items-center gap-3">
               <app-status-badge [status]="d.garment.status" />
+              @if (d.garment.code) {
+                <span class="rounded bg-trama-sand-100 px-2 py-0.5 font-mono text-sm font-semibold text-trama-dark">{{ d.garment.code }}</span>
+              }
               <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
             </div>
           </app-page-header>

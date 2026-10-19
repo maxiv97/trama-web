@@ -24,6 +24,7 @@ export interface GarmentEvent {
 
 export interface Garment {
   id: string;
+  code?: string;
   consignorId: string;
   merchantId?: string;
   name: string;
