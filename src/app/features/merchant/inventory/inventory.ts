@@ -134,6 +134,11 @@ type InventoryState =
               <span class="text-sm font-semibold text-trama-dark">
                 {{ selectedCount() }} {{ selectedCount() === 1 ? 'prenda seleccionada' : 'prendas seleccionadas' }}
               </span>
+              @if (sellableCount() > 1) {
+                <button type="button" (click)="toggleAll()" class="text-sm font-semibold text-trama-brand underline underline-offset-2">
+                  {{ allSelected() ? 'Quitar selección' : 'Seleccionar todas (' + sellableCount() + ')' }}
+                </button>
+              }
               <button type="button" (click)="bulkOpen.set(true)" class="t-btn t-btn-primary t-btn-sm">
                 Marcar como vendidas
               </button>
@@ -145,7 +150,18 @@ type InventoryState =
             <table class="t-table">
               <thead>
                 <tr>
-                  <th class="w-10"></th>
+                  <th class="w-10">
+                    @if (sellableCount() > 0) {
+                      <input
+                        type="checkbox"
+                        class="h-4 w-4 accent-trama-brand"
+                        [checked]="allSelected()"
+                        [indeterminate]="someSelected()"
+                        (change)="toggleAll()"
+                        aria-label="Seleccionar todas las prendas en stock"
+                      />
+                    }
+                  </th>
                   <th>Prenda</th>
                   <th>Cedente</th>
                   <th>Punto de venta</th>
@@ -306,6 +322,27 @@ export class Inventory {
   // Una prenda se puede marcar vendida si está en stock (con o sin observaciones).
   protected sellable(status: GarmentStatus): boolean {
     return status === 'in_stock' || status === 'with_remarks';
+  }
+
+  // "Seleccionar todas" abarca las vendibles del resultado filtrado (todas las
+  // páginas), no solo la visible.
+  private readonly sellableIds = computed(() =>
+    this.filteredRows()
+      .filter((row) => this.sellable(row.status))
+      .map((row) => row.id),
+  );
+  protected readonly sellableCount = computed(() => this.sellableIds().length);
+  protected readonly allSelected = computed(() => {
+    const ids = this.sellableIds();
+    return ids.length > 0 && ids.every((id) => this.selected().has(id));
+  });
+  protected readonly someSelected = computed(
+    () => this.selectedCount() > 0 && !this.allSelected(),
+  );
+
+  protected toggleAll(): void {
+    if (this.allSelected()) this.clearSelection();
+    else this.selected.set(new Set(this.sellableIds()));
   }
 
   protected isSelected(id: string): boolean {
