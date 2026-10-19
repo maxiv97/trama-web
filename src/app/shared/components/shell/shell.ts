@@ -66,7 +66,7 @@ const MENUS: Record<Role, NavItem[]> = {
       @if (!isPublic()) {
         <aside class="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col bg-trama-sidebar md:flex">
           <a routerLink="/" class="flex items-center gap-2.5 px-6 pb-6 pt-6">
-            <app-logo-icon [size]="28" />
+            <app-logo-icon [size]="30" [decorative]="true" />
             <span class="font-display text-[22px] font-bold tracking-[-0.02em] text-trama-sand-50">Trama</span>
           </a>
           <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-6">
@@ -110,7 +110,7 @@ const MENUS: Record<Role, NavItem[]> = {
           class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-trama-sand-100 bg-trama-paper/95 px-4 py-2.5 backdrop-blur md:ml-60 md:justify-end md:px-8"
         >
           <a routerLink="/" class="flex items-center gap-2 md:hidden">
-            <app-logo-icon [size]="26" />
+            <app-logo-icon [size]="28" [decorative]="true" />
             <span class="font-display text-lg font-bold text-trama-dark">Trama</span>
           </a>
           <div class="flex items-center gap-2">

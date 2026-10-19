@@ -286,19 +286,56 @@ interface Leaf {
           </svg>
         </div>
 
-        <!-- Nav -->
+        <!-- Nav: entrada "Hilo que cruza" (logo, palabra, hilo e Ingresar) -->
         <header
-          class="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 py-5 sm:px-10 lg:px-20 lg:py-[26px]"
+          class="absolute inset-x-0 top-0 z-10 flex items-center gap-4 px-5 py-5 sm:px-10 lg:px-20 lg:py-[26px]"
         >
-          <a routerLink="/" class="flex items-center gap-2.5">
-            <app-logo-icon [size]="30" />
-            <span class="font-display text-[22px] font-bold tracking-[-0.02em] text-trama-dark"
-              >Trama</span
-            >
+          <a routerLink="/" class="flex shrink-0 items-center gap-2.5" aria-label="Trama, inicio">
+            <span class="nav-logo inline-flex">
+              <app-logo-icon [size]="34" [decorative]="true" />
+            </span>
+            <span class="inline-flex overflow-hidden">
+              <span
+                class="nav-word inline-block font-display text-[22px] font-bold tracking-[-0.02em] text-trama-dark"
+                >Trama</span
+              >
+            </span>
           </a>
+
+          <span class="nav-thread pointer-events-none h-2.5 min-w-0 flex-1" aria-hidden="true">
+            <svg
+              class="block h-full w-full overflow-visible"
+              viewBox="0 0 100 10"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <mask id="nav-thread-mask" maskUnits="userSpaceOnUse" x="-2" y="-5" width="104" height="20">
+                  <path
+                    class="nav-thread-draw"
+                    d="M0,5 C20,0 30,10 50,5 S80,0 100,5"
+                    fill="none"
+                    stroke="#fff"
+                    stroke-width="6"
+                    pathLength="100"
+                  />
+                </mask>
+              </defs>
+              <path
+                d="M0,5 C20,0 30,10 50,5 S80,0 100,5"
+                fill="none"
+                stroke="#F2B636"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-dasharray="3 2.5"
+                vector-effect="non-scaling-stroke"
+                mask="url(#nav-thread-mask)"
+              />
+            </svg>
+          </span>
+
           <a
             routerLink="/login"
-            class="rounded-full border-[1.5px] border-trama-dark bg-trama-sand-50 px-5 py-2.5 text-[15px] font-semibold text-trama-dark transition-colors hover:bg-trama-paper"
+            class="nav-cta shrink-0 rounded-full border-[1.5px] border-trama-dark bg-trama-sand-50 px-5 py-2.5 text-[15px] font-semibold text-trama-dark transition-colors hover:bg-trama-paper"
           >
             Ingresar
           </a>
@@ -508,7 +545,62 @@ interface Leaf {
         transform: none;
       }
     }
+    /* Entrada del nav (corre en todos los tamaños, antes que la escena) */
+    .nav-logo {
+      transform-origin: center;
+      animation: c-pop 0.5s cubic-bezier(0.3, 1.3, 0.5, 1) 0s both;
+    }
+    .nav-word {
+      animation: c-word 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) 0.25s both;
+    }
+    .nav-cta {
+      animation: c-pop 0.5s cubic-bezier(0.3, 1.3, 0.5, 1) 0.75s both;
+    }
+    .nav-thread-draw {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: c-thread-draw 1.3s ease-in-out 0.1s both;
+    }
+    .nav-thread {
+      animation: c-thread-fade 1.3s ease-in-out 0.1s both;
+    }
+    @keyframes c-word {
+      from {
+        transform: translateX(-110%);
+        opacity: 0;
+      }
+      to {
+        transform: none;
+        opacity: 1;
+      }
+    }
+    @keyframes c-thread-draw {
+      0% {
+        stroke-dashoffset: 100;
+      }
+      55%,
+      100% {
+        stroke-dashoffset: 0;
+      }
+    }
+    @keyframes c-thread-fade {
+      0%,
+      55% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
     @media (prefers-reduced-motion: reduce) {
+      .nav-logo,
+      .nav-word,
+      .nav-cta {
+        animation: c-text 400ms ease both;
+      }
+      .nav-thread {
+        display: none;
+      }
       .sway,
       .float {
         animation: none;

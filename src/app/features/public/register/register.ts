@@ -206,7 +206,7 @@ interface SummaryRow {
       <div class="mx-auto max-w-[1080px]">
         <div class="mb-6 flex items-center justify-between gap-3">
           <a routerLink="/" class="flex items-center gap-2.5">
-            <app-logo-icon [size]="30" />
+            <app-logo-icon [size]="34" [decorative]="true" />
             <span class="font-display text-[22px] font-bold tracking-[-0.02em] text-trama-dark">Trama</span>
           </a>
           <span class="text-sm text-trama-body">

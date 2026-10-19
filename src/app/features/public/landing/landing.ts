@@ -191,7 +191,7 @@ const AUDIENCES: Audience[] = [
           class="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-5 py-8 text-[13px] sm:px-10 lg:px-20"
         >
           <div class="flex items-center gap-2 font-display font-bold text-trama-sand-50">
-            <app-logo-icon [size]="22" /> Trama
+            <app-logo-icon [size]="24" [decorative]="true" /> Trama
           </div>
           <div>Práctica Profesionalizante 3 · Instituto Cervantes · 2026</div>
         </div>

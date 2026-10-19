@@ -13,7 +13,7 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
     <div class="flex min-h-screen items-center justify-center bg-trama-sand-50 px-5 py-10">
       <div class="w-full max-w-[400px]">
         <div class="mb-7 flex flex-col items-center">
-          <a routerLink="/" aria-label="Volver al inicio"><app-logo-icon [size]="46" /></a>
+          <a routerLink="/" aria-label="Volver al inicio"><app-logo-icon [size]="46" [decorative]="true" /></a>
           <h1 class="text-title-2 mt-4 text-trama-dark">Ingresá a Trama</h1>
           <app-stitch class="mt-2" variant="knot" [width]="120" [animate]="true" [delay]="200" />
           <p class="mt-2 text-sm text-trama-body">Cedentes y comercios</p>
