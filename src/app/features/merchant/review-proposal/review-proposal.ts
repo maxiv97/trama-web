@@ -320,7 +320,7 @@ export class ReviewProposal {
     this.proposalsService.counteroffer(garmentId, price).subscribe({
       next: () => {
         this.toast.show('Contraoferta enviada');
-        this.router.navigate(['/m']);
+        this.router.navigate(['/m/proposals']);
       },
       error: () => this.onActionError(),
     });
