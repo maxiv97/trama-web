@@ -31,6 +31,12 @@ export class GarmentsService {
     return this.http.get<Garment[]>(this.base);
   }
 
+  // Prendas sin fotos/video/timeline, para vistas que solo agregan datos (puntos de venta,
+  // tarjetas de reportes) y no muestran miniaturas. Evita traerse los base64 de cada prenda.
+  listMeta(): Observable<Garment[]> {
+    return this.http.get<Garment[]>(this.base, { params: { lite: '1' } });
+  }
+
   create(input: NewGarment): Observable<Garment> {
     return this.http.post<Garment>(this.base, input);
   }

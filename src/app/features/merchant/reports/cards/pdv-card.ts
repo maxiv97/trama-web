@@ -126,7 +126,7 @@ export class PdvCard {
     try {
       const f = this.filters.current();
       const [sales, garments, consignors] = await firstValueFrom(
-        forkJoin([this.salesService.list(), this.garmentsService.list(), this.consignorsService.list()]),
+        forkJoin([this.salesService.list(), this.garmentsService.listMeta(), this.consignorsService.list()]),
       );
       const garmentById = new Map(garments.map((g) => [g.id, g]));
       const consignorName = new Map(consignors.map((c) => [c.id, c.name]));

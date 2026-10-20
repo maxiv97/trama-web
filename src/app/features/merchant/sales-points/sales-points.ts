@@ -353,7 +353,7 @@ export class SalesPoints {
     const merchantId = this.auth.user()?.id ?? '';
     return forkJoin({
       salesPoints: this.salesPointsService.byMerchant(merchantId),
-      garments: this.garmentsService.byMerchant(merchantId),
+      garments: this.garmentsService.listMeta(),
       agreements: this.agreementsService.list(),
       merchant: this.merchantsService.getById(merchantId),
     }).pipe(

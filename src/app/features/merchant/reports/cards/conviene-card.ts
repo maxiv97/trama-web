@@ -165,7 +165,7 @@ export class ConvieneCard {
   protected openDrill(category: string): void {
     const sp = this.filters.salesPointId();
     const consignor = this.filters.consignorId();
-    this.garmentsService.list().subscribe((garments) => {
+    this.garmentsService.listMeta().subscribe((garments) => {
       const rows: DrillRow[] = garments
         .filter(
           (g) =>

@@ -133,7 +133,7 @@ export class RotaCard {
     const category = this.filters.category();
     const consignor = this.filters.consignorId();
     const now = Date.now();
-    this.garmentsService.list().subscribe((garments) => {
+    this.garmentsService.listMeta().subscribe((garments) => {
       const rows: DrillRow[] = garments
         .filter((g) => {
           if (g.status !== 'in_stock' && g.status !== 'with_remarks') return false;
