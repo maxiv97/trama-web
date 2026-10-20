@@ -7,7 +7,6 @@ import { CategorySales } from '../../../core/models/category-sales.model';
 import { SummaryReport } from '../../../core/models/summary.model';
 import { WeeklyPoint } from '../../../core/models/summary.model';
 import { PayoutsService } from '../../../core/services/payouts.service';
-import { ProposalsService } from '../../../core/services/proposals.service';
 import { ReportsService } from '../../../core/services/reports.service';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
@@ -17,7 +16,6 @@ import { BlobIcon } from '../../../shared/components/blob-icon/blob-icon';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { BarColumns, BarDatum, BarThin } from '../../../shared/components/charts/charts';
 import { EnterDirective } from '../../../shared/directives/enter.directive';
-import { MerchantsService } from '../../../core/services/merchants.service';
 import { BlobTone } from '../../../shared/icons/trama-icons';
 import { Check, Clock, Inbox, LayoutDashboard, LucideIconData, Receipt } from 'lucide-angular';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
@@ -151,10 +149,8 @@ const EXPIRY_URGENT_DAYS = 30;
 export class MerchantPanel {
   private readonly auth = inject(AuthService);
   private readonly reportsService = inject(ReportsService);
-  private readonly proposalsService = inject(ProposalsService);
   private readonly payoutsService = inject(PayoutsService);
   private readonly money = inject(MoneyPipe);
-  private readonly merchantsService = inject(MerchantsService);
 
   protected readonly panelIcon = LayoutDashboard;
   protected readonly checkIcon = Check;
@@ -239,22 +235,17 @@ export class MerchantPanel {
   private load(): Observable<ResumenData> {
     const merchantId = this.auth.user()?.id ?? '';
     return forkJoin({
-      summary: this.reportsService.summary(),
-      categories: this.reportsService.byCategory(),
-      weekly: this.reportsService.weekly(),
-      proposals: this.proposalsService.pendingForMerchant(merchantId),
+      dashboard: this.reportsService.dashboard(),
       payouts: this.payoutsService.monthlyByMerchant(merchantId),
-      expiring: this.reportsService.expiring(EXPIRY_URGENT_DAYS),
-      merchant: this.merchantsService.getById(merchantId).pipe(catchError(() => of(null))),
     }).pipe(
-      map(({ summary, categories, weekly, proposals, payouts, expiring, merchant }): ResumenData => {
+      map(({ dashboard, payouts }): ResumenData => {
         const overdue = payouts.filter((p) => p.status === 'overdue');
         const overdueAmount = overdue.reduce((sum, p) => sum + p.pendingAmount, 0);
         const urgencias: Urgencia[] = [];
-        if (proposals.length) {
+        if (dashboard.pendingCount) {
           urgencias.push({
             key: 'proposals',
-            title: `${proposals.length} ${proposals.length === 1 ? 'propuesta para revisar' : 'propuestas para revisar'}`,
+            title: `${dashboard.pendingCount} ${dashboard.pendingCount === 1 ? 'propuesta para revisar' : 'propuestas para revisar'}`,
             meta: 'Cedentes esperando tu respuesta',
             actionLabel: 'Revisar',
             icon: Inbox,
@@ -274,10 +265,10 @@ export class MerchantPanel {
             link: ['/m/payouts'],
           });
         }
-        if (expiring.length) {
+        if (dashboard.expiringCount) {
           urgencias.push({
             key: 'expiring',
-            title: `${expiring.length} ${expiring.length === 1 ? 'plazo por vencer' : 'plazos por vencer'}`,
+            title: `${dashboard.expiringCount} ${dashboard.expiringCount === 1 ? 'plazo por vencer' : 'plazos por vencer'}`,
             meta: `Próximos ${EXPIRY_URGENT_DAYS} días`,
             actionLabel: 'Ver',
             icon: Clock,
@@ -287,18 +278,20 @@ export class MerchantPanel {
           });
         }
 
-        const topCategories = [...categories]
+        const topCategories = [...dashboard.categories]
           .filter((c) => c.merchantProfit > 0)
           .sort((a, b) => b.merchantProfit - a.merchantProfit)
           .slice(0, 4);
 
         return {
-          displayName: merchant?.businessName || this.auth.user()?.name || '',
-          summary,
+          displayName: dashboard.displayName || this.auth.user()?.name || '',
+          summary: dashboard.summary,
           categories: topCategories,
-          weekly,
+          weekly: dashboard.weekly,
           urgencias,
-          hasData: summary.current.soldCount > 0 || categories.some((c) => c.inStockCount > 0),
+          hasData:
+            dashboard.summary.current.soldCount > 0 ||
+            dashboard.categories.some((c) => c.inStockCount > 0),
         };
       }),
     );

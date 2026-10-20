@@ -11,11 +11,17 @@ import { ReceptionDiscrepancyReport } from '../models/reception-discrepancies.mo
 import { ReportFilters, toReportParams } from '../models/report-filters.model';
 import { RotationReport } from '../models/rotation.model';
 import { SummaryReport, WeeklyPoint } from '../models/summary.model';
+import { DashboardReport } from '../models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/reports`;
+
+  // Panel del comercio en una sola llamada (summary + categorías + weekly + conteos).
+  dashboard(): Observable<DashboardReport> {
+    return this.http.get<DashboardReport>(`${this.base}/dashboard`);
+  }
 
   expiring(withinDays?: number, filters?: ReportFilters): Observable<ExpiringConsignment[]> {
     const params = toReportParams(filters);
