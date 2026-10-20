@@ -176,7 +176,7 @@ type InventoryState =
                     </td>
                     <td class="t-cell-main">
                       <div class="flex items-center gap-3">
-                        <app-table-thumb [photo]="row.photo" [seed]="row.id" />
+                        <app-table-thumb [garmentId]="row.id" [seed]="row.id" />
                         <span class="min-w-0 max-w-[260px]">
                           <span class="block truncate font-bold">{{ row.name }}</span>
                           <span class="t-meta">{{ row.meta }}</span>
@@ -428,7 +428,7 @@ export class Inventory {
   private load(): Observable<InventoryData> {
     const merchantId = this.auth.user()?.id ?? '';
     return forkJoin({
-      garments: this.garmentsService.byMerchant(merchantId),
+      garments: this.garmentsService.listMeta(),
       consignors: this.consignorsService.list(),
       merchant: this.merchantsService.getById(merchantId),
       agreements: this.agreementsService.list(),
@@ -455,7 +455,6 @@ export class Inventory {
               id: garment.id,
               code: garment.code,
               name: garment.name,
-              photo: garment.photos[0],
               consignorId: garment.consignorId,
               consignorName: consignorName.get(garment.consignorId) ?? '—',
               consignorVerified: consignorVerified.get(garment.consignorId) ?? false,

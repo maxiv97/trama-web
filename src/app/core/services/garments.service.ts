@@ -45,6 +45,11 @@ export class GarmentsService {
     return this.http.get<Garment>(`${this.base}/${id}`);
   }
 
+  // Primera foto de una prenda, para la miniatura diferida de los listados.
+  photo(id: string): Observable<{ photo: string | null }> {
+    return this.http.get<{ photo: string | null }>(`${this.base}/${id}/photo`);
+  }
+
   // Editar una consignación en revisión (prenda + precio pedido).
   updateDraft(id: string, payload: EditDraftPayload): Observable<unknown> {
     return this.http.patch(`${this.base}/${id}/draft`, payload);

@@ -1,5 +1,6 @@
-import { Component, computed, input, model, output } from '@angular/core';
+import { afterNextRender, Component, computed, ElementRef, inject, input, model, output, signal } from '@angular/core';
 import { ChevronLeft, ChevronRight, LucideAngularModule, Search, Shirt } from 'lucide-angular';
+import { GarmentsService } from '../../../core/services/garments.service';
 import { BLOB_PATH, BLOB_ROTATION, hashIndex } from '../../icons/trama-icons';
 import { Avatar } from '../avatar/avatar';
 import { VerifiedBadge } from '../verified-badge/verified-badge';
@@ -208,8 +209,8 @@ export class SearchField {
     '[style.height.px]': 'size()',
   },
   template: `
-    @if (photo()) {
-      <img [src]="photo()" alt="" class="h-full w-full rounded-[14px] object-cover" loading="lazy" />
+    @if (src(); as img) {
+      <img [src]="img" alt="" class="h-full w-full rounded-[14px] object-cover" loading="lazy" />
     } @else {
       <svg class="absolute inset-0" [attr.width]="size()" [attr.height]="size()" viewBox="-32 -32 64 64" aria-hidden="true">
         <path [attr.d]="blob" [attr.fill]="fill()" [attr.transform]="'rotate(' + rotation() + ')'" />
@@ -220,6 +221,8 @@ export class SearchField {
 })
 export class TableThumb {
   readonly photo = input<string | undefined | null>(null);
+  /** Id de la prenda: si se pasa (y no `photo`), la miniatura se trae al entrar en pantalla. */
+  readonly garmentId = input('');
   /** Texto estable (id o nombre) para elegir color y giro. */
   readonly seed = input('');
   readonly size = input(48);
@@ -227,6 +230,28 @@ export class TableThumb {
   protected readonly shirt = Shirt;
   protected readonly fill = computed(() => BLOB_ROTATION[hashIndex(this.seed(), BLOB_ROTATION.length)]);
   protected readonly rotation = computed(() => (hashIndex(this.seed() + '*', 7) - 3) * 22);
+
+  private readonly host = inject(ElementRef);
+  private readonly garments = inject(GarmentsService);
+  // Foto cargada de forma diferida; mientras tanto se muestra el placeholder.
+  private readonly lazyPhoto = signal<string | null>(null);
+  protected readonly src = computed(() => this.photo() ?? this.lazyPhoto());
+
+  constructor() {
+    afterNextRender(() => {
+      if (this.photo() || !this.garmentId()) return;
+      const el = this.host.nativeElement as HTMLElement;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((entry) => entry.isIntersecting)) return;
+          observer.disconnect();
+          this.garments.photo(this.garmentId()).subscribe((res) => this.lazyPhoto.set(res.photo));
+        },
+        { rootMargin: '150px' },
+      );
+      observer.observe(el);
+    });
+  }
 }
 
 /** Celda de persona: avatar con iniciales (30 px), nombre y parche de verificado de 15 px. */

@@ -49,7 +49,6 @@ export function buildProposalRows(
         garmentId: garment.id,
         proposalId: proposal?.id,
         name: garment.name,
-        photo: garment.photos[0],
         category: garment.category,
         consignorId: garment.consignorId,
         consignorName: consignorName.get(garment.consignorId) ?? '—',

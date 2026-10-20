@@ -130,7 +130,7 @@ type ProposalsState =
                     <tr class="t-row-link" (click)="open(row)">
                       <td class="t-cell-main">
                         <div class="flex items-center gap-3">
-                          <app-table-thumb [photo]="row.photo" [seed]="row.garmentId" />
+                          <app-table-thumb [garmentId]="row.garmentId" [seed]="row.garmentId" />
                           <span class="min-w-0 max-w-[240px]">
                             <span class="block truncate font-bold">{{ row.name }}</span>
                             <span class="t-meta truncate">{{ row.category }} · {{ row.createdAt | shortDate }}</span>
@@ -286,7 +286,7 @@ export class MerchantProposals {
   private load(): Observable<ProposalsData> {
     const merchantId = this.auth.user()?.id ?? '';
     return forkJoin({
-      garments: this.garmentsService.byMerchant(merchantId),
+      garments: this.garmentsService.listMeta(),
       pending: this.proposalsService.pendingForMerchant(merchantId),
       consignors: this.consignorsService.list(),
       merchant: this.merchantsService.getById(merchantId),

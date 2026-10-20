@@ -84,7 +84,7 @@ type PanelState =
                     <tr class="t-row-link" [routerLink]="['/c/garment', row.id]">
                       <td class="t-cell-main">
                         <div class="flex items-center gap-3">
-                          <app-table-thumb [photo]="row.photo" [seed]="row.id" />
+                          <app-table-thumb [garmentId]="row.id" [seed]="row.id" />
                           <span class="min-w-0 max-w-[280px]">
                             <span class="block truncate font-bold">{{ row.name }}</span>
                             <span class="t-meta">{{ row.category }}</span>
@@ -172,7 +172,7 @@ export class ConsignorPanel {
   private load(): Observable<PanelData> {
     const consignorId = this.auth.user()?.id ?? '';
     return forkJoin({
-      garments: this.garmentsService.byConsignor(consignorId),
+      garments: this.garmentsService.listMeta(),
       payouts: this.payoutsService.byConsignor(consignorId),
       merchants: this.merchantsService.list(),
       agreements: this.agreementsService.list(),
@@ -181,7 +181,6 @@ export class ConsignorPanel {
         const rows: GarmentRow[] = garments.map((garment) => ({
           id: garment.id,
           name: garment.name,
-          photo: garment.photos[0],
           category: garment.category,
           status: garment.status,
           agreedSalePrice: agreements.find((agreement) => agreement.garmentId === garment.id)
