@@ -28,6 +28,7 @@ export interface MonthlyPayout {
   counterpartId: string;
   counterpartName: string;
   counterpartDni?: string;
+  counterpartBankDetails?: string;
   lines: MonthlyPayoutLine[];
   unpaidGarmentIds: string[];
   totalAmount: number;

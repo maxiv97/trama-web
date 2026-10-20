@@ -1,4 +1,4 @@
-import { Receipt, ChevronRight, LucideAngularModule } from 'lucide-angular';
+import { Copy, Receipt, ChevronRight, LucideAngularModule } from 'lucide-angular';
 import { Component, computed, inject, signal, linkedSignal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -90,6 +90,20 @@ type PayoutsState =
                           @if (row.counterpartDni) {
                             <span class="t-meta">DNI {{ row.counterpartDni }}</span>
                           }
+                          @if (row.counterpartBankDetails; as bank) {
+                            <span class="mt-0.5 flex items-center gap-1.5 t-meta">
+                              <span class="truncate">{{ bank }}</span>
+                              <button
+                                type="button"
+                                (click)="copy(bank)"
+                                class="shrink-0 rounded p-0.5 text-trama-muted hover:text-trama-dark"
+                                aria-label="Copiar CBU / CVU / alias"
+                                title="Copiar"
+                              >
+                                <lucide-angular [img]="copyIcon" [size]="14" />
+                              </button>
+                            </span>
+                          }
                         </span>
                       </div>
                     </td>
@@ -173,6 +187,7 @@ export class MerchantPayouts {
     this.months().map((m) => ({ value: m, label: this.monthLabel(m) })),
   );
   protected readonly headerIcon = Receipt;
+  protected readonly copyIcon = Copy;
   private readonly auth = inject(AuthService);
   private readonly payoutsService = inject(PayoutsService);
   private readonly merchantsService = inject(MerchantsService);
@@ -239,6 +254,15 @@ export class MerchantPayouts {
 
   protected retry(): void {
     this.reload.next();
+  }
+
+  protected async copy(text: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.toast.show('Copiado al portapapeles');
+    } catch {
+      this.toast.show('No pudimos copiar', 'error');
+    }
   }
 
   protected openSettle(row: MonthlyPayout): void {

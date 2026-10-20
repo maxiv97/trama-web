@@ -349,14 +349,25 @@ interface SummaryRow {
                   </form>
                 }
                 @case ('dni') {
-                  <form [formGroup]="dniForm" class="max-w-xs">
-                    <label class="t-label" for="r-dni">Número de DNI</label>
-                    <input id="r-dni" formControlName="dni" inputmode="numeric" placeholder="30123456" class="t-input" />
-                    @if (showError(dniForm, 'dni')) {
-                      <p class="t-error">{{ errorMessage(dniForm, 'dni') }}</p>
-                    } @else {
-                      <p class="t-help">Sin puntos ni espacios.</p>
-                    }
+                  <form [formGroup]="dniForm" class="max-w-sm space-y-4">
+                    <div>
+                      <label class="t-label" for="r-dni">Número de DNI</label>
+                      <input id="r-dni" formControlName="dni" inputmode="numeric" placeholder="30123456" class="t-input" />
+                      @if (showError(dniForm, 'dni')) {
+                        <p class="t-error">{{ errorMessage(dniForm, 'dni') }}</p>
+                      } @else {
+                        <p class="t-help">Sin puntos ni espacios.</p>
+                      }
+                    </div>
+                    <div>
+                      <label class="t-label" for="r-bank">CBU / CVU / Alias</label>
+                      <input id="r-bank" formControlName="bankDetails" placeholder="alias.de.cobro o CBU" class="t-input" />
+                      @if (showError(dniForm, 'bankDetails')) {
+                        <p class="t-error">{{ errorMessage(dniForm, 'bankDetails') }}</p>
+                      } @else {
+                        <p class="t-help">Donde vas a recibir el pago de tus liquidaciones.</p>
+                      }
+                    </div>
                   </form>
                 }
                 @case ('location') {
@@ -729,6 +740,7 @@ export class Register {
 
   protected readonly dniForm = this.fb.group({
     dni: ['', [Validators.required, Validators.pattern(/^\d{7,8}$/)]],
+    bankDetails: ['', [Validators.required, Validators.minLength(3)]],
   });
 
   protected readonly consignorLocationForm = this.fb.group({
@@ -1110,6 +1122,7 @@ export class Register {
       phone: account.phone!,
       password: account.password!,
       dni: this.dniForm.controls.dni.value!,
+      bankDetails: this.dniForm.controls.bankDetails.value!.trim(),
       location: {
         street: location.street!,
         number: location.number!,

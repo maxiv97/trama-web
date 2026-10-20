@@ -7,6 +7,7 @@ export interface RegisterConsignorRequest {
   phone: string;
   password: string;
   dni: string;
+  bankDetails: string;
   location: UserLocation;
 }
 
