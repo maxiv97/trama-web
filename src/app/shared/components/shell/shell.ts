@@ -301,6 +301,8 @@ export class Shell {
   private readonly unreadSource = computed(() => ({
     userId: this.auth.user()?.id ?? null,
     url: this.url(),
+    // Se re-consulta el contador cuando cambian las notificaciones leídas, no solo al navegar.
+    changed: this.notifications.changed(),
   }));
 
   protected readonly unread = toSignal(

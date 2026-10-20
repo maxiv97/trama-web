@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Notification } from '../models/notification.model';
 
@@ -8,6 +8,14 @@ import { Notification } from '../models/notification.model';
 export class NotificationsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/notifications`;
+
+  // Se incrementa cada vez que cambia el estado de lectura, para que el contador del Shell
+  // (campana y menú) se recalcule sin tener que navegar a otra pantalla.
+  private readonly _changed = signal(0);
+  readonly changed = this._changed.asReadonly();
+  private bump(): void {
+    this._changed.update((n) => n + 1);
+  }
 
   byUser(_userId: string): Observable<Notification[]> {
     return this.http.get<Notification[]>(this.base);
@@ -20,10 +28,12 @@ export class NotificationsService {
   }
 
   markRead(id: string): Observable<Notification> {
-    return this.http.patch<Notification>(`${this.base}/${id}/read`, {});
+    return this.http
+      .patch<Notification>(`${this.base}/${id}/read`, {})
+      .pipe(tap(() => this.bump()));
   }
 
   markAllRead(_userId: string): Observable<unknown> {
-    return this.http.patch(`${this.base}/read-all`, {});
+    return this.http.patch(`${this.base}/read-all`, {}).pipe(tap(() => this.bump()));
   }
 }
