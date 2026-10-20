@@ -111,7 +111,7 @@ interface Draft {
   `,
   template: `
     <app-wizard-shell
-      eyebrow="Cargar artículo"
+      eyebrow="Cargar prenda"
       summaryTitle="Tu propuesta"
       finishLabel="Enviar propuesta"
       busyLabel="Enviando…"

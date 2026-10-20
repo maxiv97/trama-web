@@ -100,7 +100,7 @@ type InventoryState =
         }
 
         <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 [&>:first-child]:col-span-2 md:[&>:first-child]:col-span-1">
-          <app-stat-card title="Artículos en stock" [value]="d.stockCount" [highlight]="true" />
+          <app-stat-card title="Prendas en stock" [value]="d.stockCount" [highlight]="true" />
           <app-stat-card title="Valor a precio de venta" [value]="d.stockValue | money" />
           <app-stat-card title="Comprometido con cedentes" [value]="d.committed | money" />
         </div>
@@ -235,7 +235,7 @@ type InventoryState =
                 [disabled]="bulkSaving()"
                 class="t-btn t-btn-primary"
               >
-                {{ bulkSaving() ? 'Registrando…' : 'Marcar vendidas' }}
+                {{ bulkSaving() ? 'Registrando…' : 'Marcar como vendidas' }}
               </button>
             </div>
           </div>

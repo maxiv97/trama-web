@@ -55,11 +55,11 @@ type PanelState =
       <div class="space-y-8">
         <div class="flex flex-wrap items-end justify-between gap-4">
           <app-greeting eyebrow="Cedente · Mi panel" [name]="firstName()" [summary]="greetingSummary()" />
-          <a routerLink="/c/upload" class="t-btn t-btn-primary" [appEnter]="2">Cargar artículo</a>
+          <a routerLink="/c/upload" class="t-btn t-btn-primary" [appEnter]="2">Cargar prenda</a>
         </div>
 
         <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4" [appEnter]="3">
-          <app-stat-card title="Artículos activos" [value]="data.activeCount" [dark]="true" />
+          <app-stat-card title="Prendas activas" [value]="data.activeCount" [dark]="true" />
           <app-stat-card title="Pendientes de acuerdo" [value]="data.pendingCount" />
           <app-stat-card title="Liquidación pendiente" [value]="data.pendingPayout | money" />
           <app-stat-card title="Total liquidado" [value]="data.totalPaidOut | money" />

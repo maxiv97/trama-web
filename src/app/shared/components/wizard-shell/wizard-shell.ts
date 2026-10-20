@@ -17,7 +17,7 @@ export interface WizardSummaryRow {
 }
 
 /**
- * Wizard de Trama (handoff §6). Estructura compartida por "Cargar artículo" y
+ * Wizard de Trama (handoff §6). Estructura compartida por "Cargar prenda" y
  * "Registro":
  *
  * - Encabezado con eyebrow "… · Paso N de M", el título del paso (una pregunta

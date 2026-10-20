@@ -59,7 +59,7 @@ type SalesPointsState =
             (click)="openCreate()"
             class="t-btn t-btn-primary"
           >
-            Agregar punto
+            Agregar punto de venta
           </button>
         </app-page-header>
 
