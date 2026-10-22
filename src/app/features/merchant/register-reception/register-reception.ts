@@ -141,7 +141,7 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
             </div>
             <div>
               <p class="t-label">Evidencia fotográfica <span class="font-medium text-trama-muted">(opcional)</span></p>
-              <app-photo-uploader [(photos)]="evidence" [max]="4" [suggestions]="['Evidencia', 'Detalle', 'Otra', 'Otra']" />
+              <app-photo-uploader [(photos)]="evidence" [max]="4" [allowCamera]="true" [suggestions]="['Evidencia', 'Detalle', 'Otra', 'Otra']" />
             </div>
           </div>
         }
