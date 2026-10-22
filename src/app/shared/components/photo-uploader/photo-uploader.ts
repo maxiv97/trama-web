@@ -1,5 +1,5 @@
 import { Component, computed, input, model, output, signal } from '@angular/core';
-import { Camera, LucideAngularModule, Plus, X } from 'lucide-angular';
+import { Camera, Image as ImageIcon, LucideAngularModule, Plus, X } from 'lucide-angular';
 import { compressImage } from '../../../core/utils/image.util';
 import { BLOB_PATH, BLOB_ROTATION } from '../../icons/trama-icons';
 
@@ -38,11 +38,24 @@ let nextSlot = 0;
       (dragleave)="dragOver.set(false)"
       (drop)="onDrop($event)"
     >
-      <lucide-angular [img]="cameraIcon" [size]="28" class="flex text-trama-dark" />
-      <span class="mt-1 text-[15px] font-bold text-trama-dark">Arrastrá las fotos o elegilas</span>
+      <lucide-angular [img]="showCamera() ? galleryIcon : cameraIcon" [size]="28" class="flex text-trama-dark" />
+      <span class="mt-1 text-[15px] font-bold text-trama-dark">{{ showCamera() ? 'Elegir de la galería' : 'Arrastrá las fotos o elegilas' }}</span>
       <span class="text-[13px] text-trama-body">JPG o PNG de hasta 10 MB · hasta {{ max() }} fotos</span>
       <input #file type="file" accept="image/*" multiple class="sr-only" (change)="onPick($event)" />
     </label>
+
+    @if (showCamera()) {
+      <input #cam type="file" accept="image/*" capture="environment" class="sr-only" (change)="onPick($event)" />
+      <button
+        type="button"
+        class="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-trama-dark px-4 py-3 text-[15px] font-bold text-trama-sand-50 disabled:opacity-50"
+        [disabled]="full()"
+        (click)="cam.click()"
+      >
+        <lucide-angular [img]="cameraIcon" [size]="18" class="flex" />
+        Sacar foto
+      </button>
+    }
 
     <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(104px,124px))]">
       @for (photo of photos(); track photo; let i = $index) {
@@ -140,10 +153,13 @@ export class PhotoUploader {
   /** Fotos sugeridas para los casilleros vacíos. */
   readonly suggestions = input<readonly string[]>(['Frente', 'Espalda', 'Etiqueta', 'Detalle', 'Otra', 'Otra']);
   readonly invalid = input(false);
+  /** Ofrece "Sacar foto" con la cámara del dispositivo (solo en pantallas táctiles). */
+  readonly allowCamera = input(false);
   /** Avisa cuando una foto no se pudo procesar (para un toast, si hace falta). */
   readonly failed = output<string>();
 
   protected readonly cameraIcon = Camera;
+  protected readonly galleryIcon = ImageIcon;
   protected readonly plusIcon = Plus;
   protected readonly xIcon = X;
   protected readonly blob = BLOB_PATH;
@@ -152,6 +168,12 @@ export class PhotoUploader {
   protected readonly pending = signal<PendingSlot[]>([]);
   protected readonly dragOver = signal(false);
   protected readonly dragIndex = signal<number | null>(null);
+
+  /** Se considera mobile cuando el puntero principal es táctil (celulares y tablets). */
+  protected readonly isTouch =
+    typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+  protected readonly showCamera = computed(() => this.allowCamera() && this.isTouch);
+  protected readonly full = computed(() => this.photos().length + this.pending().length >= this.max());
 
   protected readonly emptyLabels = computed(() => {
     const used = this.photos().length + this.pending().length;
