@@ -112,10 +112,10 @@ type PayoutsState =
                     <td data-label="Estado"><app-payout-status-badge [status]="row.status" /></td>
                     <td data-label="Vencimiento" class="whitespace-nowrap" [class]="row.status === 'overdue' ? 'font-bold text-status-none' : 't-muted'">{{ row.dueDate | shortDate }}</td>
                     <td class="t-cell-action">
-                      <div class="flex justify-end gap-2">
-                        <button type="button" (click)="download(row)" class="t-btn t-btn-secondary t-btn-sm">Descargar</button>
+                      <div class="flex gap-2 sm:justify-end">
+                        <button type="button" (click)="download(row)" class="t-btn t-btn-secondary t-btn-sm flex-1 sm:flex-none">Descargar</button>
                         @if (row.status !== 'paid') {
-                          <button type="button" (click)="openSettle(row)" class="t-btn t-btn-primary t-btn-sm">Marcar pagada</button>
+                          <button type="button" (click)="openSettle(row)" class="t-btn t-btn-primary t-btn-sm flex-1 sm:flex-none">Marcar pagada</button>
                         }
                       </div>
                     </td>

@@ -42,6 +42,14 @@ type State =
         }
       </div>
 
+      @if (rows().length) {
+        <!-- En el celular la tabla pasa a tarjetas y el encabezado (que ordena) no se ve. -->
+        <div class="mb-3 flex flex-wrap items-center gap-2 sm:hidden" role="radiogroup" aria-label="Ordenar por">
+          <span class="w-full text-[13px] font-semibold text-trama-muted">Ordenar por</span>
+          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'ganancia'" (click)="sortBy('ganancia')">Ganancia</button>
+          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'rate'" (click)="sortBy('rate')">Tasa de venta</button>
+        </div>
+      }
       @if (isLoading()) {
         <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
@@ -66,14 +74,15 @@ type State =
             <tbody>
               @for (row of visible(); track row.consignorId) {
                 <tr>
-                  <td class="font-bold">{{ row.name }}</td>
-                  <td class="text-trama-body">{{ row.receivedCount }}</td>
-                  <td class="text-trama-body">{{ row.soldCount }}</td>
-                  <td class="text-trama-body">
+                  <!-- En la tarjeta del celular van primero la ganancia y la tasa de venta. -->
+                  <td class="t-cell-main font-bold">{{ row.name }}</td>
+                  <td data-label="Recibidas" class="text-trama-body max-sm:order-3">{{ row.receivedCount }}</td>
+                  <td data-label="Vendidas" class="text-trama-body max-sm:order-3">{{ row.soldCount }}</td>
+                  <td data-label="Tasa de venta" class="text-trama-body max-sm:order-2">
                     {{ row.sellThroughRate === null ? '—' : row.sellThroughRate + '%' }}
                   </td>
-                  <td class="t-amount">{{ row.merchantProfit | money }}</td>
-                  <td class="text-trama-body">{{ row.pendingAmount | money }}</td>
+                  <td data-label="Ganancia" class="t-amount max-sm:order-1">{{ row.merchantProfit | money }}</td>
+                  <td data-label="Le debo" class="text-trama-body max-sm:order-3">{{ row.pendingAmount | money }}</td>
                 </tr>
               }
             </tbody>

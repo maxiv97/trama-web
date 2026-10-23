@@ -690,6 +690,11 @@
     .t-table tbody td.t-cell-action {
       grid-column: 1 / -1;
     }
+    /* En la tarjeta las acciones ocupan todo el ancho (en escritorio la columna se ajusta al botón). */
+    .t-table tbody td.t-cell-action {
+      width: auto;
+      white-space: normal;
+    }
     .t-table tbody td.t-num {
       text-align: left;
     }
