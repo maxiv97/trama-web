@@ -4,6 +4,7 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
 import { CollageHero } from './collage-hero';
 import { BLOB_PATH } from '../../../shared/icons/trama-icons';
 import { Stitch } from '../../../shared/components/stitch/stitch';
+import { FEATURED_FAQ_IDS, FAQS } from '../help/help.content';
 
 interface Step {
   n: string;
@@ -166,6 +167,30 @@ const AUDIENCES: Audience[] = [
         </div>
       </section>
 
+      <!-- ¿Dudas? (centro de ayuda) -->
+      <section class="bg-trama-paper">
+        <div class="mx-auto max-w-[1280px] px-5 py-16 sm:px-10 lg:px-20">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-eyebrow">Ayuda</p>
+              <h2 class="mt-2 font-display text-[30px] font-bold tracking-[-0.02em] md:text-[36px]">¿Dudas?</h2>
+            </div>
+            <div class="flex flex-wrap gap-x-6 gap-y-2 text-[15px]">
+              <a routerLink="/ayuda/faq" class="t-link">Ver todas</a>
+              <a routerLink="/ayuda/contacto" class="t-link">Contacto</a>
+            </div>
+          </div>
+          <div class="mt-8 grid gap-4 md:grid-cols-2">
+            @for (f of featured; track f.id) {
+              <a routerLink="/ayuda/faq" [fragment]="f.id" class="t-lift flex flex-col gap-2 rounded-[18px] bg-trama-sand-50 p-6">
+                <span class="text-[17px] font-bold leading-snug text-trama-dark">{{ f.pregunta }}</span>
+                <span class="line-clamp-2 text-[15px] leading-normal text-trama-body">{{ f.respuesta }}</span>
+              </a>
+            }
+          </div>
+        </div>
+      </section>
+
       <!-- llamado final -->
       <section class="bg-trama-dark text-trama-sand-50">
         <div
@@ -193,6 +218,11 @@ const AUDIENCES: Audience[] = [
           <div class="flex items-center gap-2 font-display font-bold text-trama-sand-50">
             <app-logo-icon [size]="24" [decorative]="true" /> Trama
           </div>
+          <nav class="flex flex-wrap gap-x-5 gap-y-2" aria-label="Ayuda">
+            <a routerLink="/ayuda" class="hover:text-trama-sand-50">Ayuda</a>
+            <a routerLink="/ayuda/faq" class="hover:text-trama-sand-50">Preguntas frecuentes</a>
+            <a routerLink="/ayuda/contacto" class="hover:text-trama-sand-50">Contacto</a>
+          </nav>
           <div>Práctica Profesionalizante 3 · Instituto Cervantes · 2026</div>
         </div>
       </footer>
@@ -211,6 +241,7 @@ export class Landing {
   protected readonly steps = STEPS;
   protected readonly audiences = AUDIENCES;
   protected readonly blob = BLOB_PATH;
+  protected readonly featured = FEATURED_FAQ_IDS.map((id) => FAQS.find((f) => f.id === id)!).filter(Boolean);
   protected readonly sampleKpis = [
     { label: 'Ticket promedio', value: '$13.000' },
     { label: 'Vendidas', value: '37' },
