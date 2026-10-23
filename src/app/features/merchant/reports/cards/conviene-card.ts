@@ -41,6 +41,15 @@ type State =
         }
       </div>
 
+      @if (rows().length) {
+        <!-- En el celular la tabla pasa a tarjetas y el encabezado (que ordena) no se ve. -->
+        <div class="mb-3 flex flex-wrap items-center gap-2 sm:hidden" role="radiogroup" aria-label="Ordenar por">
+          <span class="w-full text-[13px] font-semibold text-trama-muted">Ordenar por</span>
+          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'ganancia'" (click)="sortBy('ganancia')">Ganancia</button>
+          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'conversion'" (click)="sortBy('conversion')">Conversión</button>
+          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'dias'" (click)="sortBy('dias')">Días a venta</button>
+        </div>
+      }
       @if (isLoading()) {
         <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
       } @else if (isError()) {
@@ -66,22 +75,22 @@ type State =
             <tbody>
               @for (row of rows(); track row.category) {
                 <tr>
-                  <td>
+                  <td class="t-cell-main">
                     <button
                       (click)="openDrill(row.category)"
-                      class="font-medium text-trama-dark hover:text-trama-brand hover:underline"
+                      class="text-left font-medium text-trama-dark hover:text-trama-brand hover:underline max-sm:font-bold"
                     >
                       {{ row.category }}
                     </button>
                   </td>
-                  <td class="t-amount">{{ row.merchantProfit | money }}</td>
-                  <td class="text-trama-body">
+                  <td data-label="Ganancia" class="t-amount">{{ row.merchantProfit | money }}</td>
+                  <td data-label="Conversión" class="text-trama-body">
                     {{ row.conversion === null ? '—' : row.conversion + '%' }}
                   </td>
-                  <td class="text-trama-body">
+                  <td data-label="Días a venta" class="text-trama-body">
                     {{ row.avgDaysToSale === null ? '—' : row.avgDaysToSale + ' días' }}
                   </td>
-                  <td class="text-trama-body">{{ row.inStockCount }}</td>
+                  <td data-label="En stock" class="text-trama-body">{{ row.inStockCount }}</td>
                 </tr>
               }
             </tbody>

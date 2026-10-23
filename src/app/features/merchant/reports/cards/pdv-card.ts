@@ -69,10 +69,10 @@ type State =
             <tbody>
               @for (row of rows(); track row.salesPointId) {
                 <tr>
-                  <td class="font-bold">{{ row.name }}</td>
-                  <td class="t-amount">{{ row.merchantProfit | money }}</td>
-                  <td class="text-trama-body">{{ row.soldCount }}</td>
-                  <td class="text-trama-body">
+                  <td class="t-cell-main font-bold">{{ row.name }}</td>
+                  <td data-label="Ganancia" class="t-amount">{{ row.merchantProfit | money }}</td>
+                  <td data-label="Ventas" class="text-trama-body">{{ row.soldCount }}</td>
+                  <td data-label="Ticket promedio" class="text-trama-body">
                     {{ row.soldCount ? (row.revenue / row.soldCount | money) : '—' }}
                   </td>
                 </tr>
