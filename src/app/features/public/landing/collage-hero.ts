@@ -415,9 +415,10 @@ interface Leaf {
         transform-origin: 70% 80%;
         animation: c-slide 0.85s cubic-bezier(0.6, 0, 0.2, 1) 3.9s both;
       }
-      .txt {
-        animation: c-text 650ms cubic-bezier(0.2, 0.8, 0.3, 1) calc(4.3s + var(--i) * 110ms) both;
-      }
+    }
+    /* El texto entra recién cuando la escena terminó de armarse, en todos los tamaños. */
+    .txt {
+      animation: c-text 650ms cubic-bezier(0.2, 0.8, 0.3, 1) calc(4.3s + var(--i) * 110ms) both;
     }
     .cta {
       transition: transform 250ms cubic-bezier(0.2, 0.8, 0.3, 1);
@@ -595,7 +596,8 @@ interface Leaf {
     @media (prefers-reduced-motion: reduce) {
       .nav-logo,
       .nav-word,
-      .nav-cta {
+      .nav-cta,
+      .txt {
         animation: c-text 400ms ease both;
       }
       .nav-thread {

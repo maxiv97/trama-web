@@ -195,14 +195,16 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
-                  <button
-                    type="button"
-                    (click)="openRedeliver()"
-                    [disabled]="acting()"
-                    class="t-btn t-btn-primary"
-                  >
-                    Coordinar nueva entrega
-                  </button>
+                  <div class="pt-2">
+                    <button
+                      type="button"
+                      (click)="openRedeliver()"
+                      [disabled]="acting()"
+                      class="t-btn t-btn-primary"
+                    >
+                      Coordinar nueva entrega
+                    </button>
+                  </div>
                 </div>
               }
               @case ('with_remarks') {

@@ -150,11 +150,13 @@ type TrackingState =
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
-                  <a
-                    [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                    class="t-btn t-btn-primary"
-                    >Registrar venta</a
-                  >
+                  <div class="pt-2">
+                    <a
+                      [routerLink]="['/m/garment', d.garment.id, 'sale']"
+                      class="t-btn t-btn-primary"
+                      >Registrar venta</a
+                    >
+                  </div>
                 </div>
               }
               @case ('rejected') {

@@ -131,7 +131,12 @@ const RESULT_ACTION: Record<ReceptionResult, GarmentAction> = {
               </div>
             </div>
             <div>
-              <label class="t-label">Detalle</label>
+              <label class="t-label"
+                >Detalle
+                @if (!detailRequired()) {
+                  <span class="font-medium text-trama-muted">(opcional)</span>
+                }
+              </label>
               <textarea
                 rows="3"
                 [value]="detail()"
@@ -202,8 +207,12 @@ export class RegisterReception {
     const result = this.result();
     if (!result || !this.salesPointId()) return false;
     if (result === 'accepted') return true;
-    return this.discrepancies().length > 0 && this.detail().trim().length > 0;
+    if (this.discrepancies().length === 0) return false;
+    // Con observaciones alcanza con el motivo; el rechazo además exige explicarlo por escrito.
+    return result === 'with_remarks' || this.detail().trim().length > 0;
   });
+
+  protected readonly detailRequired = computed(() => this.result() === 'rejected');
 
   private readonly garmentId = toSignal(
     this.route.paramMap.pipe(map((params) => params.get('id') ?? '')),
