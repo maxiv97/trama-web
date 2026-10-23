@@ -18,6 +18,30 @@ export const routes: Routes = [
   },
 
   {
+    // Centro de ayuda: público, sin guard (handoff design_handoff_trama_ayuda).
+    path: 'ayuda',
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/public/help/help-hub').then((m) => m.HelpHub),
+      },
+      {
+        path: 'guia/:slug',
+        loadComponent: () => import('./features/public/help/help-guide').then((m) => m.HelpGuide),
+      },
+      {
+        path: 'faq',
+        loadComponent: () => import('./features/public/help/help-faq').then((m) => m.HelpFaq),
+      },
+      {
+        path: 'contacto',
+        loadComponent: () =>
+          import('./features/public/help/help-contact').then((m) => m.HelpContact),
+      },
+    ],
+  },
+
+  {
     path: 'c',
     canActivate: [authGuard, roleGuard],
     data: { role: 'consignor' },

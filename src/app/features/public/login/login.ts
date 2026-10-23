@@ -84,6 +84,9 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
             >Soy comercio</a
           >
         </div>
+        <p class="mt-6 text-center text-sm text-trama-body">
+          <a routerLink="/ayuda" class="t-link">¿Necesitás ayuda?</a>
+        </p>
       </div>
     </div>
   `,

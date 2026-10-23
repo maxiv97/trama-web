@@ -687,11 +687,22 @@ interface SummaryRow {
             </div>
           }
         }
+        @if (view() !== 'done') {
+          <p class="mt-8 text-center text-sm text-trama-body">
+            <a routerLink="/ayuda" [queryParams]="helpParams()" class="t-link">¿Necesitás ayuda?</a>
+          </p>
+        }
       </div>
     </div>
   `,
 })
 export class Register {
+  /** Link a la ayuda filtrada por el rol que se está registrando. */
+  protected readonly helpParams = computed(() => {
+    const r = this.role();
+    return r === 'consignor' ? { rol: 'cedente' } : r === 'merchant' ? { rol: 'comercio' } : {};
+  });
+
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);

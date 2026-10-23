@@ -334,6 +334,12 @@ interface Leaf {
           </span>
 
           <a
+            routerLink="/ayuda"
+            class="nav-cta shrink-0 px-2 py-2.5 text-[15px] font-semibold text-trama-dark hover:underline"
+          >
+            Ayuda
+          </a>
+          <a
             routerLink="/login"
             class="nav-cta shrink-0 rounded-full border-[1.5px] border-trama-dark bg-trama-sand-50 px-5 py-2.5 text-[15px] font-semibold text-trama-dark transition-colors hover:bg-trama-paper"
           >
