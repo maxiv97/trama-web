@@ -1,6 +1,16 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { GarmentStatus } from '../../../core/models/garment.model';
 import { Seam } from '../seam/seam';
+import { SeamSummary } from './seam-summary';
 
 const STEPS = [
   'Cargada',
@@ -32,23 +42,82 @@ const NEGATIVE: Partial<Record<GarmentStatus, boolean>> = {
   rejected: true,
 };
 
-/** Recorrido de la prenda (handoff §4.7): la costura de trazabilidad en 7 pasos. */
+// Estados finales: no hay un paso siguiente esperado.
+const TERMINAL: Partial<Record<GarmentStatus, boolean>> = {
+  no_agreement: true,
+  rejected: true,
+  cancelled: true,
+};
+
+const RADIUS = 22;
+
+/**
+ * Recorrido de la prenda (handoff §4.7): la costura de trazabilidad en 7 pasos.
+ *
+ * Cuando el contenedor es angosto y los anillos de la costura grande se pisarían
+ * (handoff "Recorrido mobile", opción 1b), muestra el resumen con la costura mini y
+ * el recorrido completo desplegable. Se decide por el ancho del contenedor y no por
+ * el del viewport, porque el tracker vive dentro de grillas de distinto ancho.
+ */
 @Component({
   selector: 'app-progress-tracker',
-  imports: [Seam],
+  imports: [Seam, SeamSummary],
+  host: { class: 'block' },
   template: `
-    <app-seam
-      [steps]="steps"
-      [current]="currentIndex()"
-      [negative]="isNegative()"
-      [radius]="22"
-      [compactLabels]="true"
-    />
+    @if (width() > 0) {
+      @if (compact()) {
+        <app-seam-summary
+          [steps]="steps"
+          [current]="currentIndex()"
+          [negative]="isNegative()"
+          [terminal]="isTerminal()"
+        />
+      } @else {
+        <app-seam
+          [steps]="steps"
+          [current]="currentIndex()"
+          [negative]="isNegative()"
+          [radius]="radius"
+          [compactLabels]="true"
+        />
+      }
+    }
   `,
 })
 export class ProgressTracker {
   readonly currentStatus = input.required<GarmentStatus>();
   protected readonly steps = STEPS;
+  protected readonly radius = RADIUS;
   protected readonly currentIndex = computed(() => STEP_INDEX[this.currentStatus()]);
   protected readonly isNegative = computed(() => NEGATIVE[this.currentStatus()] ?? false);
+  protected readonly isTerminal = computed(() => TERMINAL[this.currentStatus()] ?? false);
+
+  protected readonly width = signal(0);
+  /** La costura grande no entra si la separación entre botones es menor que el anillo + 8 px. */
+  readonly compact = computed(() => isCompact(this.width(), STEPS.length, RADIUS));
+
+  constructor() {
+    const el = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+    const destroyRef = inject(DestroyRef);
+    afterNextRender(() => {
+      this.width.set(el.getBoundingClientRect().width);
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver((entries) => {
+          const w = entries[0]?.contentRect.width ?? 0;
+          if (Math.abs(w - this.width()) > 0.5) this.width.set(w);
+        });
+        ro.observe(el);
+        destroyRef.onDestroy(() => ro.disconnect());
+      }
+    });
+  }
+}
+
+/** Regla del handoff: `(ancho − 2·pad) / (n − 1) < diámetro del anillo + 8`, con el pad de `Seam`. */
+export function isCompact(width: number, steps: number, radius: number): boolean {
+  if (width <= 0 || steps < 2) return false;
+  const pad = Math.round(radius * 1.5) + 4;
+  const ringDiameter = radius * 1.36 * 2;
+  const spacing = (width - 2 * pad) / (steps - 1);
+  return spacing < ringDiameter + 8;
 }

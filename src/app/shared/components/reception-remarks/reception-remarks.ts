@@ -4,6 +4,7 @@ import { Reception, ReceptionDiscrepancy } from '../../../core/models/reception.
 
 @Component({
   selector: 'app-reception-remarks',
+  host: { class: 'block' },
   template: `
     <div class="space-y-3">
       @if (reception().discrepancies.length) {
