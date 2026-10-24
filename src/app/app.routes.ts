@@ -122,6 +122,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'garment/:id/return',
+        loadComponent: () =>
+          import('./features/merchant/register-return/register-return').then(
+            (m) => m.RegisterReturn,
+          ),
+      },
+      {
         path: 'garment/:id/sale',
         loadComponent: () =>
           import('./features/merchant/register-sale/register-sale').then((m) => m.RegisterSale),

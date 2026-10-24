@@ -31,6 +31,9 @@ const INVENTORY_STATUSES: GarmentStatus[] = [
   'with_remarks',
   'sold',
   'paid_out',
+  'awaiting_pickup',
+  'unclaimed',
+  'returned',
 ];
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
@@ -40,6 +43,9 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: 'with_remarks', label: 'Con observaciones' },
   { value: 'sold', label: 'Vendido' },
   { value: 'paid_out', label: 'Liquidado' },
+  { value: 'awaiting_pickup', label: 'Por retirar' },
+  { value: 'unclaimed', label: 'No retiradas' },
+  { value: 'returned', label: 'Retiradas' },
 ];
 
 interface InventoryRow {
@@ -56,6 +62,7 @@ interface InventoryRow {
   status: GarmentStatus;
   salePrice?: number;
   consignorPrice?: number;
+  dispositionDone?: boolean;
 }
 
 interface FilterOption {
@@ -89,6 +96,23 @@ type InventoryState =
       <div class="space-y-6">
         <app-page-header title="Inventario" section="Inventario" [icon]="headerIcon" lead="Las prendas que aceptaste, desde que las recibís hasta que se venden." />
 
+        @if (toPickUp() > 0 && statusFilter() !== 'awaiting_pickup') {
+          <button type="button" (click)="statusFilter.set('awaiting_pickup')" class="t-notice w-full text-left hover:brightness-[.98]">
+            <span class="flex-1">
+              <strong class="font-bold">{{ toPickUp() }} {{ toPickUp() === 1 ? 'prenda no se vendió' : 'prendas no se vendieron' }} y {{ toPickUp() === 1 ? 'espera' : 'esperan' }} que el cedente la retire.</strong>
+              Sacalas de exhibición y registrá la devolución cuando las retiren.
+            </span>
+            <span class="font-bold underline underline-offset-2">Ver</span>
+          </button>
+        }
+        @if (unclaimedPending() > 0 && statusFilter() !== 'unclaimed') {
+          <button type="button" (click)="statusFilter.set('unclaimed')" class="t-notice w-full text-left hover:brightness-[.98]">
+            <span class="flex-1">
+              <strong class="font-bold">{{ unclaimedPending() }} {{ unclaimedPending() === 1 ? 'prenda no retirada espera' : 'prendas no retiradas esperan' }} que registres su destino.</strong>
+            </span>
+            <span class="font-bold underline underline-offset-2">Ver</span>
+          </button>
+        }
         @if (toReceive() > 0 && statusFilter() !== 'agreed') {
           <button type="button" (click)="statusFilter.set('agreed')" class="t-notice w-full text-left hover:brightness-[.98]">
             <span class="flex-1">
@@ -196,6 +220,14 @@ type InventoryState =
                         >
                           Recibir
                         </a>
+                      } @else if (row.status === 'awaiting_pickup') {
+                        <a
+                          [routerLink]="['/m/garment', row.id, 'return']"
+                          (click)="$event.stopPropagation()"
+                          class="t-btn t-btn-primary t-btn-sm"
+                        >
+                          Devolver
+                        </a>
                       }
                     </td>
                     <td class="t-chev"><lucide-angular [img]="chevIcon" [size]="18" /></td>
@@ -265,7 +297,8 @@ export class Inventory {
   protected readonly bulkSaving = signal(false);
 
   protected readonly search = signal('');
-  protected readonly statusFilter = signal<StatusFilter>('all');
+  // El panel enlaza al inventario ya filtrado (?status=awaiting_pickup, por ejemplo).
+  protected readonly statusFilter = signal<StatusFilter>(this.initialStatus());
   protected readonly consignorFilter = signal(
     this.route.snapshot.queryParamMap.get('consignor') ?? 'all',
   );
@@ -395,6 +428,17 @@ export class Inventory {
     return current.status === 'loaded' ? current.data : null;
   });
 
+  private initialStatus(): StatusFilter {
+    const value = this.route.snapshot.queryParamMap.get('status');
+    return STATUS_FILTERS.some((option) => option.value === value) ? (value as StatusFilter) : 'all';
+  }
+
+  protected readonly toPickUp = computed(
+    () => this.data()?.rows.filter((row) => row.status === 'awaiting_pickup').length ?? 0,
+  );
+  protected readonly unclaimedPending = computed(
+    () => this.data()?.rows.filter((row) => row.status === 'unclaimed' && !row.dispositionDone).length ?? 0,
+  );
   protected readonly toReceive = computed(
     () => this.data()?.rows.filter((row) => row.status === 'agreed').length ?? 0,
   );
@@ -466,6 +510,7 @@ export class Inventory {
               status: garment.status,
               salePrice: agreement?.agreedSalePrice,
               consignorPrice: agreement?.agreedConsignorPrice,
+              dispositionDone: !!garment.unclaimedDisposition,
             };
           });
 

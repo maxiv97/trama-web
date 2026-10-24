@@ -22,6 +22,18 @@ const STEPS = [
   'Liquidada',
 ] as const;
 
+// Recorrido alternativo de una prenda que no se vendió: termina en el retiro.
+const UNSOLD_STEPS = [
+  'Cargada',
+  'En revisión',
+  'Acordada',
+  'Recepcionada',
+  'En stock',
+  'Por retirar',
+  'Retirada',
+] as const;
+const UNCLAIMED_STEPS = [...UNSOLD_STEPS.slice(0, 6), 'No retirada'] as const;
+
 const STEP_INDEX: Record<GarmentStatus, number> = {
   submitted: 0,
   under_review: 1,
@@ -34,12 +46,18 @@ const STEP_INDEX: Record<GarmentStatus, number> = {
   sold: 5,
   paid_out: 6,
   cancelled: 1,
+  delivery_expired: 2,
+  awaiting_pickup: 5,
+  returned: 6,
+  unclaimed: 6,
 };
 
 // Resultados negativos: el anillo del paso actual pasa a rojo.
 const NEGATIVE: Partial<Record<GarmentStatus, boolean>> = {
   no_agreement: true,
   rejected: true,
+  delivery_expired: true,
+  unclaimed: true,
 };
 
 // Estados finales: no hay un paso siguiente esperado.
@@ -47,7 +65,16 @@ const TERMINAL: Partial<Record<GarmentStatus, boolean>> = {
   no_agreement: true,
   rejected: true,
   cancelled: true,
+  delivery_expired: true,
+  returned: true,
+  unclaimed: true,
 };
+
+function stepsFor(status: GarmentStatus): readonly string[] {
+  if (status === 'unclaimed') return UNCLAIMED_STEPS;
+  if (status === 'awaiting_pickup' || status === 'returned') return UNSOLD_STEPS;
+  return STEPS;
+}
 
 const RADIUS = 22;
 
@@ -67,14 +94,14 @@ const RADIUS = 22;
     @if (width() > 0) {
       @if (compact()) {
         <app-seam-summary
-          [steps]="steps"
+          [steps]="steps()"
           [current]="currentIndex()"
           [negative]="isNegative()"
           [terminal]="isTerminal()"
         />
       } @else {
         <app-seam
-          [steps]="steps"
+          [steps]="steps()"
           [current]="currentIndex()"
           [negative]="isNegative()"
           [radius]="radius"
@@ -86,7 +113,7 @@ const RADIUS = 22;
 })
 export class ProgressTracker {
   readonly currentStatus = input.required<GarmentStatus>();
-  protected readonly steps = STEPS;
+  protected readonly steps = computed(() => stepsFor(this.currentStatus()));
   protected readonly radius = RADIUS;
   protected readonly currentIndex = computed(() => STEP_INDEX[this.currentStatus()]);
   protected readonly isNegative = computed(() => NEGATIVE[this.currentStatus()] ?? false);

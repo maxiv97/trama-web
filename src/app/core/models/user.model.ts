@@ -39,7 +39,10 @@ export interface CommissionConfig {
 
 export interface MerchantTerms {
   saleWindowMonths: number;
-  graceMonths: number;
+  // Días que tiene el cedente para entregar la prenda acordada (7 por defecto).
+  deliveryDays: number;
+  // Días para retirar la prenda que no se vendió, desde el fin de la ventana de venta (15).
+  pickupDays: number;
   payoutDay: number;
 }
 

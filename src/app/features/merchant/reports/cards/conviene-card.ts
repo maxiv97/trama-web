@@ -12,7 +12,16 @@ import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
 
-const RECEIVED: GarmentStatus[] = ['in_stock', 'with_remarks', 'sold', 'paid_out'];
+// Recibidas físicamente (en stock, vendidas o ya sin vender), igual que la base de conversión de la API.
+const RECEIVED: GarmentStatus[] = [
+  'in_stock',
+  'with_remarks',
+  'sold',
+  'paid_out',
+  'awaiting_pickup',
+  'returned',
+  'unclaimed',
+];
 
 type SortKey = 'ganancia' | 'conversion' | 'dias';
 

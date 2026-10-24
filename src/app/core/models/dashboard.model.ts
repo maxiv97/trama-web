@@ -9,4 +9,7 @@ export interface DashboardReport {
   weekly: WeeklyPoint[];
   pendingCount: number;
   expiringCount: number;
+  // Opcionales: versiones de la API anteriores al 23/10/2026 no los envían.
+  awaitingPickupCount?: number;
+  unclaimedPendingCount?: number;
 }

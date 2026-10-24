@@ -62,7 +62,7 @@ export interface Stage {
 export const MOTIVOS: readonly { value: HelpMotivo; label: string }[] = [
   { value: 'cuenta', label: 'Registro y cuenta' },
   { value: 'recepcion', label: 'Recepción de prendas' },
-  { value: 'plazos', label: 'Plazos y período de gracia' },
+  { value: 'plazos', label: 'Plazos de entrega, venta y retiro' },
   { value: 'precios', label: 'Precios y comisión' },
   { value: 'liquidaciones', label: 'Liquidaciones y pagos' },
   { value: 'no-vendidas', label: 'Prendas no vendidas y devolución' },
@@ -106,7 +106,7 @@ export const ALL_STAGES: readonly Stage[] = [
       "no_agreement"
     ],
     "cedente": "Si el comercio envía una contraoferta, la aceptás o la rechazás. Si no hay acuerdo, la prenda queda cerrada.",
-    "comercio": "Aceptás, enviás una contraoferta o rechazás. Con el acuerdo, los precios quedan congelados y empieza a correr el plazo de venta.",
+    "comercio": "Aceptás, enviás una contraoferta o rechazás. Con el acuerdo, los precios y los plazos quedan congelados y empieza a correr el plazo de entrega.",
     "guias": [
       "responder-contraoferta",
       "revisar-propuesta"
@@ -119,10 +119,11 @@ export const ALL_STAGES: readonly Stage[] = [
       "agreed",
       "in_stock",
       "with_remarks",
-      "rejected"
+      "rejected",
+      "delivery_expired"
     ],
-    "cedente": "Llevás la prenda al punto de venta en los días y el horario de recepción, siguiendo sus instrucciones.",
-    "comercio": "Revisás la prenda contra lo publicado y registrás la recepción: conforme, con observaciones o rechazada.",
+    "cedente": "Llevás la prenda al punto de venta dentro del plazo de entrega, en los días y el horario de recepción, siguiendo sus instrucciones. Si no la llevás a tiempo, el acuerdo vence.",
+    "comercio": "Revisás la prenda contra lo publicado y registrás la recepción: conforme, con observaciones o rechazada. Con la recepción empieza a correr la ventana de venta.",
     "guias": [
       "llevar-prenda",
       "recepcion-observada",
@@ -141,6 +142,21 @@ export const ALL_STAGES: readonly Stage[] = [
     "comercio": "La prenda está en tu inventario. Cuando se vende, registrás la venta con el precio final.",
     "guias": [
       "registrar-venta"
+    ]
+  },
+  {
+    "id": "retiro",
+    "titulo": "Si no se vende",
+    "estados": [
+      "awaiting_pickup",
+      "returned",
+      "unclaimed"
+    ],
+    "cedente": "Al terminar la ventana de venta, la prenda queda Por retirar. La buscás con tu DNI dentro del plazo para retirar; si no, el comercio dispone de ella según los términos.",
+    "comercio": "Sacás la prenda de exhibición y, cuando el cedente la retira, registrás la devolución con su comprobante. Si no la retira a tiempo, registrás el destino que le diste.",
+    "guias": [
+      "retirar-prenda",
+      "registrar-devolucion"
     ]
   },
   {
@@ -170,7 +186,7 @@ export const ALL_TOPICS: readonly HelpTopic[] = [
   },
   {
     "id": "plazos",
-    "titulo": "Plazos y período de gracia"
+    "titulo": "Plazos de entrega, venta y retiro"
   },
   {
     "id": "precios",
@@ -233,7 +249,7 @@ export const ALL_FAQS: readonly Faq[] = [
     "rol": "comercio",
     "motivo": "cuenta",
     "pregunta": "¿Qué datos necesito para registrar mi comercio?",
-    "respuesta": "Razón social, CUIT, logo, el primer punto de venta con su ubicación, días y horario de recepción, instrucciones para el cedente, la comisión y los plazos (ventana de venta, período de gracia y día de pago)."
+    "respuesta": "Razón social, CUIT, el primer punto de venta con su ubicación, días y horario de recepción e instrucciones para el cedente, la comisión y los plazos: de entrega, de venta, para retirar y el día de pago."
   },
   {
     "id": "cambiar-datos-bancarios",
@@ -250,7 +266,7 @@ export const ALL_FAQS: readonly Faq[] = [
     "rol": "cedente",
     "motivo": "recepcion",
     "pregunta": "¿Cuándo y dónde llevo la prenda?",
-    "respuesta": "Después del acuerdo. En la prenda ves el punto de venta, los días y la franja horaria de recepción y las instrucciones del comercio.",
+    "respuesta": "Después del acuerdo, dentro del plazo de entrega que fija el comercio (7 días si no lo cambió). En la prenda ves hasta qué día tenés, el punto de venta, los días y la franja horaria de recepción y las instrucciones del comercio.",
     "guia": "llevar-prenda"
   },
   {
@@ -275,7 +291,7 @@ export const ALL_FAQS: readonly Faq[] = [
     "rol": "comercio",
     "motivo": "recepcion",
     "pregunta": "¿Qué resultados puedo registrar al recibir una prenda?",
-    "respuesta": "Conforme (pasa a stock), con observaciones (pasa a stock con las diferencias registradas) o rechazada (el cedente puede volver a entregarla).",
+    "respuesta": "Conforme (pasa a stock), con observaciones (pasa a stock con las diferencias registradas) o rechazada (el cedente puede volver a entregarla dentro de un nuevo plazo de entrega, que corre desde el rechazo).",
     "guia": "registrar-recepcion"
   },
   {
@@ -284,34 +300,56 @@ export const ALL_FAQS: readonly Faq[] = [
     "rol": "comun",
     "motivo": "plazos",
     "pregunta": "¿Cuánto tiempo está la prenda a la venta?",
-    "respuesta": "Lo define cada comercio como ventana de venta, en meses. Empieza a correr con el acuerdo. La fecha límite figura en el detalle de la prenda."
+    "respuesta": "Lo define cada comercio como ventana de venta, en meses, y empieza a correr cuando el comercio recibe la prenda. La fecha límite figura en el detalle de la prenda."
   },
   {
-    "id": "periodo-gracia",
+    "id": "plazo-entrega",
+    "tema": "plazos",
+    "rol": "cedente",
+    "motivo": "plazos",
+    "pregunta": "¿Cuánto tiempo tengo para llevar la prenda después del acuerdo?",
+    "respuesta": "El plazo de entrega que fija el comercio (7 días si no lo cambió), contado desde el acuerdo. La fecha límite y los días que quedan figuran en la prenda.",
+    "guia": "llevar-prenda"
+  },
+  {
+    "id": "entrega-vencida",
+    "tema": "plazos",
+    "rol": "cedente",
+    "motivo": "plazos",
+    "pregunta": "¿Qué pasa si no llego a entregarla a tiempo?",
+    "respuesta": "La prenda pasa a Entrega vencida y el acuerdo queda sin efecto. Si querés consignarla de nuevo, cargala otra vez y enviá una nueva propuesta."
+  },
+  {
+    "id": "cedente-no-entrega",
+    "tema": "plazos",
+    "rol": "comercio",
+    "motivo": "plazos",
+    "pregunta": "¿Qué pasa si el cedente no trae la prenda acordada?",
+    "respuesta": "Al vencer el plazo de entrega, la prenda pasa sola a Entrega vencida y el acuerdo queda sin efecto. Te llega un aviso y deja de figurar entre las prendas por recibir."
+  },
+  {
+    "id": "plazo-retiro",
     "tema": "plazos",
     "rol": "comun",
     "motivo": "plazos",
-    "validar": true,
-    "pregunta": "¿Qué es el período de gracia?",
-    "respuesta": "Un plazo adicional, definido por el comercio, que corre después de la ventana de venta. Durante ese tiempo la prenda puede seguir a la venta o el cedente puede retirarla."
+    "pregunta": "¿Qué es el plazo para retirar?",
+    "respuesta": "Son los días que tiene el cedente para retirar una prenda que no se vendió, contados desde que termina la ventana de venta. Lo define cada comercio (15 días si no lo cambió)."
   },
   {
     "id": "aviso-vencimiento",
     "tema": "plazos",
     "rol": "comun",
     "motivo": "plazos",
-    "validar": true,
     "pregunta": "¿Me avisan antes de que venza el plazo?",
-    "respuesta": "Sí, con una notificación. El comercio además ve los plazos por vencer en su panel."
+    "respuesta": "Sí, con una notificación y un email: dos días antes de que venza el plazo de entrega, siete días antes de que termine la venta, cuando la prenda pasa a Por retirar y tres días antes de que venza el plazo para retirarla. El comercio, además, ve los vencimientos en su panel."
   },
   {
     "id": "cambio-plazos",
     "tema": "plazos",
     "rol": "comercio",
     "motivo": "plazos",
-    "validar": true,
     "pregunta": "Si cambio mis plazos, ¿afecta a las prendas que ya tengo?",
-    "respuesta": "No. Las prendas acordadas mantienen la fecha límite que tenían al momento del acuerdo.",
+    "respuesta": "No. Cada acuerdo conserva los plazos con los que se cerró: entrega, ventana de venta y plazo para retirar.",
     "guia": "comision-y-plazos"
   },
   {
@@ -396,18 +434,52 @@ export const ALL_FAQS: readonly Faq[] = [
     "tema": "no-vendidas",
     "rol": "comun",
     "motivo": "no-vendidas",
-    "validar": true,
     "pregunta": "¿Qué pasa si la prenda no se vende?",
-    "respuesta": "Al terminar la ventana de venta y el período de gracia, el cedente retira la prenda en el punto de venta. [Definir: qué ocurre si no la retira.]"
+    "respuesta": "Al terminar la ventana de venta, la prenda sale de exhibición y queda Por retirar: ya no se puede vender y el cedente tiene el plazo para retirar para buscarla en el punto de venta. Si no la retira a tiempo, queda No retirada y el comercio dispone de ella según los términos, dejando registrado su destino.",
+    "guia": "retirar-prenda"
+  },
+  {
+    "id": "que-llevar-retiro",
+    "tema": "no-vendidas",
+    "rol": "cedente",
+    "motivo": "no-vendidas",
+    "pregunta": "¿Qué tengo que llevar para retirar una prenda?",
+    "respuesta": "Tu DNI. El comercio lo verifica antes de entregártela y registra la devolución con un número de comprobante. En la prenda ves el punto de venta, el horario y hasta qué día podés retirarla.",
+    "guia": "retirar-prenda"
+  },
+  {
+    "id": "no-retiro",
+    "tema": "no-vendidas",
+    "rol": "cedente",
+    "motivo": "no-vendidas",
+    "pregunta": "¿Qué pasa si no retiro mi prenda?",
+    "respuesta": "Vencido el plazo para retirar, la prenda queda No retirada y el comercio puede disponer de ella (por ejemplo, donarla o conservarla), según los términos que aceptaste al registrarte. El destino queda registrado y lo ves en la prenda."
+  },
+  {
+    "id": "prenda-vencida",
+    "tema": "no-vendidas",
+    "rol": "comercio",
+    "motivo": "no-vendidas",
+    "pregunta": "¿Qué hago con una prenda que terminó su período de venta?",
+    "respuesta": "Sacala de exhibición: ya no se puede vender. Cuando el cedente pase a buscarla, verificá su DNI y registrá la devolución desde la prenda o desde el Inventario.",
+    "guia": "registrar-devolucion"
+  },
+  {
+    "id": "prenda-no-retirada",
+    "tema": "no-vendidas",
+    "rol": "comercio",
+    "motivo": "no-vendidas",
+    "pregunta": "¿Qué hago con una prenda que el cedente no retiró?",
+    "respuesta": "Según los términos, podés disponer de ella. Abrí la prenda y registrá el destino (donada, quedó para el comercio u otro, con una nota): queda constancia y el cedente lo ve.",
+    "guia": "registrar-devolucion"
   },
   {
     "id": "retirar-antes",
     "tema": "no-vendidas",
     "rol": "cedente",
     "motivo": "no-vendidas",
-    "validar": true,
     "pregunta": "¿Puedo retirar la prenda antes de que venza el plazo?",
-    "respuesta": "Coordinalo con el comercio. [Definir: hoy la plataforma no tiene un estado de retiro.]"
+    "respuesta": "Mientras la prenda está a la venta, la plataforma no tiene un retiro anticipado: coordinalo directamente con el comercio. Antes de entregarla, sí podés cancelar la consignación."
   },
   {
     "id": "cancelar",
@@ -527,11 +599,26 @@ export const ALL_GUIDES: readonly Guide[] = [
     "minutos": 2,
     "motivo": "recepcion",
     "pasos": [
-      "Con el acuerdo cerrado, abrí la prenda y mirá los datos del punto de venta.",
+      "Con el acuerdo cerrado, abrí la prenda y mirá los datos del punto de venta y hasta qué día tenés para entregarla.",
       "Revisá días y franja horaria de recepción y las instrucciones del comercio.",
-      "Llevá la prenda limpia, con sus etiquetas y accesorios.",
+      "Llevá la prenda limpia, con sus etiquetas y accesorios, antes de que venza el plazo de entrega.",
       "El comercio registra la recepción y te llega el resultado con su número de comprobante."
     ]
+  },
+  {
+    "slug": "retirar-prenda",
+    "rol": "cedente",
+    "titulo": "Retirar una prenda que no se vendió",
+    "pantalla": "/c/garment/:id",
+    "minutos": 2,
+    "motivo": "no-vendidas",
+    "pasos": [
+      "Cuando termina la ventana de venta, te llega un aviso y la prenda queda Por retirar.",
+      "Abrila: ves el punto de venta, el horario y hasta qué día podés retirarla.",
+      "Andá con tu DNI. El comercio lo verifica y registra la devolución.",
+      "La prenda pasa a Retirada y en el detalle queda el número de comprobante."
+    ],
+    "consejo": "Si no la retirás dentro del plazo, el comercio puede disponer de ella según los términos."
   },
   {
     "slug": "recepcion-observada",
@@ -617,6 +704,21 @@ export const ALL_GUIDES: readonly Guide[] = [
     ]
   },
   {
+    "slug": "registrar-devolucion",
+    "rol": "comercio",
+    "titulo": "Registrar la devolución de una prenda",
+    "pantalla": "/m/garment/:id/return",
+    "minutos": 2,
+    "motivo": "no-vendidas",
+    "pasos": [
+      "Cuando una prenda termina su período de venta sin venderse, pasa a Por retirar: sacala de exhibición.",
+      "Cuando el cedente pase a buscarla, abrí la prenda (o usá «Devolver» en el Inventario) y elegí Registrar devolución.",
+      "Verificá su DNI, marcá la confirmación y, si hace falta, agregá una nota.",
+      "Al confirmar, la prenda queda Retirada y se genera el comprobante de devolución.",
+      "Si vence el plazo para retirar sin que la busque, la prenda queda No retirada: abrila y registrá el destino que le diste."
+    ]
+  },
+  {
     "slug": "registrar-pago",
     "rol": "comercio",
     "titulo": "Registrar el pago de una liquidación",
@@ -652,10 +754,9 @@ export const ALL_GUIDES: readonly Guide[] = [
     "motivo": "plazos",
     "pasos": [
       "En Configuración, definí el porcentaje para el cedente y para el comercio.",
-      "Definí la ventana de venta, el período de gracia y el día de pago mensual.",
+      "Definí el plazo de entrega (días para que el cedente traiga la prenda acordada), la ventana de venta (meses desde que la recibís), el plazo para retirar (días para buscar una prenda que no se vendió) y el día de pago mensual.",
       "Los cambios aplican a acuerdos nuevos. Los acuerdos ya cerrados mantienen sus condiciones."
-    ],
-    "validar": true
+    ]
   },
   {
     "slug": "leer-dashboard",
@@ -665,8 +766,8 @@ export const ALL_GUIDES: readonly Guide[] = [
     "minutos": 3,
     "motivo": "otro",
     "pasos": [
-      "Arriba están las urgencias: liquidaciones vencidas, stock estancado y plazos por vencer. Cada fila tiene su acción.",
-      "Para vigilar muestra lo que todavía no es urgente. Cada fila abre el reporte que lo explica, ya filtrado.",
+      "Arriba está «Qué hacer hoy»: propuestas por revisar, liquidaciones vencidas, prendas que no se vendieron y hay que sacar de exhibición, prendas no retiradas sin destino registrado y plazos de venta por vencer. Cada fila tiene su acción.",
+      "Debajo, «El mes en números» compara ganancia, facturación, prendas vendidas y ticket promedio con el período anterior.",
       "En Reportes elegís una pregunta (por ejemplo, ¿Qué stock no rota?) y entrás hasta las prendas detrás del número.",
       "Los colores siguen un semáforo: rojo vencido, ámbar por vencer, verde al día, gris informativo."
     ]

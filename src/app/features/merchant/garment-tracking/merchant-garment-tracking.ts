@@ -1,4 +1,5 @@
 import { Route } from 'lucide-angular';
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -14,7 +15,11 @@ import {
   throwError,
 } from 'rxjs';
 import { Agreement } from '../../../core/models/agreement.model';
-import { Garment } from '../../../core/models/garment.model';
+import { Garment, UnclaimedDisposition } from '../../../core/models/garment.model';
+import { DISPOSITION_LABELS } from '../../../core/models/garment.labels';
+import { GarmentReturn } from '../../../core/models/return.model';
+import { ReturnsService } from '../../../core/services/returns.service';
+import { countdownLabel, daysUntil } from '../../../core/utils/deadline.util';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Reception } from '../../../core/models/reception.model';
 import { PAYMENT_METHOD_LABELS } from '../../../core/models/sale.labels';
@@ -51,7 +56,14 @@ interface TrackingData {
   salesPoint?: SalesPoint;
   reception?: Reception;
   sale?: Sale;
+  returned?: GarmentReturn;
 }
+
+const DISPOSITIONS: { value: UnclaimedDisposition; label: string }[] = [
+  { value: 'donated', label: DISPOSITION_LABELS.donated },
+  { value: 'kept', label: DISPOSITION_LABELS.kept },
+  { value: 'other', label: DISPOSITION_LABELS.other },
+];
 
 type TrackingState =
   | { status: 'loading'; data: null }
@@ -71,6 +83,7 @@ type TrackingState =
     MoneyPipe,
     ShortDatePipe,
     ErrorState,
+    NgTemplateOutlet,
   ],
   template: `
     @if (isLoading()) {
@@ -127,6 +140,12 @@ type TrackingState =
                   <p class="text-[15px] font-bold text-trama-dark">
                     Acuerdo confirmado. Cuando recibas la prenda, registrá la recepción.
                   </p>
+                  @if (d.agreement?.deliveryDeadline; as deadline) {
+                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
+                      <span>El cedente tiene hasta el <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span> para entregarla.</span>
+                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 2)">{{ countdown(deadline) }}</span>
+                    </p>
+                  }
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'reception']"
                     class="t-btn t-btn-primary"
@@ -137,6 +156,7 @@ type TrackingState =
               @case ('in_stock') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
                   <p class="text-[15px] font-bold text-trama-dark">La prenda está en stock.</p>
+                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
                     class="t-btn t-btn-primary"
@@ -150,6 +170,7 @@ type TrackingState =
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
+                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
                   <div class="pt-2">
                     <a
                       [routerLink]="['/m/garment', d.garment.id, 'sale']"
@@ -167,6 +188,98 @@ type TrackingState =
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
+                  @if (d.agreement?.deliveryDeadline; as deadline) {
+                    <p class="text-sm text-trama-body">
+                      El cedente puede volver a entregarla hasta el {{ deadline | shortDate }} ({{ countdown(deadline) }}).
+                    </p>
+                  }
+                </div>
+              }
+              @case ('awaiting_pickup') {
+                <div class="space-y-3 rounded-2xl border border-status-pending/30 bg-status-pending-soft p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">
+                    Terminó el período de venta: sacala de exhibición.
+                  </p>
+                  @if (d.agreement?.pickupDeadline; as deadline) {
+                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
+                      <span>El cedente tiene hasta el <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span> para retirarla{{ d.salesPoint ? ' en ' + d.salesPoint.name : '' }}.</span>
+                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 3)">{{ countdown(deadline) }}</span>
+                    </p>
+                  }
+                  <p class="text-[13px] text-trama-muted">Ya no se puede vender: el acuerdo de precio terminó.</p>
+                  <a [routerLink]="['/m/garment', d.garment.id, 'return']" class="t-btn t-btn-primary">Registrar devolución</a>
+                </div>
+              }
+              @case ('returned') {
+                <div class="space-y-1 rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">El cedente retiró la prenda.</p>
+                  @if (d.returned; as ret) {
+                    <p class="text-sm text-trama-body">
+                      {{ ret.returnedAt | shortDate }} · Comp. {{ ret.receiptNumber }} · Registró {{ ret.handledBy }}
+                      @if (ret.identityChecked) { · DNI verificado }
+                    </p>
+                    @if (ret.notes) {
+                      <p class="text-sm text-trama-body">{{ ret.notes }}</p>
+                    }
+                  }
+                </div>
+              }
+              @case ('unclaimed') {
+                <div class="space-y-3 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">El cedente no retiró la prenda a tiempo.</p>
+                  @if (d.garment.unclaimedDisposition; as disposition) {
+                    <p class="text-sm text-trama-body">
+                      Destino: <span class="font-semibold text-trama-dark">{{ dispositionLabel(disposition.disposition) }}</span>
+                      · {{ disposition.date | shortDate }} · {{ disposition.handledBy }}
+                    </p>
+                    @if (disposition.note) {
+                      <p class="text-sm text-trama-body">{{ disposition.note }}</p>
+                    }
+                  } @else {
+                    <p class="text-sm text-trama-body">
+                      Según los términos, podés disponer de ella. Registrá qué hiciste para dejar constancia.
+                    </p>
+                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Destino de la prenda">
+                      @for (option of dispositions; track option.value) {
+                        <button type="button" role="radio" class="t-chip" [attr.aria-checked]="disposition() === option.value" (click)="disposition.set(option.value)">
+                          {{ option.label }}
+                        </button>
+                      }
+                    </div>
+                    <div>
+                      <label class="t-label" for="disposition-note">
+                        Nota
+                        @if (disposition() !== 'other') {
+                          <span class="font-medium text-trama-muted">(opcional)</span>
+                        }
+                      </label>
+                      <input
+                        id="disposition-note"
+                        type="text"
+                        maxlength="500"
+                        class="t-input"
+                        [value]="dispositionNote()"
+                        (input)="dispositionNote.set($any($event.target).value)"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      class="t-btn t-btn-primary"
+                      [disabled]="!canRegisterDisposition() || acting()"
+                      (click)="confirmingDisposition.set(true)"
+                    >
+                      Registrar destino
+                    </button>
+                  }
+                </div>
+              }
+              @case ('delivery_expired') {
+                <div class="space-y-1 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">El cedente no entregó la prenda a tiempo.</p>
+                  <p class="text-sm text-trama-body">
+                    El acuerdo quedó sin efecto.
+                    @if (d.agreement?.deliveryDeadline; as deadline) { El plazo vencía el {{ deadline | shortDate }}. }
+                  </p>
                 </div>
               }
               @case ('sold') {
@@ -296,6 +409,24 @@ type TrackingState =
         </div>
       </div>
 
+      <ng-template #saleWindow let-d>
+        @if (d.agreement; as agreement) {
+          <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
+            <span>En venta hasta el <span class="font-semibold text-trama-dark">{{ agreement.saleDeadline | shortDate }}</span></span>
+            <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(agreement.saleDeadline, 7)">{{ countdown(agreement.saleDeadline) }}</span>
+          </p>
+        }
+      </ng-template>
+
+      <app-confirm-modal
+        [open]="confirmingDisposition()"
+        title="Registrar destino"
+        [body]="'Vas a registrar que la prenda quedó como: ' + dispositionLabel(disposition() ?? 'other') + '. No se puede modificar después.'"
+        confirmLabel="Registrar"
+        (confirmed)="registerDisposition()"
+        (cancelled)="confirmingDisposition.set(false)"
+      />
+
       <app-confirm-modal
         [open]="confirmingPayout()"
         title="Registrar liquidación"
@@ -318,7 +449,18 @@ export class MerchantGarmentTracking {
   private readonly receptionsService = inject(ReceptionsService);
   private readonly salesService = inject(SalesService);
   private readonly payoutsService = inject(PayoutsService);
+  private readonly returnsService = inject(ReturnsService);
   private readonly toast = inject(ToastService);
+
+  protected readonly dispositions = DISPOSITIONS;
+  protected readonly disposition = signal<UnclaimedDisposition | null>(null);
+  protected readonly dispositionNote = signal('');
+  protected readonly confirmingDisposition = signal(false);
+  protected readonly canRegisterDisposition = computed(() => {
+    const value = this.disposition();
+    if (!value) return false;
+    return value !== 'other' || this.dispositionNote().trim().length >= 3;
+  });
 
   protected readonly payingOut = signal(false);
   protected readonly confirmingPayout = signal(false);
@@ -364,6 +506,40 @@ export class MerchantGarmentTracking {
     if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
     return 0;
   });
+
+  protected countdown(deadline: Date): string {
+    return countdownLabel(deadline);
+  }
+
+  protected countdownClass(deadline: Date, soonDays: number): string {
+    const days = daysUntil(deadline);
+    if (days < 0) return 'bg-status-none-soft text-status-none';
+    if (days <= soonDays) return 'bg-status-pending-soft text-status-pending';
+    return 'bg-trama-paper text-trama-body';
+  }
+
+  protected dispositionLabel(value: UnclaimedDisposition): string {
+    return DISPOSITION_LABELS[value];
+  }
+
+  protected registerDisposition(): void {
+    this.confirmingDisposition.set(false);
+    const d = this.data();
+    const value = this.disposition();
+    if (!d || !value || !this.canRegisterDisposition() || this.acting()) return;
+    this.acting.set(true);
+    this.returnsService.registerDisposition(d.garment.id, value, this.dispositionNote()).subscribe({
+      next: () => {
+        this.acting.set(false);
+        this.toast.show('Destino registrado');
+        this.reload.next();
+      },
+      error: () => {
+        this.acting.set(false);
+        this.toast.show('No pudimos registrar el destino', 'error');
+      },
+    });
+  }
 
   protected methodLabel(method?: PaymentMethod): string {
     return method ? PAYMENT_METHOD_LABELS[method] : '—';
@@ -412,9 +588,11 @@ export class MerchantGarmentTracking {
             : of(undefined),
           reception: this.receptionsService.byGarment(id),
           sale: this.salesService.byGarment(id),
+          returned:
+            garment.status === 'returned' ? this.returnsService.byGarment(id) : of(undefined),
         }).pipe(
           map(
-            ({ proposal, agreement, consignor, merchant, reception, sale }): TrackingData => ({
+            ({ proposal, agreement, consignor, merchant, reception, sale, returned }): TrackingData => ({
               garment,
               proposal,
               agreement,
@@ -423,6 +601,7 @@ export class MerchantGarmentTracking {
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
               reception,
               sale,
+              returned,
             }),
           ),
         );

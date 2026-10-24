@@ -28,6 +28,6 @@ export interface RegisterMerchantRequest {
   cuit: string;
   location: UserLocation;
   commissionConfig: { consignorPercentage: number; merchantPercentage: number };
-  terms: { saleWindowMonths: number; graceMonths: number; payoutDay: number };
+  terms: { saleWindowMonths: number; deliveryDays: number; pickupDays: number; payoutDay: number };
   salesPoint: RegisterSalesPoint;
 }

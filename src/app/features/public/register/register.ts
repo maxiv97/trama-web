@@ -561,7 +561,19 @@ interface SummaryRow {
                 }
                 @case ('conditions') {
                   <form [formGroup]="conditionsForm" class="space-y-6">
-                    <div class="grid max-w-[520px] gap-4 sm:grid-cols-2">
+                    <div class="grid max-w-[720px] gap-4 sm:grid-cols-3">
+                      <div>
+                        <label class="t-label" for="r-delivery">Plazo de entrega</label>
+                        <div class="flex items-center gap-2">
+                          <input id="r-delivery" formControlName="deliveryDays" type="number" min="1" max="30" class="t-input !w-24" />
+                          <span class="text-sm text-trama-body">días</span>
+                        </div>
+                        @if (showError(conditionsForm, 'deliveryDays')) {
+                          <p class="t-error">{{ errorMessage(conditionsForm, 'deliveryDays') }}</p>
+                        } @else {
+                          <p class="t-help">Para traer la prenda acordada (1 a 30).</p>
+                        }
+                      </div>
                       <div>
                         <label class="t-label" for="r-window">Plazo de venta</label>
                         <div class="flex items-center gap-2">
@@ -571,19 +583,19 @@ interface SummaryRow {
                         @if (showError(conditionsForm, 'saleWindowMonths')) {
                           <p class="t-error">{{ errorMessage(conditionsForm, 'saleWindowMonths') }}</p>
                         } @else {
-                          <p class="t-help">Tiempo en exhibición (1 a 12).</p>
+                          <p class="t-help">Tiempo en exhibición desde que la recibís (1 a 12).</p>
                         }
                       </div>
                       <div>
-                        <label class="t-label" for="r-grace">Período de gracia</label>
+                        <label class="t-label" for="r-pickup">Plazo para retirar</label>
                         <div class="flex items-center gap-2">
-                          <input id="r-grace" formControlName="graceMonths" type="number" min="0" max="6" class="t-input !w-24" />
-                          <span class="text-sm text-trama-body">meses</span>
+                          <input id="r-pickup" formControlName="pickupDays" type="number" min="1" max="60" class="t-input !w-24" />
+                          <span class="text-sm text-trama-body">días</span>
                         </div>
-                        @if (showError(conditionsForm, 'graceMonths')) {
-                          <p class="t-error">{{ errorMessage(conditionsForm, 'graceMonths') }}</p>
+                        @if (showError(conditionsForm, 'pickupDays')) {
+                          <p class="t-error">{{ errorMessage(conditionsForm, 'pickupDays') }}</p>
                         } @else {
-                          <p class="t-help">Meses extra (0 a 6).</p>
+                          <p class="t-help">Si no se vende, para retirarla (1 a 60).</p>
                         }
                       </div>
                     </div>
@@ -622,6 +634,8 @@ interface SummaryRow {
                       <p>El comercio recibe, revisa y exhibe las prendas acordadas, y registra cualquier discrepancia respecto de la propuesta al momento de la recepción.</p>
                       <p>El reparto de cada venta se rige por la comisión acordada. Un cambio posterior de comisión no afecta a las prendas ya acordadas.</p>
                       <p>Las liquidaciones se pagan el día del mes definido por el comercio, por las prendas vendidas en el período anterior.</p>
+                      <p>Cada acuerdo fija un plazo de entrega definido por el comercio: si la prenda no se entrega dentro de ese plazo, el acuerdo queda sin efecto.</p>
+                      <p>Si una prenda no se vende dentro de la ventana de venta, sale de exhibición y el cedente puede retirarla, presentando su DNI, dentro del plazo para retirar definido por el comercio. Vencido ese plazo sin que la retire, el comercio puede disponer de la prenda (por ejemplo, donarla o conservarla) y deja registrado su destino.</p>
                     </div>
                     <label class="flex cursor-pointer items-start gap-3 text-[15px] text-trama-dark">
                       <input type="checkbox" class="t-check mt-0.5" [checked]="accepted()" (change)="accepted.set($any($event.target).checked)" />
@@ -778,7 +792,8 @@ export class Register {
 
   protected readonly conditionsForm = this.fb.group({
     saleWindowMonths: [3, [Validators.required, Validators.min(1), Validators.max(12)]],
-    graceMonths: [1, [Validators.required, Validators.min(0), Validators.max(6)]],
+    deliveryDays: [7, [Validators.required, Validators.min(1), Validators.max(30)]],
+    pickupDays: [15, [Validators.required, Validators.min(1), Validators.max(60)]],
     payoutDay: [10, [Validators.required, Validators.min(1), Validators.max(28)]],
   });
 
@@ -1170,7 +1185,8 @@ export class Register {
       },
       terms: {
         saleWindowMonths: Number(conditions.saleWindowMonths),
-        graceMonths: Number(conditions.graceMonths),
+        deliveryDays: Number(conditions.deliveryDays),
+        pickupDays: Number(conditions.pickupDays),
         payoutDay: Number(conditions.payoutDay),
       },
       salesPoint: {
@@ -1213,7 +1229,7 @@ export class Register {
         },
         {
           key: 'Condiciones',
-          value: `${conditions.saleWindowMonths} meses + ${conditions.graceMonths} de gracia · pago el ${conditions.payoutDay}`,
+          value: `Entrega en ${conditions.deliveryDays} días · venta ${conditions.saleWindowMonths} meses · retiro en ${conditions.pickupDays} días · pago el ${conditions.payoutDay}`,
         },
       ];
     }

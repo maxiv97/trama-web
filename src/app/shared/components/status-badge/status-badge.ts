@@ -21,6 +21,11 @@ const STATUS_META: Record<GarmentStatus, StatusMeta> = {
   paid_out: { label: 'Liquidado', badgeClass: 'bg-status-settled-soft text-status-settled' },
   no_agreement: { label: 'Sin acuerdo', badgeClass: 'bg-status-none-soft text-status-none' },
   cancelled: { label: 'Cancelada', badgeClass: 'bg-status-none-soft text-status-none' },
+  // Semáforo del producto: rojo = vencido, ámbar = pendiente, gris = informativo/cerrado.
+  delivery_expired: { label: 'Entrega vencida', badgeClass: 'bg-status-none-soft text-status-none' },
+  awaiting_pickup: { label: 'Por retirar', badgeClass: 'bg-status-pending-soft text-status-pending' },
+  returned: { label: 'Retirada', badgeClass: 'bg-status-neutral-soft text-status-neutral' },
+  unclaimed: { label: 'No retirada', badgeClass: 'bg-status-none-soft text-status-none' },
 };
 
 @Component({
