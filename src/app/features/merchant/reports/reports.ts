@@ -4,12 +4,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Tabs } from '../../../shared/components/tabs/tabs';
 import { CedentesCard } from './cards/cedentes-card';
 import { ConvieneCard } from './cards/conviene-card';
+import { CumplimientoCard } from './cards/cumplimiento-card';
 import { DeboCard } from './cards/debo-card';
 import { DiscrepanciasCard } from './cards/discrepancias-card';
 import { PdvCard } from './cards/pdv-card';
 import { PlazosCard } from './cards/plazos-card';
 import { RotaCard } from './cards/rota-card';
 import { TardoCard } from './cards/tardo-card';
+import { VencimientosCard } from './cards/vencimientos-card';
 import { ReportsFilterBar } from './filter-bar/filter-bar';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 
@@ -42,6 +44,7 @@ const INDEX: IndexEntry[] = [
     questions: [
       { label: '¿Qué stock no rota?', card: 'rep-rota' },
       { label: '¿Cuánto tarda en venderse una prenda?', card: 'rep-conviene' },
+      { label: '¿Qué pasa con lo que no se vende?', card: 'rep-vencimientos' },
     ],
   },
   {
@@ -49,6 +52,7 @@ const INDEX: IndexEntry[] = [
     questions: [
       { label: '¿Quiénes me dan más ganancia?', card: 'rep-cedentes' },
       { label: '¿Qué cedentes venden mejor lo que recibo?', card: 'rep-cedentes' },
+      { label: '¿Qué cedentes cumplen con los plazos?', card: 'rep-cumplimiento' },
       { label: '¿Cuántas prendas recibidas tuvieron observaciones?', card: 'rep-discrepancias' },
     ],
   },
@@ -64,7 +68,9 @@ const INDEX: IndexEntry[] = [
     ConvieneCard,
     PdvCard,
     RotaCard,
+    VencimientosCard,
     CedentesCard,
+    CumplimientoCard,
     DiscrepanciasCard,
   ],
   template: `
@@ -100,10 +106,12 @@ const INDEX: IndexEntry[] = [
           }
           @case ('Stock y rotación') {
             <app-rota-card />
+            <app-vencimientos-card />
             <app-conviene-card />
           }
           @case ('Cedentes') {
             <app-cedentes-card />
+            <app-cumplimiento-card />
             <app-discrepancias-card />
           }
         }
