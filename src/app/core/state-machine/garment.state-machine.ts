@@ -12,7 +12,11 @@ export type GarmentAction =
   | 'REGISTER_SALE'
   | 'MARK_PAID_OUT'
   | 'REDELIVER'
-  | 'CANCEL';
+  | 'CANCEL'
+  | 'EXPIRE_DELIVERY'
+  | 'EXPIRE_SALE'
+  | 'REGISTER_RETURN'
+  | 'MARK_UNCLAIMED';
 
 const TRANSITIONS: Record<GarmentStatus, Partial<Record<GarmentAction, GarmentStatus>>> = {
   submitted: { SUBMIT_PROPOSAL: 'under_review' },
@@ -28,14 +32,20 @@ const TRANSITIONS: Record<GarmentStatus, Partial<Record<GarmentAction, GarmentSt
     RECEIVE_WITH_REMARKS: 'with_remarks',
     REJECT_RECEPTION: 'rejected',
     CANCEL: 'cancelled',
+    EXPIRE_DELIVERY: 'delivery_expired',
   },
-  in_stock: { REGISTER_SALE: 'sold' },
-  with_remarks: { REGISTER_SALE: 'sold' },
-  rejected: { REDELIVER: 'agreed' },
+  in_stock: { REGISTER_SALE: 'sold', EXPIRE_SALE: 'awaiting_pickup' },
+  with_remarks: { REGISTER_SALE: 'sold', EXPIRE_SALE: 'awaiting_pickup' },
+  rejected: { REDELIVER: 'agreed', EXPIRE_DELIVERY: 'delivery_expired' },
   sold: { MARK_PAID_OUT: 'paid_out' },
   paid_out: {},
   no_agreement: {},
   cancelled: {},
+  // Vencida la venta ya no se puede vender: el acuerdo de precio terminó.
+  awaiting_pickup: { REGISTER_RETURN: 'returned', MARK_UNCLAIMED: 'unclaimed' },
+  delivery_expired: {},
+  returned: {},
+  unclaimed: {},
 };
 
 export function canTransition(status: GarmentStatus, action: GarmentAction): boolean {

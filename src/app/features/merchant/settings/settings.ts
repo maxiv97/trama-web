@@ -11,10 +11,11 @@ import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { PageHeader } from '../../../shared/components/page-header/page-header';
 import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
+import { HelpTip } from '../../../shared/components/help-tip/help-tip';
 
 @Component({
   selector: 'app-settings',
-  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, ErrorState],
+  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, ErrorState, HelpTip],
   template: `
     @if (loading()) {
       <app-page-skeleton layout="form" />
@@ -137,9 +138,38 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
 
         <section formGroupName="terms" class="t-card space-y-4 p-5">
           <h2 class="text-title-3 text-trama-dark">Términos de consignación</h2>
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <p class="text-sm text-trama-body">
+            Rigen para las propuestas que aceptes desde ahora: cada acuerdo conserva los plazos con
+            los que se cerró.
+          </p>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label class="block">
-              <span class="t-label">Ventana de venta (meses)</span>
+              <span class="t-label inline-flex items-center gap-1.5">
+                Plazo de entrega (días)
+                <app-help-tip
+                  label="Ayuda sobre el plazo de entrega"
+                  text="Días que tiene el cedente para traer la prenda después del acuerdo. Si no la entrega, el acuerdo vence solo."
+                />
+              </span>
+              <input
+                formControlName="deliveryDays"
+                type="number"
+                min="1"
+                max="30"
+                class="t-input"
+              />
+              @if (invalid('terms', 'deliveryDays')) {
+                <span class="t-error">Entre 1 y 30 días.</span>
+              }
+            </label>
+            <label class="block">
+              <span class="t-label inline-flex items-center gap-1.5">
+                Ventana de venta (meses)
+                <app-help-tip
+                  label="Ayuda sobre la ventana de venta"
+                  text="Cuánto tiempo está la prenda a la venta, contado desde que la recibís."
+                />
+              </span>
               <input
                 formControlName="saleWindowMonths"
                 type="number"
@@ -151,15 +181,22 @@ import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skel
               }
             </label>
             <label class="block">
-              <span class="t-label">Gracia (meses)</span>
+              <span class="t-label inline-flex items-center gap-1.5">
+                Plazo para retirar (días)
+                <app-help-tip
+                  label="Ayuda sobre el plazo para retirar"
+                  text="Si la prenda no se vende, sale de exhibición y el cedente tiene estos días para retirarla."
+                />
+              </span>
               <input
-                formControlName="graceMonths"
+                formControlName="pickupDays"
                 type="number"
-                min="0"
+                min="1"
+                max="60"
                 class="t-input"
               />
-              @if (invalid('terms', 'graceMonths')) {
-                <span class="t-error">No puede ser negativo.</span>
+              @if (invalid('terms', 'pickupDays')) {
+                <span class="t-error">Entre 1 y 60 días.</span>
               }
             </label>
             <label class="block">
@@ -229,7 +266,8 @@ export class Settings {
     }),
     terms: this.fb.nonNullable.group({
       saleWindowMonths: [1, [Validators.required, Validators.min(1)]],
-      graceMonths: [0, [Validators.required, Validators.min(0)]],
+      deliveryDays: [7, [Validators.required, Validators.min(1), Validators.max(30)]],
+      pickupDays: [15, [Validators.required, Validators.min(1), Validators.max(60)]],
       payoutDay: [1, [Validators.required, Validators.min(1), Validators.max(28)]],
     }),
   });
@@ -304,7 +342,8 @@ export class Settings {
       },
       terms: {
         saleWindowMonths: value.terms.saleWindowMonths,
-        graceMonths: value.terms.graceMonths,
+        deliveryDays: value.terms.deliveryDays,
+        pickupDays: value.terms.pickupDays,
         payoutDay: value.terms.payoutDay,
       },
     };
@@ -336,7 +375,8 @@ export class Settings {
       commission: { consignorPercentage: merchant.commissionConfig.consignorPercentage },
       terms: {
         saleWindowMonths: merchant.terms.saleWindowMonths,
-        graceMonths: merchant.terms.graceMonths,
+        deliveryDays: merchant.terms.deliveryDays ?? 7,
+        pickupDays: merchant.terms.pickupDays ?? 15,
         payoutDay: merchant.terms.payoutDay,
       },
     });

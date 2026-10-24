@@ -216,6 +216,18 @@ type DetailState =
                 class="t-btn t-btn-primary"
                 >Registrar venta</a
               >
+            } @else if (d.garment.status === 'awaiting_pickup') {
+              <a
+                [routerLink]="['/m/garment', d.garment.id, 'return']"
+                class="t-btn t-btn-primary"
+                >Registrar devolución</a
+              >
+            } @else if (d.garment.status === 'unclaimed' && !d.garment.unclaimedDisposition) {
+              <a
+                [routerLink]="['/m/garment', d.garment.id]"
+                class="t-btn t-btn-primary"
+                >Registrar destino</a
+              >
             } @else if (d.garment.status === 'sold') {
               <a
                 [routerLink]="['/m/garment', d.garment.id]"

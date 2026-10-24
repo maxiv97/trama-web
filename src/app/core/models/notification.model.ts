@@ -4,7 +4,10 @@ export type NotificationType =
   | 'agreement'
   | 'reception'
   | 'sale'
-  | 'payout';
+  | 'payout'
+  | 'delivery'
+  | 'expiry'
+  | 'pickup';
 
 export interface Notification {
   id: string;

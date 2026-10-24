@@ -1,4 +1,5 @@
 import { Route } from 'lucide-angular';
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,6 +16,10 @@ import {
 } from 'rxjs';
 import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
+import { DISPOSITION_LABELS } from '../../../core/models/garment.labels';
+import { GarmentReturn } from '../../../core/models/return.model';
+import { ReturnsService } from '../../../core/services/returns.service';
+import { countdownLabel, daysUntil } from '../../../core/utils/deadline.util';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Reception } from '../../../core/models/reception.model';
 import { PAYMENT_METHOD_LABELS } from '../../../core/models/sale.labels';
@@ -48,6 +53,7 @@ interface TrackingData {
   salesPoint?: SalesPoint;
   reception?: Reception;
   sale?: Sale;
+  returned?: GarmentReturn;
 }
 
 type TrackingState =
@@ -70,6 +76,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
     ShortDatePipe,
     ErrorState,
     RouterLink,
+    NgTemplateOutlet,
   ],
   template: `
     @if (isLoading()) {
@@ -182,10 +189,12 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       {{ point.receptionSchedule.instructions }}
                     </p>
                   }
-                  @if (d.agreement; as agreement) {
-                    <p class="text-sm text-trama-body">
-                      Plazo de entrega: hasta {{ agreement.saleDeadline | shortDate }}
+                  @if (d.agreement?.deliveryDeadline; as deadline) {
+                    <p class="flex flex-wrap items-center gap-2 pt-1 text-sm text-trama-body">
+                      <span>Entregala antes del <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span></span>
+                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 2)">{{ countdown(deadline) }}</span>
                     </p>
+                    <p class="text-[13px] text-trama-muted">Si no la entregás a tiempo, el acuerdo queda sin efecto.</p>
                   }
                 </div>
               }
@@ -194,6 +203,12 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                   <p class="text-sm text-trama-body">El comercio rechazó la recepción.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
+                  }
+                  @if (d.agreement?.deliveryDeadline; as deadline) {
+                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
+                      <span>Podés volver a entregarla hasta el <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span></span>
+                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 2)">{{ countdown(deadline) }}</span>
+                    </p>
                   }
                   <div class="pt-2">
                     <button
@@ -215,11 +230,78 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
+                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
                 </div>
               }
               @case ('in_stock') {
-                <div class="rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
+                <div class="space-y-2 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
                   <p class="text-sm text-trama-body">Tu prenda está en el comercio, en venta.</p>
+                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
+                </div>
+              }
+              @case ('awaiting_pickup') {
+                <div class="space-y-3 rounded-2xl border border-status-pending/30 bg-status-pending-soft p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">Tu prenda no se vendió: pasá a retirarla</p>
+                  @if (d.salesPoint; as point) {
+                    <div class="space-y-1 text-sm text-trama-body">
+                      <p><span class="font-semibold text-trama-dark">{{ point.name }}</span> — {{ point.address }}</p>
+                      <p>Horario: {{ point.receptionSchedule.days }} {{ point.receptionSchedule.hours }}</p>
+                      <a
+                        class="inline-block font-semibold text-trama-dark underline underline-offset-2"
+                        [href]="mapsUrl(point.geo.lat, point.geo.lng)"
+                        target="_blank"
+                        rel="noopener"
+                        >Cómo llegar</a
+                      >
+                    </div>
+                  }
+                  @if (d.agreement?.pickupDeadline; as deadline) {
+                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
+                      <span>Retirala antes del <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span></span>
+                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 3)">{{ countdown(deadline) }}</span>
+                    </p>
+                  }
+                  <p class="text-sm text-trama-body">Llevá tu DNI: el comercio lo verifica antes de entregártela.</p>
+                  <p class="text-[13px] text-trama-muted">
+                    Si no la retirás a tiempo, el comercio puede disponer de la prenda según los términos.
+                    <a routerLink="/ayuda/faq" fragment="no-se-vende" class="underline underline-offset-2">Más información</a>
+                  </p>
+                </div>
+              }
+              @case ('returned') {
+                <div class="space-y-1 rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">Retiraste tu prenda</p>
+                  @if (d.returned; as ret) {
+                    <p class="text-sm text-trama-body">
+                      {{ ret.returnedAt | shortDate }}
+                      @if (d.salesPoint) { · {{ d.salesPoint.name }} }
+                      · Comp. {{ ret.receiptNumber }}
+                    </p>
+                  }
+                </div>
+              }
+              @case ('unclaimed') {
+                <div class="space-y-1 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">Venció el plazo para retirarla</p>
+                  <p class="text-sm text-trama-body">
+                    La prenda no se retiró a tiempo y el comercio puede disponer de ella según los términos.
+                  </p>
+                  @if (d.garment.unclaimedDisposition; as disposition) {
+                    <p class="text-sm text-trama-body">
+                      Destino registrado por el comercio:
+                      <span class="font-semibold text-trama-dark">{{ dispositionLabel(disposition.disposition) }}</span>
+                      ({{ disposition.date | shortDate }}).
+                    </p>
+                  }
+                </div>
+              }
+              @case ('delivery_expired') {
+                <div class="space-y-1 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
+                  <p class="text-[15px] font-bold text-trama-dark">Venció el plazo de entrega</p>
+                  <p class="text-sm text-trama-body">
+                    La prenda no se entregó a tiempo y el acuerdo quedó sin efecto.
+                    @if (d.agreement?.deliveryDeadline; as deadline) { El plazo vencía el {{ deadline | shortDate }}. }
+                  </p>
                 </div>
               }
               @case ('sold') {
@@ -297,6 +379,20 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
         </div>
       </div>
 
+      <ng-template #saleWindow let-d>
+        @if (d.agreement; as agreement) {
+          <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
+            <span>En venta hasta el <span class="font-semibold text-trama-dark">{{ agreement.saleDeadline | shortDate }}</span></span>
+            <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(agreement.saleDeadline, 7)">{{ countdown(agreement.saleDeadline) }}</span>
+          </p>
+          @if (agreement.pickupDays) {
+            <p class="text-[13px] text-trama-muted">
+              Si no se vende, sale de exhibición y vas a tener {{ agreement.pickupDays }} días para retirarla.
+            </p>
+          }
+        }
+      </ng-template>
+
       <app-confirm-modal
         [open]="activeModal() !== null"
         [title]="modalTitle()"
@@ -318,6 +414,7 @@ export class ConsignorGarmentTracking {
   private readonly merchantsService = inject(MerchantsService);
   private readonly receptionsService = inject(ReceptionsService);
   private readonly salesService = inject(SalesService);
+  private readonly returnsService = inject(ReturnsService);
   private readonly toast = inject(ToastService);
 
   private readonly garmentId = toSignal(
@@ -358,6 +455,26 @@ export class ConsignorGarmentTracking {
     if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
     return 0;
   });
+
+  protected countdown(deadline: Date): string {
+    return countdownLabel(deadline);
+  }
+
+  // Ámbar cuando faltan `soonDays` días o menos, rojo si ya venció, neutro en otro caso.
+  protected countdownClass(deadline: Date, soonDays: number): string {
+    const days = daysUntil(deadline);
+    if (days < 0) return 'bg-status-none-soft text-status-none';
+    if (days <= soonDays) return 'bg-status-pending-soft text-status-pending';
+    return 'bg-trama-paper text-trama-body';
+  }
+
+  protected mapsUrl(lat: number, lng: number): string {
+    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  }
+
+  protected dispositionLabel(value: keyof typeof DISPOSITION_LABELS): string {
+    return DISPOSITION_LABELS[value];
+  }
 
   protected methodLabel(method?: PaymentMethod): string {
     return method ? PAYMENT_METHOD_LABELS[method] : '—';
@@ -509,9 +626,11 @@ export class ConsignorGarmentTracking {
             : of(undefined),
           reception: this.receptionsService.byGarment(id),
           sale: this.salesService.byGarment(id),
+          returned:
+            garment.status === 'returned' ? this.returnsService.byGarment(id) : of(undefined),
         }).pipe(
           map(
-            ({ proposal, agreement, merchant, reception, sale }): TrackingData => ({
+            ({ proposal, agreement, merchant, reception, sale, returned }): TrackingData => ({
               garment,
               proposal,
               agreement,
@@ -519,6 +638,7 @@ export class ConsignorGarmentTracking {
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
               reception,
               sale,
+              returned,
             }),
           ),
         );

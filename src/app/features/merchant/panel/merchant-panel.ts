@@ -17,7 +17,16 @@ import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { BarColumns, BarDatum, BarThin } from '../../../shared/components/charts/charts';
 import { EnterDirective } from '../../../shared/directives/enter.directive';
 import { BlobTone } from '../../../shared/icons/trama-icons';
-import { Check, Clock, Inbox, LayoutDashboard, LucideIconData, Receipt } from 'lucide-angular';
+import {
+  Archive,
+  Check,
+  Clock,
+  Inbox,
+  LayoutDashboard,
+  LucideIconData,
+  PackageCheck,
+  Receipt,
+} from 'lucide-angular';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 
 interface Urgencia {
@@ -263,6 +272,32 @@ export class MerchantPanel {
             icon: Receipt,
             tone: 'error',
             link: ['/m/payouts'],
+          });
+        }
+        const pickup = dashboard.awaitingPickupCount ?? 0;
+        if (pickup) {
+          urgencias.push({
+            key: 'pickup',
+            title: `${pickup} ${pickup === 1 ? 'prenda no se vendió' : 'prendas no se vendieron'}`,
+            meta: 'Sacalas de exhibición: el cedente las va a pasar a retirar',
+            actionLabel: 'Ver',
+            icon: PackageCheck,
+            tone: 'warning',
+            link: ['/m/inventory'],
+            queryParams: { status: 'awaiting_pickup' },
+          });
+        }
+        const unclaimed = dashboard.unclaimedPendingCount ?? 0;
+        if (unclaimed) {
+          urgencias.push({
+            key: 'unclaimed',
+            title: `${unclaimed} ${unclaimed === 1 ? 'prenda no retirada' : 'prendas no retiradas'}`,
+            meta: 'Registrá el destino que les diste',
+            actionLabel: 'Registrar',
+            icon: Archive,
+            tone: 'error',
+            link: ['/m/inventory'],
+            queryParams: { status: 'unclaimed' },
           });
         }
         if (dashboard.expiringCount) {

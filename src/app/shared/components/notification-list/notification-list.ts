@@ -6,10 +6,13 @@ import {
   Bell,
   Check,
   Handshake,
+  Hourglass,
   Inbox,
   LucideAngularModule,
   LucideIconData,
+  PackageCheck,
   Receipt,
+  Truck,
 } from 'lucide-angular';
 import { BlobIcon } from '../blob-icon/blob-icon';
 import { EnterDirective } from '../../directives/enter.directive';
@@ -36,6 +39,9 @@ const TYPE_KIND: Record<NotificationType, { icon: LucideIconData; tone: BlobTone
   reception: { icon: Hanger, tone: 'cream', label: 'Recepción' },
   sale: { icon: Receipt, tone: 'success', label: 'Venta' },
   payout: { icon: Check, tone: 'sage', label: 'Pago' },
+  delivery: { icon: Truck, tone: 'warning', label: 'Entrega' },
+  expiry: { icon: Hourglass, tone: 'warning', label: 'Período de venta' },
+  pickup: { icon: PackageCheck, tone: 'peach', label: 'Retiro' },
 };
 
 @Component({

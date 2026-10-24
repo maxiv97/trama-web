@@ -4,7 +4,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { GarmentStatus } from '../../../core/models/garment.model';
+import { Agreement } from '../../../core/models/agreement.model';
+import { Garment, GarmentStatus } from '../../../core/models/garment.model';
+import { countdownLabel, daysUntil } from '../../../core/utils/deadline.util';
+import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { AgreementsService } from '../../../core/services/agreements.service';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
@@ -29,6 +32,17 @@ interface GarmentRow {
   merchantName: string;
 }
 
+// Prendas con un plazo que requiere acción del cedente: retirar o entregar.
+interface UrgentItem {
+  id: string;
+  name: string;
+  kind: 'pickup' | 'delivery';
+  deadline: Date;
+}
+
+// Las entregas se destacan cuando faltan 3 días o menos; los retiros, siempre.
+const DELIVERY_SOON_DAYS = 3;
+
 interface PanelData {
   activeCount: number;
   pendingCount: number;
@@ -36,6 +50,7 @@ interface PanelData {
   pendingPayout: number;
   totalPaidOut: number;
   rows: GarmentRow[];
+  urgent: UrgentItem[];
 }
 
 type PanelState =
@@ -45,7 +60,7 @@ type PanelState =
 
 @Component({
   selector: 'app-consignor-panel',
-  imports: [LucideAngularModule, PersonCell, TableThumb, DataTable, EnterDirective, PageSkeleton, Greeting, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState],
+  imports: [LucideAngularModule, PersonCell, TableThumb, DataTable, EnterDirective, PageSkeleton, Greeting, RouterLink, StatCard, StatusBadge, MoneyPipe, ErrorState, EmptyState, ShortDatePipe],
   template: `
     @if (isLoading()) {
       <app-page-skeleton layout="dashboard" />
@@ -57,6 +72,26 @@ type PanelState =
           <app-greeting eyebrow="Cedente · Mi panel" [name]="firstName()" [summary]="greetingSummary()" />
           <a routerLink="/c/upload" class="t-btn t-btn-primary" [appEnter]="2">Cargar prenda</a>
         </div>
+
+        @if (data.urgent.length) {
+          <section class="space-y-2 rounded-2xl border border-status-pending/30 bg-status-pending-soft p-5" [appEnter]="3" aria-label="Plazos">
+            <h2 class="text-[15px] font-bold text-trama-dark">Tenés plazos por cumplir</h2>
+            <ul class="divide-y divide-status-pending/15">
+              @for (item of data.urgent; track item.id) {
+                <li>
+                  <a class="flex flex-wrap items-center justify-between gap-2 py-2 text-sm" [routerLink]="['/c/garment', item.id]">
+                    <span class="text-trama-body">
+                      {{ item.kind === 'pickup' ? 'Retirá' : 'Entregá' }}
+                      <span class="font-semibold text-trama-dark">{{ item.name }}</span>
+                      antes del {{ item.deadline | shortDate }}
+                    </span>
+                    <span class="rounded-full bg-trama-paper px-2.5 py-0.5 text-[12px] font-semibold text-status-pending">{{ countdown(item.deadline) }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+        }
 
         <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4" [appEnter]="3">
           <app-stat-card title="Prendas activas" [value]="data.activeCount" [dark]="true" />
@@ -152,6 +187,10 @@ export class ConsignorPanel {
   protected readonly greetingSummary = computed(() => {
     const d = this.data();
     if (!d) return '';
+    const pickups = d.urgent.filter((item) => item.kind === 'pickup').length;
+    if (pickups) {
+      return pickups === 1 ? 'Tenés 1 prenda para retirar.' : `Tenés ${pickups} prendas para retirar.`;
+    }
     if (d.counterCount) {
       return d.counterCount === 1
         ? 'Tenés 1 contraoferta para responder.'
@@ -165,8 +204,31 @@ export class ConsignorPanel {
     return d.rows.length ? 'Todo al día: no hay nada pendiente de tu lado.' : 'Cargá tu primera prenda para empezar.';
   });
 
+  protected countdown(deadline: Date): string {
+    return countdownLabel(deadline);
+  }
+
   protected retry(): void {
     this.reload.next();
+  }
+
+  private urgentItems(garments: Garment[], agreements: Agreement[]): UrgentItem[] {
+    const byGarment = new Map(agreements.map((agreement) => [agreement.garmentId, agreement]));
+    const items: UrgentItem[] = [];
+    for (const garment of garments) {
+      const agreement = byGarment.get(garment.id);
+      if (garment.status === 'awaiting_pickup' && agreement?.pickupDeadline) {
+        items.push({ id: garment.id, name: garment.name, kind: 'pickup', deadline: agreement.pickupDeadline });
+      }
+      if (
+        (garment.status === 'agreed' || garment.status === 'rejected') &&
+        agreement?.deliveryDeadline &&
+        daysUntil(agreement.deliveryDeadline) <= DELIVERY_SOON_DAYS
+      ) {
+        items.push({ id: garment.id, name: garment.name, kind: 'delivery', deadline: agreement.deliveryDeadline });
+      }
+    }
+    return items.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
   }
 
   private load(): Observable<PanelData> {
@@ -204,6 +266,7 @@ export class ConsignorPanel {
             .filter((payout) => payout.status === 'paid')
             .reduce((total, payout) => total + payout.totalAmount, 0),
           rows,
+          urgent: this.urgentItems(garments, agreements),
         };
       }),
     );
