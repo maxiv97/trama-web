@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { CategorySales } from '../models/category-sales.model';
 import { ConsignorPerformance } from '../models/consignor-performance.model';
 import { DiscrepancyDetailRow } from '../models/discrepancy-detail.model';
+import { ExpiryOutcomes } from '../models/expiry-outcomes.model';
 import { ExpiringConsignment } from '../models/expiring-consignment.model';
 import { PointSales } from '../models/point-sales.model';
 import { ReceptionDiscrepancyReport } from '../models/reception-discrepancies.model';
@@ -49,6 +50,12 @@ export class ReportsService {
 
   consignors(filters?: ReportFilters): Observable<ConsignorPerformance[]> {
     return this.http.get<ConsignorPerformance[]>(`${this.base}/consignors`, {
+      params: toReportParams(filters),
+    });
+  }
+
+  expiryOutcomes(filters?: ReportFilters): Observable<ExpiryOutcomes> {
+    return this.http.get<ExpiryOutcomes>(`${this.base}/expiry-outcomes`, {
       params: toReportParams(filters),
     });
   }
