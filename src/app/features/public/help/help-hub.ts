@@ -155,10 +155,20 @@ export class HelpHub implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly injector = inject(Injector);
 
-  protected readonly roleOptions = ROLE_OPTIONS;
-  protected readonly roleLabel = ROLE_LABEL;
-  protected readonly recorrido = RECORRIDO;
-  protected readonly stages = STAGES;
+  // Se leen al renderizar y no al construir el componente: con la carga diferida, el módulo del
+  // contenido puede terminar de evaluarse después que este (pasaba en las pruebas unitarias).
+  protected get roleOptions() {
+    return ROLE_OPTIONS;
+  }
+  protected get roleLabel() {
+    return ROLE_LABEL;
+  }
+  protected get recorrido() {
+    return RECORRIDO;
+  }
+  protected get stages() {
+    return STAGES;
+  }
   protected readonly guideIcon = BookOpen;
   protected readonly clockIcon = Clock;
   protected readonly arrowIcon = ArrowRight;

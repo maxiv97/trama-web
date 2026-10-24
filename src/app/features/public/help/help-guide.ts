@@ -114,7 +114,10 @@ export class HelpGuide {
   private readonly state = inject(HelpState);
   private readonly analytics = inject(HelpAnalytics);
 
-  protected readonly roleLabel = ROLE_LABEL;
+  // Se lee al renderizar: con la carga diferida, el módulo del contenido puede evaluarse después.
+  protected get roleLabel() {
+    return ROLE_LABEL;
+  }
   protected readonly clockIcon = Clock;
   protected readonly leftIcon = ArrowLeft;
   protected readonly rightIcon = ArrowRight;
