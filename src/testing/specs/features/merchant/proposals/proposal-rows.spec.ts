@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { Garment, GarmentStatus } from '../../../core/models/garment.model';
-import { Proposal } from '../../../core/models/proposal.model';
-import { buildProposalRows } from './proposal-rows';
+import { Garment, GarmentStatus } from '../../../../../app/core/models/garment.model';
+import { Proposal } from '../../../../../app/core/models/proposal.model';
+import { buildProposalRows } from '../../../../../app/features/merchant/proposals/proposal-rows';
 
 function garment(id: string, status: GarmentStatus, createdAt: string): Garment {
   return {

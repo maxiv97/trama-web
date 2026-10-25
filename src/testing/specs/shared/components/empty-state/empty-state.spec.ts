@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
-import { EmptyState } from './empty-state';
+import { EmptyState } from '../../../../../app/shared/components/empty-state/empty-state';
 
 describe('EmptyState', () => {
   it('renderiza el mensaje sin CTA por defecto', () => {

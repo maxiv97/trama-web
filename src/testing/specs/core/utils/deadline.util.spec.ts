@@ -1,4 +1,4 @@
-import { countdownLabel, daysUntil } from './deadline.util';
+import { countdownLabel, daysUntil } from '../../../../app/core/utils/deadline.util';
 
 describe('deadline.util', () => {
   const now = new Date(2026, 9, 23, 22, 0);

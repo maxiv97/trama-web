@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, describe, expect, it } from 'vitest';
-import { PhotoUploader } from './photo-uploader';
+import { PhotoUploader } from '../../../../../app/shared/components/photo-uploader/photo-uploader';
 
 const originalMatchMedia = window.matchMedia;
 

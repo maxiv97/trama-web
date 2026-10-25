@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
-import { isCompact } from './progress-tracker';
-import { SeamSummary } from './seam-summary';
+import { isCompact } from '../../../../../app/shared/components/progress-tracker/progress-tracker';
+import { SeamSummary } from '../../../../../app/shared/components/progress-tracker/seam-summary';
 
 const STEPS = ['Cargada', 'En revisión', 'Acordada', 'Recepcionada', 'En stock', 'Vendida', 'Liquidada'];
 

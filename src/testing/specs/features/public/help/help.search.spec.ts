@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FAQS, GUIDES } from './help.content';
-import { normalize, queryTerms, searchHelp, segments } from './help.search';
+import { FAQS, GUIDES } from '../../../../../app/features/public/help/help.content';
+import { normalize, queryTerms, searchHelp, segments } from '../../../../../app/features/public/help/help.search';
 
 describe('búsqueda de ayuda', () => {
   it('normaliza sin tildes, minúsculas y sin signos', () => {

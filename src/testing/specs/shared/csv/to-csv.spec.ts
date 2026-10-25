@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { toCsv } from './to-csv';
+import { toCsv } from '../../../../app/shared/csv/to-csv';
 
 describe('toCsv', () => {
   it('arma encabezados y filas con saltos CRLF', () => {

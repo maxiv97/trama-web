@@ -143,8 +143,13 @@ export class HelpFaq implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly bar = viewChild<ElementRef<HTMLElement>>('bar');
 
-  protected readonly roleOptions = ROLE_OPTIONS;
-  protected readonly roleLabel = ROLE_LABEL;
+  // Se leen al renderizar: con la carga diferida, el módulo del contenido puede evaluarse después.
+  protected get roleOptions() {
+    return ROLE_OPTIONS;
+  }
+  protected get roleLabel() {
+    return ROLE_LABEL;
+  }
   protected readonly guideIcon = BookOpen;
   protected readonly arrowIcon = ArrowRight;
 

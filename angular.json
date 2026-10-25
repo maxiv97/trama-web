@@ -112,7 +112,24 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "buildTarget": "::development",
-            "runner": "vitest"
+            "runner": "vitest",
+            "include": [
+              "src/testing/**/*.spec.ts"
+            ],
+            "coverageInclude": [
+              "src/app/**/*.ts"
+            ],
+            "coverageReporters": [
+              "text-summary",
+              "html",
+              "json-summary"
+            ],
+            "coverageThresholds": {
+              "statements": 85,
+              "branches": 85,
+              "functions": 85,
+              "lines": 85
+            }
           }
         }
       }

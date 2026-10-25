@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DashboardFiltersService } from './dashboard-filters.service';
+import { DashboardFiltersService } from '../../../../app/core/services/dashboard-filters.service';
 
 describe('DashboardFiltersService', () => {
   it('empieza sin ningún filtro activo', () => {

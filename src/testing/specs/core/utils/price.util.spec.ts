@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calculateConsignorAmount, calculateSalePrice } from './price.util';
+import { calculateConsignorAmount, calculateSalePrice } from '../../../../app/core/utils/price.util';
 
 describe('price util', () => {
   it('calcula el precio de venta desde el precio del cedente y su porcentaje', () => {

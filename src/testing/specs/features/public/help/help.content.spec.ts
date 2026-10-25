@@ -9,7 +9,7 @@ import {
   MOTIVOS,
   STAGES,
   TOPICS,
-} from './help.content';
+} from '../../../../../app/features/public/help/help.content';
 
 const slugs = new Set(ALL_GUIDES.map((g) => g.slug));
 const motivos = new Set(MOTIVOS.map((m) => m.value));

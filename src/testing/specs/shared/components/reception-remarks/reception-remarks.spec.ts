@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
-import { Reception } from '../../../core/models/reception.model';
-import { ReceptionRemarks } from './reception-remarks';
+import { Reception } from '../../../../../app/core/models/reception.model';
+import { ReceptionRemarks } from '../../../../../app/shared/components/reception-remarks/reception-remarks';
 
 function makeReception(overrides: Partial<Reception> = {}): Reception {
   return {
