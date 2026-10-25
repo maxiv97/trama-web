@@ -22,34 +22,51 @@ let observedWidth = 1024;
 export function setObservedWidth(width: number): void {
   observedWidth = width;
 }
+// Como los reales, dejan de avisar al desconectarse: si no, un aviso pendiente de una pantalla ya
+// cerrada dispararía pedidos con el inyector destruido (NG0205).
 class FakeResizeObserver {
+  private active = true;
   constructor(private readonly callback: ResizeObserverCallback) {}
   observe(target: Element): void {
+    this.active = true;
     const entry = {
       target,
       contentRect: { width: observedWidth, height: 400 },
     } as unknown as ResizeObserverEntry;
     // Asíncrono, como el real: avisar dentro del render dispararía un ciclo de detección anidado.
-    setTimeout(() => this.callback([entry], this as unknown as ResizeObserver), 0);
+    setTimeout(() => this.active && this.callback([entry], this as unknown as ResizeObserver), 0);
   }
-  unobserve(): void {}
-  disconnect(): void {}
+  unobserve(): void {
+    this.active = false;
+  }
+  disconnect(): void {
+    this.active = false;
+  }
 }
 globalThis.ResizeObserver = FakeResizeObserver as unknown as typeof ResizeObserver;
 
 // Las miniaturas se cargan cuando entran en pantalla: en las pruebas, todo está "visible".
 class FakeIntersectionObserver {
+  private active = true;
   constructor(private readonly callback: IntersectionObserverCallback) {}
   observe(target: Element): void {
+    this.active = true;
     const entry = {
       target,
       isIntersecting: true,
       intersectionRatio: 1,
     } as unknown as IntersectionObserverEntry;
-    setTimeout(() => this.callback([entry], this as unknown as IntersectionObserver), 0);
+    setTimeout(
+      () => this.active && this.callback([entry], this as unknown as IntersectionObserver),
+      0,
+    );
   }
-  unobserve(): void {}
-  disconnect(): void {}
+  unobserve(): void {
+    this.active = false;
+  }
+  disconnect(): void {
+    this.active = false;
+  }
   takeRecords(): IntersectionObserverEntry[] {
     return [];
   }
@@ -112,12 +129,29 @@ export function login(as: As, api: FakeApi, keepStorage = false): void {
 }
 
 /** `keepStorage` conserva lo guardado en el navegador (por ejemplo, un borrador) entre pantallas. */
+// Pantalla anterior de la misma prueba: se cierra antes de armar la siguiente para que ninguna
+// navegación pendiente (por ejemplo, la carga diferida de la pantalla destino) termine con el
+// inyector ya destruido.
+let previous: { fixture: ComponentFixture<App>; router: Router } | null = null;
+
+async function waitForNavigation(router: Router): Promise<void> {
+  const limit = Date.now() + 10000;
+  while (router.currentNavigation() !== null && Date.now() < limit) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+}
+
 export async function renderRoute(
   url: string,
   as: As,
   api = new FakeApi(),
   keepStorage = false,
 ): Promise<Screen> {
+  if (previous) {
+    await waitForNavigation(previous.router);
+    previous.fixture.destroy();
+    previous = null;
+  }
   login(as, api, keepStorage);
   // Permite renderizar más de una pantalla en la misma prueba (por ejemplo, la vista de cada rol).
   TestBed.resetTestingModule();
@@ -125,6 +159,7 @@ export async function renderRoute(
   const fixture = TestBed.createComponent(App);
   const router = TestBed.inject(Router);
   const toast = TestBed.inject(ToastService);
+  previous = { fixture, router };
   // Algunos paneles (drawer, hojas de filtros) se montan en el body, fuera del componente raíz.
   const root = () => document.body;
 
@@ -132,7 +167,9 @@ export async function renderRoute(
   // 5 s). La API simulada responde en el momento, así que alcanza con unas vueltas del event loop.
   // Si hay una navegación en curso (la pantalla destino se carga de forma diferida), la espera.
   const settle = async () => {
-    for (let i = 0; i < 10 || (router.currentNavigation() !== null && i < 200); i++) {
+    // En una máquina lenta la carga diferida puede tardar: se espera hasta 10 s por navegación.
+    const limit = Date.now() + 10000;
+    for (let i = 0; i < 10 || (router.currentNavigation() !== null && Date.now() < limit); i++) {
       fixture.detectChanges();
       // Corre también los afterNextRender (medición de anchos, foco) como lo haría la app.
       TestBed.tick();

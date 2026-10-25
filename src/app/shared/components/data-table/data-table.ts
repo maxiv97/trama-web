@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, ElementRef, inject, input, model, output, signal } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, ElementRef, inject, input, model, output, signal } from '@angular/core';
 import { ChevronLeft, ChevronRight, LucideAngularModule, Search, Shirt } from 'lucide-angular';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { BLOB_PATH, BLOB_ROTATION, hashIndex } from '../../icons/trama-icons';
@@ -233,6 +233,7 @@ export class TableThumb {
 
   private readonly host = inject(ElementRef);
   private readonly garments = inject(GarmentsService);
+  private readonly destroyRef = inject(DestroyRef);
   // Foto cargada de forma diferida; mientras tanto se muestra el placeholder.
   private readonly lazyPhoto = signal<string | null>(null);
   protected readonly src = computed(() => this.photo() ?? this.lazyPhoto());
@@ -250,6 +251,8 @@ export class TableThumb {
         { rootMargin: '150px' },
       );
       observer.observe(el);
+      // Sin esto, una fila que sale de pantalla antes de verse dejaría el observador activo.
+      this.destroyRef.onDestroy(() => observer.disconnect());
     });
   }
 }

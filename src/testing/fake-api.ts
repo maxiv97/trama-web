@@ -104,6 +104,39 @@ export class FakeApi {
   /** Respuestas que no siguen la lógica del backend simulado (por ejemplo, listas vacías). */
   readonly overrides = new Map<string, unknown>();
 
+  constructor() {
+    // Datos de cumplimiento (posteriores a la generación de los fixtures): valores variados,
+    // incluido un cedente sin entregas ni vencimientos (tasas nulas).
+    const consignors = this.db.reports['consignors'] as Json[];
+    consignors.forEach((c, i) => {
+      const delivered = i === 1 ? 0 : 3 + i;
+      const notDelivered = i % 3;
+      const expired = i === 1 ? 0 : 1 + (i % 4);
+      const returned = Math.max(0, expired - (i % 2));
+      Object.assign(c, {
+        deliveredCount: delivered,
+        deliveryExpiredCount: i === 1 ? 0 : notDelivered,
+        deliveryRate: i === 1 ? null : Math.round((100 * delivered) / (delivered + notDelivered)),
+        expiredCount: expired,
+        returnedCount: returned,
+        unclaimedCount: expired - returned,
+        awaitingPickupCount: i % 2,
+        pickupRate: expired === 0 ? null : Math.round((100 * returned) / expired),
+      });
+    });
+    this.db.reports['expiryOutcomes'] = {
+      expiredCount: 9,
+      awaitingPickupCount: 2,
+      returnedCount: 4,
+      unclaimedCount: 3,
+      pickupRate: 57,
+      donatedCount: 1,
+      keptCount: 1,
+      otherCount: 0,
+      unclaimedPendingCount: 1,
+    };
+  }
+
   /** Hace fallar la próxima llamada (o las próximas `times`) que coincida. */
   fail(
     method: string,
@@ -516,6 +549,7 @@ export class FakeApi {
     ['GET', /^\/reports\/consignors$/, () => this.db.reports['consignors']],
     ['GET', /^\/reports\/discrepancies$/, () => this.db.reports['discrepancies']],
     ['GET', /^\/reports\/discrepancies\/detail$/, () => this.db.reports['discrepancyDetail']],
+    ['GET', /^\/reports\/expiry-outcomes$/, () => this.db.reports['expiryOutcomes']],
     ['GET', /^\/reports\/summary$/, () => this.db.reports['summary']],
     ['GET', /^\/reports\/weekly$/, () => this.db.reports['weekly']],
     ['POST', /^\/support\/tickets$/, () => ({ ticketId: 'TR-2026-000042' })],
