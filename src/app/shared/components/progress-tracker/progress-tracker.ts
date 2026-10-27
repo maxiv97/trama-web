@@ -70,6 +70,12 @@ const TERMINAL: Partial<Record<GarmentStatus, boolean>> = {
   unclaimed: true,
 };
 
+// Recorridos que terminaron bien: el último paso también se muestra como hecho.
+const COMPLETED: Partial<Record<GarmentStatus, boolean>> = {
+  paid_out: true,
+  returned: true,
+};
+
 function stepsFor(status: GarmentStatus): readonly string[] {
   if (status === 'unclaimed') return UNCLAIMED_STEPS;
   if (status === 'awaiting_pickup' || status === 'returned') return UNSOLD_STEPS;
@@ -105,6 +111,7 @@ const RADIUS = 22;
           [current]="currentIndex()"
           [negative]="isNegative()"
           [radius]="radius"
+          [allDone]="isCompleted()"
           [compactLabels]="true"
         />
       }
@@ -118,6 +125,7 @@ export class ProgressTracker {
   protected readonly currentIndex = computed(() => STEP_INDEX[this.currentStatus()]);
   protected readonly isNegative = computed(() => NEGATIVE[this.currentStatus()] ?? false);
   protected readonly isTerminal = computed(() => TERMINAL[this.currentStatus()] ?? false);
+  protected readonly isCompleted = computed(() => COMPLETED[this.currentStatus()] ?? false);
 
   protected readonly width = signal(0);
   /** La costura grande no entra si la separación entre botones es menor que el anillo + 8 px. */

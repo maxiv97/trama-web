@@ -7,7 +7,7 @@ interface StatusMeta {
 }
 
 const STATUS_META: Record<GarmentStatus, StatusMeta> = {
-  submitted: { label: 'En revisión', badgeClass: 'bg-status-neutral-soft text-status-neutral' },
+  submitted: { label: 'Cargada', badgeClass: 'bg-status-neutral-soft text-status-neutral' },
   under_review: { label: 'En revisión', badgeClass: 'bg-status-pending-soft text-status-pending' },
   counteroffer: { label: 'Contraoferta', badgeClass: 'bg-status-counter-soft text-status-counter' },
   agreed: { label: 'Acordado', badgeClass: 'bg-status-agreed-soft text-status-agreed' },
