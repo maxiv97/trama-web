@@ -235,7 +235,7 @@ export class ConsignorPanel {
     const consignorId = this.auth.user()?.id ?? '';
     return forkJoin({
       garments: this.garmentsService.listMeta(),
-      payouts: this.payoutsService.byConsignor(consignorId),
+      payouts: this.payoutsService.monthlyByConsignor(consignorId),
       merchants: this.merchantsService.list(),
       agreements: this.agreementsService.list(),
     }).pipe(
@@ -259,12 +259,10 @@ export class ConsignorPanel {
             (garment) => garment.status === 'under_review' || garment.status === 'counteroffer',
           ).length,
           counterCount: garments.filter((garment) => garment.status === 'counteroffer').length,
-          pendingPayout: payouts
-            .filter((payout) => payout.status !== 'paid')
-            .reduce((total, payout) => total + payout.totalAmount, 0),
-          totalPaidOut: payouts
-            .filter((payout) => payout.status === 'paid')
-            .reduce((total, payout) => total + payout.totalAmount, 0),
+          // Se suma por prenda y no por mes: un mes puede tener prendas ya cobradas y otras
+          // pendientes, y su estado recién pasa a "paid" cuando se cobraron todas.
+          pendingPayout: payouts.reduce((total, payout) => total + payout.pendingAmount, 0),
+          totalPaidOut: payouts.reduce((total, payout) => total + payout.paidAmount, 0),
           rows,
           urgent: this.urgentItems(garments, agreements),
         };
