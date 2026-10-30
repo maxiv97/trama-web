@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
-import { ErrorState } from './error-state';
+import { ErrorState } from '../../../../../src/app/shared/components/error-state/error-state';
 
 describe('ErrorState', () => {
   it('emite retry al hacer click en el botón', () => {
