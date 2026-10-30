@@ -7,7 +7,6 @@ export interface RegisterConsignorRequest {
   phone: string;
   password: string;
   dni: string;
-  bankDetails: string;
   location: UserLocation;
 }
 
@@ -28,6 +27,6 @@ export interface RegisterMerchantRequest {
   cuit: string;
   location: UserLocation;
   commissionConfig: { consignorPercentage: number; merchantPercentage: number };
-  terms: { saleWindowMonths: number; deliveryDays: number; pickupDays: number; payoutDay: number };
+  terms: { saleWindowMonths: number; graceMonths: number; payoutDay: number };
   salesPoint: RegisterSalesPoint;
 }

@@ -1,5 +1,3 @@
-import { Route } from 'lucide-angular';
-import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -15,11 +13,7 @@ import {
   throwError,
 } from 'rxjs';
 import { Agreement } from '../../../core/models/agreement.model';
-import { Garment, UnclaimedDisposition } from '../../../core/models/garment.model';
-import { DISPOSITION_LABELS } from '../../../core/models/garment.labels';
-import { GarmentReturn } from '../../../core/models/return.model';
-import { ReturnsService } from '../../../core/services/returns.service';
-import { countdownLabel, daysUntil } from '../../../core/utils/deadline.util';
+import { Garment } from '../../../core/models/garment.model';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Reception } from '../../../core/models/reception.model';
 import { PAYMENT_METHOD_LABELS } from '../../../core/models/sale.labels';
@@ -36,6 +30,7 @@ import { ReceptionsService } from '../../../core/services/receptions.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
@@ -44,8 +39,6 @@ import { Timeline } from '../../../shared/components/timeline/timeline';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
-import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface TrackingData {
   garment: Garment;
@@ -56,14 +49,7 @@ interface TrackingData {
   salesPoint?: SalesPoint;
   reception?: Reception;
   sale?: Sale;
-  returned?: GarmentReturn;
 }
-
-const DISPOSITIONS: { value: UnclaimedDisposition; label: string }[] = [
-  { value: 'donated', label: DISPOSITION_LABELS.donated },
-  { value: 'kept', label: DISPOSITION_LABELS.kept },
-  { value: 'other', label: DISPOSITION_LABELS.other },
-];
 
 type TrackingState =
   | { status: 'loading'; data: null }
@@ -72,7 +58,7 @@ type TrackingState =
 
 @Component({
   selector: 'app-merchant-garment-tracking',
-  imports: [PageSkeleton, PageHeader, 
+  imports: [
     RouterLink,
     PhotoGallery,
     ProgressTracker,
@@ -82,22 +68,23 @@ type TrackingState =
     ConfirmModal,
     MoneyPipe,
     ShortDatePipe,
+    LoadingSpinner,
     ErrorState,
-    NgTemplateOutlet,
   ],
   template: `
     @if (isLoading()) {
-      <app-page-skeleton layout="detail" />
+      <app-loading-spinner />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <app-page-header [title]="d.garment.name" section="Seguimiento" [icon]="headerIcon">
-          <div lead class="mt-3 flex flex-wrap items-center gap-3">
-            <app-status-badge [status]="d.garment.status" />
-            <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
-          </div>
-        </app-page-header>
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
+          <app-status-badge [status]="d.garment.status" />
+          <span class="text-sm text-trama-dark/50"
+            >Cargada el {{ d.garment.createdAt | shortDate }}</span
+          >
+        </div>
 
         <div class="grid gap-6 md:grid-cols-3">
           <div class="md:col-span-1">
@@ -106,195 +93,93 @@ type TrackingState =
 
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
-              <div class="t-card p-4">
-                <p class="text-[13px] font-semibold text-trama-body">Precio del cedente</p>
-                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
+              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <p class="text-xs text-trama-dark/50">Precio del cedente</p>
+                <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
-              <div class="t-card p-4">
-                <p class="text-[13px] font-semibold text-trama-body">Precio de venta acordado</p>
-                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
+              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
+                <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
                 </p>
               </div>
             </div>
 
-            <div class="t-card p-4">
-              <p class="text-[13px] font-semibold text-trama-body">Cedente</p>
+            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+              <p class="text-xs text-trama-dark/50">Cedente</p>
               <p class="mt-1 text-sm text-trama-dark">
                 {{ d.consignor?.name ?? '—' }}
                 @if (d.consignor?.dni) {
-                  <span class="text-trama-muted">· DNI {{ d.consignor?.dni }}</span>
+                  <span class="text-trama-dark/50">· DNI {{ d.consignor?.dni }}</span>
                 }
               </p>
             </div>
 
-            <div class="t-card p-4">
+            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
             @switch (d.garment.status) {
               @case ('agreed') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">
+                  <p class="text-sm font-medium text-trama-dark">
                     Acuerdo confirmado. Cuando recibas la prenda, registrá la recepción.
                   </p>
-                  @if (d.agreement?.deliveryDeadline; as deadline) {
-                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
-                      <span>El cedente tiene hasta el <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span> para entregarla.</span>
-                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 2)">{{ countdown(deadline) }}</span>
-                    </p>
-                  }
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'reception']"
-                    class="t-btn t-btn-primary"
+                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
                     >Registrar recepción</a
                   >
                 </div>
               }
               @case ('in_stock') {
                 <div class="space-y-3 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">La prenda está en stock.</p>
-                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
+                  <p class="text-sm font-medium text-trama-dark">La prenda está en stock.</p>
                   <a
                     [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                    class="t-btn t-btn-primary"
+                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
                     >Registrar venta</a
                   >
                 </div>
               }
               @case ('with_remarks') {
                 <div class="space-y-3 rounded-2xl border border-status-pending/20 bg-status-pending-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Recibida con observaciones.</p>
+                  <p class="text-sm font-medium text-trama-dark">Recibida con observaciones.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
-                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
-                  <div class="pt-2">
-                    <a
-                      [routerLink]="['/m/garment', d.garment.id, 'sale']"
-                      class="t-btn t-btn-primary"
-                      >Registrar venta</a
-                    >
-                  </div>
+                  <a
+                    [routerLink]="['/m/garment', d.garment.id, 'sale']"
+                    class="inline-block rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+                    >Registrar venta</a
+                  >
                 </div>
               }
               @case ('rejected') {
                 <div class="space-y-2 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">
+                  <p class="text-sm font-medium text-trama-dark">
                     Recepción rechazada. La prenda se devuelve al cedente.
                   </p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
-                  @if (d.agreement?.deliveryDeadline; as deadline) {
-                    <p class="text-sm text-trama-body">
-                      El cedente puede volver a entregarla hasta el {{ deadline | shortDate }} ({{ countdown(deadline) }}).
-                    </p>
-                  }
-                </div>
-              }
-              @case ('awaiting_pickup') {
-                <div class="space-y-3 rounded-2xl border border-status-pending/30 bg-status-pending-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">
-                    Terminó el período de venta: sacala de exhibición.
-                  </p>
-                  @if (d.agreement?.pickupDeadline; as deadline) {
-                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
-                      <span>El cedente tiene hasta el <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span> para retirarla{{ d.salesPoint ? ' en ' + d.salesPoint.name : '' }}.</span>
-                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 3)">{{ countdown(deadline) }}</span>
-                    </p>
-                  }
-                  <p class="text-[13px] text-trama-muted">Ya no se puede vender: el acuerdo de precio terminó.</p>
-                  <a [routerLink]="['/m/garment', d.garment.id, 'return']" class="t-btn t-btn-primary">Registrar devolución</a>
-                </div>
-              }
-              @case ('returned') {
-                <div class="space-y-1 rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">El cedente retiró la prenda.</p>
-                  @if (d.returned; as ret) {
-                    <p class="text-sm text-trama-body">
-                      {{ ret.returnedAt | shortDate }} · Comp. {{ ret.receiptNumber }} · Registró {{ ret.handledBy }}
-                      @if (ret.identityChecked) { · DNI verificado }
-                    </p>
-                    @if (ret.notes) {
-                      <p class="text-sm text-trama-body">{{ ret.notes }}</p>
-                    }
-                  }
-                </div>
-              }
-              @case ('unclaimed') {
-                <div class="space-y-3 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">El cedente no retiró la prenda a tiempo.</p>
-                  @if (d.garment.unclaimedDisposition; as disposition) {
-                    <p class="text-sm text-trama-body">
-                      Destino: <span class="font-semibold text-trama-dark">{{ dispositionLabel(disposition.disposition) }}</span>
-                      · {{ disposition.date | shortDate }} · {{ disposition.handledBy }}
-                    </p>
-                    @if (disposition.note) {
-                      <p class="text-sm text-trama-body">{{ disposition.note }}</p>
-                    }
-                  } @else {
-                    <p class="text-sm text-trama-body">
-                      Según los términos, podés disponer de ella. Registrá qué hiciste para dejar constancia.
-                    </p>
-                    <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Destino de la prenda">
-                      @for (option of dispositions; track option.value) {
-                        <button type="button" role="radio" class="t-chip" [attr.aria-checked]="disposition() === option.value" (click)="disposition.set(option.value)">
-                          {{ option.label }}
-                        </button>
-                      }
-                    </div>
-                    <div>
-                      <label class="t-label" for="disposition-note">
-                        Nota
-                        @if (disposition() !== 'other') {
-                          <span class="font-medium text-trama-muted">(opcional)</span>
-                        }
-                      </label>
-                      <input
-                        id="disposition-note"
-                        type="text"
-                        maxlength="500"
-                        class="t-input"
-                        [value]="dispositionNote()"
-                        (input)="dispositionNote.set($any($event.target).value)"
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      class="t-btn t-btn-primary"
-                      [disabled]="!canRegisterDisposition() || acting()"
-                      (click)="confirmingDisposition.set(true)"
-                    >
-                      Registrar destino
-                    </button>
-                  }
-                </div>
-              }
-              @case ('delivery_expired') {
-                <div class="space-y-1 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">El cedente no entregó la prenda a tiempo.</p>
-                  <p class="text-sm text-trama-body">
-                    El acuerdo quedó sin efecto.
-                    @if (d.agreement?.deliveryDeadline; as deadline) { El plazo vencía el {{ deadline | shortDate }}. }
-                  </p>
                 </div>
               }
               @case ('sold') {
                 <div class="space-y-4 rounded-2xl border border-status-sold/20 bg-status-sold-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Prenda vendida.</p>
+                  <p class="text-sm font-medium text-trama-dark">Prenda vendida.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-[13px] font-semibold text-trama-body">Le corresponde al cedente</p>
-                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      <p class="text-xs text-trama-dark/50">Le corresponde al cedente</p>
+                      <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-[13px] font-semibold text-trama-body">Tu comisión</p>
-                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
+                      <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
@@ -303,23 +188,27 @@ type TrackingState =
                     <button
                       type="button"
                       (click)="payingOut.set(true)"
-                      class="t-btn t-btn-primary"
+                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
                     >
                       Marcar liquidación pagada
                     </button>
                   } @else {
-                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-trama-paper p-4">
+                    <div class="space-y-3 rounded-xl border border-trama-sand-200 bg-white p-4">
                       <div>
-                        <label class="t-label"
+                        <label class="mb-1 block text-sm font-medium text-trama-dark"
                           >Método de pago</label
                         >
-                        <div class="flex flex-wrap gap-2" role="radiogroup" aria-label="Método de pago">
-                          <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'transfer'" (click)="paymentMethod.set('transfer')">Transferencia</button>
-                          <button type="button" role="radio" class="t-chip" [attr.aria-checked]="paymentMethod() === 'cash'" (click)="paymentMethod.set('cash')">Efectivo</button>
-                        </div>
+                        <select
+                          [value]="paymentMethod()"
+                          (change)="paymentMethod.set($any($event.target).value)"
+                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                        >
+                          <option value="transfer">Transferencia</option>
+                          <option value="cash">Efectivo</option>
+                        </select>
                       </div>
                       <div>
-                        <label class="t-label"
+                        <label class="mb-1 block text-sm font-medium text-trama-dark"
                           >Nº de comprobante</label
                         >
                         <input
@@ -327,7 +216,7 @@ type TrackingState =
                           [value]="receiptNumber()"
                           (input)="receiptNumber.set($any($event.target).value)"
                           placeholder="Opcional"
-                          class="t-input"
+                          class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                         />
                       </div>
                       <div class="flex gap-3">
@@ -335,7 +224,7 @@ type TrackingState =
                           type="button"
                           (click)="confirmingPayout.set(true)"
                           [disabled]="acting()"
-                          class="t-btn t-btn-primary"
+                          class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                         >
                           {{ acting() ? 'Registrando…' : 'Registrar pago' }}
                         </button>
@@ -343,7 +232,7 @@ type TrackingState =
                           type="button"
                           (click)="payingOut.set(false)"
                           [disabled]="acting()"
-                          class="t-btn t-btn-secondary"
+                          class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-40"
                         >
                           Cancelar
                         </button>
@@ -353,25 +242,25 @@ type TrackingState =
                 </div>
               }
               @case ('paid_out') {
-                <div class="t-card space-y-2 p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Liquidación pagada.</p>
+                <div class="space-y-2 rounded-2xl border border-trama-sand-200 bg-white p-5">
+                  <p class="text-sm font-medium text-trama-dark">Liquidación pagada.</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-[13px] font-semibold text-trama-body">Le pagaste al cedente</p>
-                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      <p class="text-xs text-trama-dark/50">Le pagaste al cedente</p>
+                      <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-[13px] font-semibold text-trama-body">Tu comisión</p>
-                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      <p class="text-xs text-trama-dark/50">Tu comisión</p>
+                      <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
                   </div>
                   @if (d.sale; as sale) {
                     @if (sale.paidAt) {
-                      <p class="text-sm text-trama-body">
+                      <p class="text-sm text-trama-dark/70">
                         {{ methodLabel(sale.paymentMethod) }}
                         @if (sale.receiptNumber) {
                           · Comp. {{ sale.receiptNumber }}
@@ -384,48 +273,30 @@ type TrackingState =
               }
               @case ('under_review') {
                 <div class="rounded-2xl bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-body">Propuesta en revisión.</p>
+                  <p class="text-sm text-trama-dark/70">Propuesta en revisión.</p>
                 </div>
               }
               @case ('counteroffer') {
                 <div class="rounded-2xl border border-status-counter/20 bg-status-counter-soft p-5">
-                  <p class="text-sm text-trama-body">
+                  <p class="text-sm text-trama-dark/70">
                     Contraoferta enviada. Esperando la respuesta del cedente.
                   </p>
                 </div>
               }
               @case ('no_agreement') {
                 <div class="rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-body">No hubo acuerdo con el cedente.</p>
+                  <p class="text-sm text-trama-dark/70">No hubo acuerdo con el cedente.</p>
                 </div>
               }
             }
           </div>
         </div>
 
-        <div class="t-card p-5">
-          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
+        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
-
-      <ng-template #saleWindow let-d>
-        @if (d.agreement; as agreement) {
-          <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
-            <span>En venta hasta el <span class="font-semibold text-trama-dark">{{ agreement.saleDeadline | shortDate }}</span></span>
-            <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(agreement.saleDeadline, 7)">{{ countdown(agreement.saleDeadline) }}</span>
-          </p>
-        }
-      </ng-template>
-
-      <app-confirm-modal
-        [open]="confirmingDisposition()"
-        title="Registrar destino"
-        [body]="'Vas a registrar que la prenda quedó como: ' + dispositionLabel(disposition() ?? 'other') + '. No se puede modificar después.'"
-        confirmLabel="Registrar"
-        (confirmed)="registerDisposition()"
-        (cancelled)="confirmingDisposition.set(false)"
-      />
 
       <app-confirm-modal
         [open]="confirmingPayout()"
@@ -439,7 +310,6 @@ type TrackingState =
   `,
 })
 export class MerchantGarmentTracking {
-  protected readonly headerIcon = Route;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly proposalsService = inject(ProposalsService);
@@ -449,18 +319,7 @@ export class MerchantGarmentTracking {
   private readonly receptionsService = inject(ReceptionsService);
   private readonly salesService = inject(SalesService);
   private readonly payoutsService = inject(PayoutsService);
-  private readonly returnsService = inject(ReturnsService);
   private readonly toast = inject(ToastService);
-
-  protected readonly dispositions = DISPOSITIONS;
-  protected readonly disposition = signal<UnclaimedDisposition | null>(null);
-  protected readonly dispositionNote = signal('');
-  protected readonly confirmingDisposition = signal(false);
-  protected readonly canRegisterDisposition = computed(() => {
-    const value = this.disposition();
-    if (!value) return false;
-    return value !== 'other' || this.dispositionNote().trim().length >= 3;
-  });
 
   protected readonly payingOut = signal(false);
   protected readonly confirmingPayout = signal(false);
@@ -506,40 +365,6 @@ export class MerchantGarmentTracking {
     if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
     return 0;
   });
-
-  protected countdown(deadline: Date): string {
-    return countdownLabel(deadline);
-  }
-
-  protected countdownClass(deadline: Date, soonDays: number): string {
-    const days = daysUntil(deadline);
-    if (days < 0) return 'bg-status-none-soft text-status-none';
-    if (days <= soonDays) return 'bg-status-pending-soft text-status-pending';
-    return 'bg-trama-paper text-trama-body';
-  }
-
-  protected dispositionLabel(value: UnclaimedDisposition): string {
-    return DISPOSITION_LABELS[value];
-  }
-
-  protected registerDisposition(): void {
-    this.confirmingDisposition.set(false);
-    const d = this.data();
-    const value = this.disposition();
-    if (!d || !value || !this.canRegisterDisposition() || this.acting()) return;
-    this.acting.set(true);
-    this.returnsService.registerDisposition(d.garment.id, value, this.dispositionNote()).subscribe({
-      next: () => {
-        this.acting.set(false);
-        this.toast.show('Destino registrado');
-        this.reload.next();
-      },
-      error: () => {
-        this.acting.set(false);
-        this.toast.show('No pudimos registrar el destino', 'error');
-      },
-    });
-  }
 
   protected methodLabel(method?: PaymentMethod): string {
     return method ? PAYMENT_METHOD_LABELS[method] : '—';
@@ -588,11 +413,9 @@ export class MerchantGarmentTracking {
             : of(undefined),
           reception: this.receptionsService.byGarment(id),
           sale: this.salesService.byGarment(id),
-          returned:
-            garment.status === 'returned' ? this.returnsService.byGarment(id) : of(undefined),
         }).pipe(
           map(
-            ({ proposal, agreement, consignor, merchant, reception, sale, returned }): TrackingData => ({
+            ({ proposal, agreement, consignor, merchant, reception, sale }): TrackingData => ({
               garment,
               proposal,
               agreement,
@@ -601,7 +424,6 @@ export class MerchantGarmentTracking {
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
               reception,
               sale,
-              returned,
             }),
           ),
         );

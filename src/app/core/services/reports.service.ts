@@ -5,24 +5,17 @@ import { environment } from '../../../environments/environment';
 import { CategorySales } from '../models/category-sales.model';
 import { ConsignorPerformance } from '../models/consignor-performance.model';
 import { DiscrepancyDetailRow } from '../models/discrepancy-detail.model';
-import { ExpiryOutcomes } from '../models/expiry-outcomes.model';
 import { ExpiringConsignment } from '../models/expiring-consignment.model';
 import { PointSales } from '../models/point-sales.model';
 import { ReceptionDiscrepancyReport } from '../models/reception-discrepancies.model';
 import { ReportFilters, toReportParams } from '../models/report-filters.model';
 import { RotationReport } from '../models/rotation.model';
 import { SummaryReport, WeeklyPoint } from '../models/summary.model';
-import { DashboardReport } from '../models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class ReportsService {
   private readonly http = inject(HttpClient);
   private readonly base = `${environment.apiUrl}/reports`;
-
-  // Panel del comercio en una sola llamada (summary + categorías + weekly + conteos).
-  dashboard(): Observable<DashboardReport> {
-    return this.http.get<DashboardReport>(`${this.base}/dashboard`);
-  }
 
   expiring(withinDays?: number, filters?: ReportFilters): Observable<ExpiringConsignment[]> {
     const params = toReportParams(filters);
@@ -50,12 +43,6 @@ export class ReportsService {
 
   consignors(filters?: ReportFilters): Observable<ConsignorPerformance[]> {
     return this.http.get<ConsignorPerformance[]>(`${this.base}/consignors`, {
-      params: toReportParams(filters),
-    });
-  }
-
-  expiryOutcomes(filters?: ReportFilters): Observable<ExpiryOutcomes> {
-    return this.http.get<ExpiryOutcomes>(`${this.base}/expiry-outcomes`, {
       params: toReportParams(filters),
     });
   }

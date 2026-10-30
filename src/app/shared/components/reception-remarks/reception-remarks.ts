@@ -4,14 +4,13 @@ import { Reception, ReceptionDiscrepancy } from '../../../core/models/reception.
 
 @Component({
   selector: 'app-reception-remarks',
-  host: { class: 'block' },
   template: `
     <div class="space-y-3">
       @if (reception().discrepancies.length) {
         <ul class="flex flex-wrap gap-2">
           @for (item of reception().discrepancies; track item) {
             <li
-              class="rounded-full bg-trama-paper px-3 py-1 text-xs font-medium text-trama-body ring-1 ring-inset ring-trama-sand-200"
+              class="rounded-full bg-white px-3 py-1 text-xs font-medium text-trama-dark/70 ring-1 ring-inset ring-trama-sand-200"
             >
               {{ discrepancyLabel(item) }}
             </li>
@@ -19,7 +18,7 @@ import { Reception, ReceptionDiscrepancy } from '../../../core/models/reception.
         </ul>
       }
       @if (reception().detail) {
-        <p class="text-sm text-trama-body">{{ reception().detail }}</p>
+        <p class="text-sm text-trama-dark/70">{{ reception().detail }}</p>
       }
       @if (reception().evidence.length) {
         <div class="grid grid-cols-4 gap-2 sm:grid-cols-6">

@@ -18,30 +18,6 @@ export const routes: Routes = [
   },
 
   {
-    // Centro de ayuda: público, sin guard (handoff design_handoff_trama_ayuda).
-    path: 'ayuda',
-    children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/public/help/help-hub').then((m) => m.HelpHub),
-      },
-      {
-        path: 'guia/:slug',
-        loadComponent: () => import('./features/public/help/help-guide').then((m) => m.HelpGuide),
-      },
-      {
-        path: 'faq',
-        loadComponent: () => import('./features/public/help/help-faq').then((m) => m.HelpFaq),
-      },
-      {
-        path: 'contacto',
-        loadComponent: () =>
-          import('./features/public/help/help-contact').then((m) => m.HelpContact),
-      },
-    ],
-  },
-
-  {
     path: 'c',
     canActivate: [authGuard, roleGuard],
     data: { role: 'consignor' },
@@ -62,11 +38,6 @@ export const routes: Routes = [
           import('./features/consignor/garment-tracking/consignor-garment-tracking').then(
             (m) => m.ConsignorGarmentTracking,
           ),
-      },
-      {
-        path: 'garment/:id/edit',
-        loadComponent: () =>
-          import('./features/consignor/edit-garment/edit-garment').then((m) => m.EditGarment),
       },
       {
         path: 'payouts',
@@ -94,13 +65,6 @@ export const routes: Routes = [
           import('./features/merchant/panel/merchant-panel').then((m) => m.MerchantPanel),
       },
       {
-        path: 'proposals',
-        loadComponent: () =>
-          import('./features/merchant/proposals/merchant-proposals').then(
-            (m) => m.MerchantProposals,
-          ),
-      },
-      {
         path: 'proposal/:id',
         loadComponent: () =>
           import('./features/merchant/review-proposal/review-proposal').then(
@@ -119,13 +83,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/merchant/register-reception/register-reception').then(
             (m) => m.RegisterReception,
-          ),
-      },
-      {
-        path: 'garment/:id/return',
-        loadComponent: () =>
-          import('./features/merchant/register-return/register-return').then(
-            (m) => m.RegisterReturn,
           ),
       },
       {
@@ -164,13 +121,6 @@ export const routes: Routes = [
         path: 'consignors',
         loadComponent: () =>
           import('./features/merchant/consignors/consignors').then((m) => m.Consignors),
-      },
-      {
-        path: 'categories',
-        loadComponent: () =>
-          import('./features/merchant/categories/manage-categories').then(
-            (m) => m.ManageCategories,
-          ),
       },
       {
         path: 'settings',

@@ -1,76 +1,56 @@
 import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-type ConfirmColor = 'green' | 'red';
+type ConfirmColor = 'green' | 'red' | 'blue';
 
 const COLOR_CLASSES: Record<ConfirmColor, string> = {
-  green: 't-btn-primary',
-  red: 't-btn-danger',
+  green: 'bg-trama-brand hover:bg-trama-green-700',
+  red: 'bg-status-none hover:brightness-90',
+  blue: 'bg-blue-600 hover:bg-blue-700',
 };
 
-/**
- * Modal de confirmación (handoff §4.11): papel con un pespunte alrededor de
- * todo el modal. Solo verde (acción) y rojo (destructiva); no hay azul.
- */
 @Component({
   selector: 'app-confirm-modal',
   imports: [FormsModule],
   template: `
     @if (open()) {
       <div
-        class="modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-trama-dark/30 p-4"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
         (click)="cancelled.emit()"
       >
-        <div
-          class="modal-panel relative w-full max-w-md rounded-[20px] bg-trama-paper p-7 shadow-[0_20px_60px_rgba(31,58,43,.14)]"
-          role="dialog"
-          aria-modal="true"
-          [attr.aria-label]="title()"
-          (click)="$event.stopPropagation()"
-        >
-          <svg class="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-            <rect
-              x="9"
-              y="9"
-              rx="13"
-              style="width: calc(100% - 18px); height: calc(100% - 18px)"
-              fill="none"
-              stroke="#C9C2AE"
-              stroke-width="2.5"
-              stroke-linecap="round"
-              stroke-dasharray="10 8"
-            />
-          </svg>
-          <div class="relative">
-            <h2 class="text-title-2 text-trama-dark">{{ title() }}</h2>
-            <p class="mt-2 text-[15px] leading-relaxed text-trama-body">{{ body() }}</p>
+        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
+          <h2 class="text-lg font-semibold text-trama-dark">{{ title() }}</h2>
+          <p class="mt-2 text-sm text-trama-dark/70">{{ body() }}</p>
 
-            @if (optionalField(); as fieldLabel) {
-              <label class="mt-5 block">
-                <span class="t-label">{{ fieldLabel }}</span>
-                <input [(ngModel)]="fieldValue" class="t-input" />
-              </label>
-            }
+          @if (optionalField(); as fieldLabel) {
+            <label class="mt-4 block text-sm">
+              <span class="text-trama-dark/70">{{ fieldLabel }}</span>
+              <input
+                [(ngModel)]="fieldValue"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
+              />
+            </label>
+          }
 
-            <div class="mt-7 flex justify-end gap-3">
-              <button type="button" (click)="cancelled.emit()" class="t-btn t-btn-ghost">
-                Cancelar
-              </button>
-              <button type="button" (click)="confirm()" class="t-btn" [class]="confirmClass()">
-                {{ confirmLabel() }}
-              </button>
-            </div>
+          <div class="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              (click)="cancelled.emit()"
+              class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              (click)="confirm()"
+              class="rounded-lg px-4 py-2 text-sm font-medium text-white"
+              [class]="confirmClass()"
+            >
+              {{ confirmLabel() }}
+            </button>
           </div>
         </div>
       </div>
-    }
-  `,
-  styles: `
-    .modal-overlay {
-      animation: t-fade 250ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
-    }
-    .modal-panel {
-      animation: t-pop-in 250ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
     }
   `,
 })

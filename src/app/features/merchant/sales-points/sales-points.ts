@@ -1,6 +1,3 @@
-import { MapPin } from 'lucide-angular';
-import { Avatar } from '../../../shared/components/avatar/avatar';
-import { Stitch } from '../../../shared/components/stitch/stitch';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
@@ -13,10 +10,9 @@ import { SalesPointsService } from '../../../core/services/sales-points.service'
 import { LeafletMap } from '../../../shared/directives/leaflet-map';
 import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
-import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 const CORDOBA_CENTER: GeoPoint = { lat: -31.4201, lng: -64.1888 };
 
@@ -45,138 +41,145 @@ type SalesPointsState =
 
 @Component({
   selector: 'app-sales-points',
-  imports: [Avatar, Stitch, PageSkeleton, PageHeader, LeafletMap, MoneyPipe, ErrorState, EmptyState],
+  imports: [LeafletMap, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
-      <app-page-skeleton layout="list" />
+      <app-loading-spinner />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar los puntos de venta." (retry)="retry()" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <app-page-header title="Puntos de venta" section="Puntos de venta" [icon]="headerIcon" lead="Dónde exhibís las prendas. Los cedentes los ven en el mapa al elegir comercio.">
-          <button actions
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h1 class="text-2xl font-semibold text-trama-dark">Puntos de venta</h1>
+          <button
             type="button"
             (click)="openCreate()"
-            class="t-btn t-btn-primary"
+            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
           >
-            Agregar punto de venta
+            Agregar punto
           </button>
-        </app-page-header>
+        </div>
 
         @if (d.cards.length) {
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             @for (card of d.cards; track card.id) {
-              <div class="t-card flex flex-col gap-4 p-6">
-                <div class="flex items-start gap-4">
-                  <app-avatar kind="merchant" [name]="card.name" [size]="48" />
-                  <div class="min-w-0 flex-1">
-                    <p class="text-title-3 truncate text-trama-dark">{{ card.name }}</p>
-                    <p class="truncate text-sm text-trama-body">{{ card.address }}</p>
-                  </div>
-                  <button type="button" (click)="openEdit(card)" class="t-btn t-btn-secondary t-btn-sm">Editar</button>
-                </div>
-
-                <div class="space-y-0.5 text-sm text-trama-body">
-                  <p>{{ card.phone }}</p>
-                  <p>Recepción: {{ card.days }} · {{ card.hours }}</p>
-                </div>
-
-                <app-stitch variant="baste" />
-
-                <div class="flex gap-8">
+              <div class="space-y-3 rounded-2xl border border-trama-sand-200 bg-white p-5">
+                <div class="flex items-start justify-between gap-3">
                   <div>
-                    <p class="text-[13px] font-semibold text-trama-body">En stock</p>
-                    <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
-                      {{ card.inStockCount }} <span class="text-sm font-semibold text-trama-body">{{ card.inStockCount === 1 ? 'artículo' : 'artículos' }}</span>
+                    <p class="font-medium text-trama-dark">{{ card.name }}</p>
+                    <p class="text-sm text-trama-dark/60">{{ card.address }}</p>
+                  </div>
+                  <button
+                    type="button"
+                    (click)="openEdit(card)"
+                    class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                  >
+                    Editar
+                  </button>
+                </div>
+
+                <div class="text-sm text-trama-dark/70">
+                  <p>{{ card.phone }}</p>
+                  <p class="text-trama-dark/50">
+                    Recepción: {{ card.days }} · {{ card.hours }}
+                  </p>
+                </div>
+
+                <div class="flex gap-6 border-t border-trama-sand-100 pt-3 text-sm">
+                  <div>
+                    <p class="text-trama-dark/50">En stock</p>
+                    <p class="font-medium text-trama-dark">
+                      {{ card.inStockCount }}
+                      {{ card.inStockCount === 1 ? 'artículo' : 'artículos' }}
                     </p>
                   </div>
                   <div>
-                    <p class="text-[13px] font-semibold text-trama-body">Valor del stock</p>
-                    <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">{{ card.stockValue | money }}</p>
+                    <p class="text-trama-dark/50">Valor del stock</p>
+                    <p class="font-medium text-trama-dark">{{ card.stockValue | money }}</p>
                   </div>
                 </div>
               </div>
             }
           </div>
         } @else {
-          <app-empty-state [icon]="headerIcon" title="Todavía no hay puntos de venta" message="Sumá el local donde exhibís las prendas para que los cedentes puedan elegirte en el mapa." />
+          <app-empty-state message="Todavía no cargaste puntos de venta." />
         }
       </div>
 
       @if (formOpen()) {
         <div
-          class="t-overlay"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
           (click)="close()"
         >
           <div
-            class="t-modal t-pop-in max-h-[90vh] w-full max-w-lg overflow-y-auto"
+            class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-lg"
             (click)="$event.stopPropagation()"
           >
-            <h2 class="text-title-2 text-trama-dark">
+            <h2 class="text-lg font-semibold text-trama-dark">
               {{ editingId() ? 'Editar punto de venta' : 'Agregar punto de venta' }}
             </h2>
 
             <div class="mt-4 space-y-4">
-              <label class="block">
-                <span class="t-label">Nombre</span>
+              <label class="block text-sm">
+                <span class="text-trama-dark/70">Nombre</span>
                 <input
                   [value]="fName()"
                   (input)="fName.set($any($event.target).value)"
-                  class="t-input"
+                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
                 />
               </label>
 
-              <label class="block">
-                <span class="t-label">Dirección</span>
+              <label class="block text-sm">
+                <span class="text-trama-dark/70">Dirección</span>
                 <input
                   [value]="fAddress()"
                   (input)="fAddress.set($any($event.target).value)"
-                  class="t-input"
+                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
                 />
               </label>
 
-              <label class="block">
-                <span class="t-label">Teléfono</span>
+              <label class="block text-sm">
+                <span class="text-trama-dark/70">Teléfono</span>
                 <input
                   [value]="fPhone()"
                   (input)="fPhone.set($any($event.target).value)"
-                  class="t-input"
+                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
                 />
               </label>
 
               <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label class="block">
-                  <span class="t-label">Días de recepción</span>
+                <label class="block text-sm">
+                  <span class="text-trama-dark/70">Días de recepción</span>
                   <input
                     [value]="fDays()"
                     (input)="fDays.set($any($event.target).value)"
                     placeholder="Lun a Vie"
-                    class="t-input"
+                    class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
                   />
                 </label>
-                <label class="block">
-                  <span class="t-label">Horario</span>
+                <label class="block text-sm">
+                  <span class="text-trama-dark/70">Horario</span>
                   <input
                     [value]="fHours()"
                     (input)="fHours.set($any($event.target).value)"
                     placeholder="10 a 18 h"
-                    class="t-input"
+                    class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
                   />
                 </label>
               </div>
 
-              <label class="block">
-                <span class="t-label">Instrucciones para el cedente</span>
+              <label class="block text-sm">
+                <span class="text-trama-dark/70">Instrucciones para el cedente</span>
                 <input
                   [value]="fInstructions()"
                   (input)="fInstructions.set($any($event.target).value)"
-                  class="t-input"
+                  class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
                 />
               </label>
 
               <div class="text-sm">
-                <span class="text-trama-body">Ubicación</span>
-                <p class="mb-1 text-xs text-trama-muted">
+                <span class="text-trama-dark/70">Ubicación</span>
+                <p class="mb-1 text-xs text-trama-dark/50">
                   Tocá el mapa para fijar la ubicación (opcional).
                 </p>
                 <div
@@ -189,7 +192,7 @@ type SalesPointsState =
                   class="h-[300px] w-full overflow-hidden rounded-lg border border-trama-sand-200"
                 ></div>
                 @if (fGeo(); as geo) {
-                  <p class="t-help">
+                  <p class="mt-1 text-xs text-trama-dark/60">
                     {{ geo.lat.toFixed(5) }}, {{ geo.lng.toFixed(5) }}
                   </p>
                 }
@@ -200,7 +203,7 @@ type SalesPointsState =
               <button
                 type="button"
                 (click)="close()"
-                class="t-btn t-btn-ghost"
+                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
               >
                 Cancelar
               </button>
@@ -208,7 +211,7 @@ type SalesPointsState =
                 type="button"
                 (click)="save()"
                 [disabled]="!canSave() || saving()"
-                class="t-btn t-btn-primary"
+                class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
               >
                 {{ saving() ? 'Guardando…' : 'Guardar' }}
               </button>
@@ -220,7 +223,6 @@ type SalesPointsState =
   `,
 })
 export class SalesPoints {
-  protected readonly headerIcon = MapPin;
   private readonly auth = inject(AuthService);
   private readonly salesPointsService = inject(SalesPointsService);
   private readonly garmentsService = inject(GarmentsService);
@@ -353,7 +355,7 @@ export class SalesPoints {
     const merchantId = this.auth.user()?.id ?? '';
     return forkJoin({
       salesPoints: this.salesPointsService.byMerchant(merchantId),
-      garments: this.garmentsService.listMeta(),
+      garments: this.garmentsService.byMerchant(merchantId),
       agreements: this.agreementsService.list(),
       merchant: this.merchantsService.getById(merchantId),
     }).pipe(

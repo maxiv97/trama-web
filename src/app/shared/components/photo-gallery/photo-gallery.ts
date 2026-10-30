@@ -29,7 +29,7 @@ import { LucideAngularModule, Shirt } from 'lucide-angular';
       </div>
     } @else {
       <div
-        class="flex aspect-square w-full flex-col items-center justify-center rounded-xl bg-trama-sand-100 text-trama-muted"
+        class="flex aspect-square w-full flex-col items-center justify-center rounded-xl bg-trama-sand-100 text-trama-dark/40"
       >
         <lucide-angular [img]="shirtIcon" [size]="48" />
         <span class="mt-2 text-sm">Sin fotos</span>

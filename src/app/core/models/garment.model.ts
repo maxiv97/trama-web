@@ -9,21 +9,7 @@ export type GarmentStatus =
   | 'sold'
   | 'paid_out'
   | 'no_agreement'
-  | 'cancelled'
-  // Vencimientos (los aplica la tarea diaria de plazos del backend):
-  | 'delivery_expired'
-  | 'awaiting_pickup'
-  | 'returned'
-  | 'unclaimed';
-
-export type UnclaimedDisposition = 'donated' | 'kept' | 'other';
-
-export interface UnclaimedDispositionRecord {
-  disposition: UnclaimedDisposition;
-  note?: string;
-  date: Date;
-  handledBy: string;
-}
+  | 'cancelled';
 
 export type EventActor = 'consignor' | 'merchant' | 'system';
 
@@ -38,7 +24,6 @@ export interface GarmentEvent {
 
 export interface Garment {
   id: string;
-  code?: string;
   consignorId: string;
   merchantId?: string;
   name: string;
@@ -56,5 +41,4 @@ export interface Garment {
   createdAt: Date;
   salesPointId?: string;
   timeline: GarmentEvent[];
-  unclaimedDisposition?: UnclaimedDispositionRecord;
 }
