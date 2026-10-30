@@ -5,9 +5,12 @@
     "types": []
   },
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "test/unit/core/services/dashboard-filters.service.spec.ts",
+    "test/unit/core/state-machine/garment.state-machine.spec.ts",
+    "test/unit/core/utils/price.util.spec.ts",
+    "test/unit/core/utils/geo.util.spec.ts",
+    "test/unit/shared/csv/to-csv.spec.ts"
   ],
-  "exclude": [
-    "src/**/*.spec.ts"
-  ]
+  "exclude": ["src/**/*.spec.ts"]
 }

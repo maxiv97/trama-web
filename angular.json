@@ -47,9 +47,7 @@
               "raf",
               "rgbcolor"
             ],
-            "polyfills": [
-              "zone.js"
-            ],
+            "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               {
@@ -57,10 +55,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "node_modules/leaflet/dist/leaflet.css",
-              "src/styles.css"
-            ]
+            "styles": ["node_modules/leaflet/dist/leaflet.css", "src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -112,7 +107,8 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "buildTarget": "::development",
-            "runner": "vitest"
+            "runner": "vitest",
+            "include": ["../test/unit/**/*.spec.ts"]
           }
         }
       }

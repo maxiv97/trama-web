@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { distanceKm } from './geo.util';
+import { distanceKm } from '../../../../src/app/core/utils/geo.util';
 
 describe('distanceKm', () => {
   it('returns zero for the same point', () => {

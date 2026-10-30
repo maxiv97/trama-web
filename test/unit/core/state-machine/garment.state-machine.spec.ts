@@ -4,8 +4,8 @@ import {
   canTransition,
   GarmentAction,
   transition,
-} from './garment.state-machine';
-import { GarmentStatus } from '../models/garment.model';
+} from '../../../../src/app/core/state-machine/garment.state-machine';
+import { GarmentStatus } from '../../../../src/app/core/models/garment.model';
 
 describe('garment state machine', () => {
   it('recorre el flujo feliz completo', () => {
