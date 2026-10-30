@@ -3,29 +3,27 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
-import { Stitch } from '../../../shared/components/stitch/stitch';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 
 @Component({
   selector: 'app-login',
-  imports: [Stitch, LogoIcon, RouterLink, ReactiveFormsModule],
+  imports: [LogoIcon, RouterLink, ReactiveFormsModule],
   template: `
     <div class="flex min-h-screen items-center justify-center bg-trama-sand-50 px-5 py-10">
       <div class="w-full max-w-[400px]">
         <div class="mb-7 flex flex-col items-center">
-          <a routerLink="/" aria-label="Volver al inicio"><app-logo-icon [size]="46" [decorative]="true" /></a>
-          <h1 class="text-title-2 mt-4 text-trama-dark">Ingresá a Trama</h1>
-          <app-stitch class="mt-2" variant="knot" [width]="120" [animate]="true" [delay]="200" />
-          <p class="mt-2 text-sm text-trama-body">Cedentes y comercios</p>
+          <a routerLink="/" aria-label="Volver al inicio"><app-logo-icon [size]="46" /></a>
+          <h1 class="mt-3.5 font-display text-2xl font-semibold text-trama-dark">Ingresá a Trama</h1>
+          <p class="mt-1.5 text-sm text-trama-muted">Cedentes y comercios</p>
         </div>
 
         <form
           [formGroup]="form"
           (ngSubmit)="submit()"
           novalidate
-          class="t-card-raised p-7"
+          class="rounded-[18px] border border-black/[.07] bg-white p-7 shadow-[0_12px_40px_rgba(0,0,0,.06)]"
         >
-          <label for="email" class="t-label">Email</label>
+          <label for="email" class="mb-1.5 block text-[13px] font-semibold text-trama-dark/80">Email</label>
           <input
             id="email"
             type="email"
@@ -35,10 +33,12 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
             [class]="inputClass"
           />
           @if (showError('email')) {
-            <p class="t-error">Ingresá un email válido.</p>
+            <p class="mt-1 text-xs text-status-none">Ingresá un email válido.</p>
           }
 
-          <label for="password" class="t-label mt-4">Contraseña</label>
+          <label for="password" class="mt-4 mb-1.5 block text-[13px] font-semibold text-trama-dark/80"
+            >Contraseña</label
+          >
           <input
             id="password"
             type="password"
@@ -47,11 +47,11 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
             [class]="inputClass"
           />
           @if (showError('password')) {
-            <p class="t-error">Ingresá tu contraseña.</p>
+            <p class="mt-1 text-xs text-status-none">Ingresá tu contraseña.</p>
           }
 
           @if (error()) {
-            <p class="t-alert mt-4" role="alert">
+            <p class="mt-4 rounded-lg bg-status-none-soft px-3 py-2 text-sm text-status-none" role="alert">
               {{ error() }}
             </p>
           }
@@ -59,34 +59,31 @@ import { LogoIcon } from '../../../shared/components/logo/logo';
           <button
             type="submit"
             [disabled]="loading()"
-            class="mt-5 w-full t-btn t-btn-primary"
+            class="mt-5 w-full rounded-[11px] bg-trama-brand py-3 text-[15.5px] font-semibold text-white hover:bg-trama-green-700 disabled:opacity-50"
           >
             {{ loading() ? 'Ingresando…' : 'Ingresar' }}
           </button>
         </form>
 
         <div class="my-5 flex items-center gap-3">
-          <app-stitch class="flex-1" variant="baste" />
+          <div class="h-px flex-1 bg-black/10"></div>
           <span class="text-[13px] text-trama-muted">¿No tenés cuenta?</span>
-          <app-stitch class="flex-1" variant="baste" />
+          <div class="h-px flex-1 bg-black/10"></div>
         </div>
         <div class="grid grid-cols-2 gap-2.5">
           <a
             routerLink="/register"
             [queryParams]="{ rol: 'cedente' }"
-            class="t-btn t-btn-secondary t-btn-pill"
+            class="rounded-[10px] border border-trama-dark/20 bg-white py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
             >Soy cedente</a
           >
           <a
             routerLink="/register"
             [queryParams]="{ rol: 'comercio' }"
-            class="t-btn t-btn-secondary t-btn-pill"
+            class="rounded-[10px] border border-trama-dark/20 bg-white py-2.5 text-center text-[13.5px] font-semibold text-trama-dark hover:bg-trama-sand-100"
             >Soy comercio</a
           >
         </div>
-        <p class="mt-6 text-center text-sm text-trama-body">
-          <a routerLink="/ayuda" class="t-link">¿Necesitás ayuda?</a>
-        </p>
       </div>
     </div>
   `,
@@ -97,7 +94,7 @@ export class Login {
   private readonly fb = inject(FormBuilder);
 
   protected readonly inputClass =
-    't-input';
+    'w-full rounded-[10px] border border-black/[.14] bg-trama-sand-100 px-3.5 py-3 text-[15px] text-trama-dark outline-none focus:border-trama-brand focus:ring-2 focus:ring-trama-green-100';
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

@@ -1,8 +1,6 @@
-import { Route } from 'lucide-angular';
-import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import {
   BehaviorSubject,
   catchError,
@@ -16,10 +14,6 @@ import {
 } from 'rxjs';
 import { Agreement } from '../../../core/models/agreement.model';
 import { Garment } from '../../../core/models/garment.model';
-import { DISPOSITION_LABELS } from '../../../core/models/garment.labels';
-import { GarmentReturn } from '../../../core/models/return.model';
-import { ReturnsService } from '../../../core/services/returns.service';
-import { countdownLabel, daysUntil } from '../../../core/utils/deadline.util';
 import { Proposal } from '../../../core/models/proposal.model';
 import { Reception } from '../../../core/models/reception.model';
 import { PAYMENT_METHOD_LABELS } from '../../../core/models/sale.labels';
@@ -35,6 +29,7 @@ import { SalesService } from '../../../core/services/sales.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ProgressTracker } from '../../../shared/components/progress-tracker/progress-tracker';
 import { ReceptionRemarks } from '../../../shared/components/reception-remarks/reception-remarks';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
@@ -42,8 +37,6 @@ import { Timeline } from '../../../shared/components/timeline/timeline';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface TrackingData {
   garment: Garment;
@@ -53,7 +46,6 @@ interface TrackingData {
   salesPoint?: SalesPoint;
   reception?: Reception;
   sale?: Sale;
-  returned?: GarmentReturn;
 }
 
 type TrackingState =
@@ -65,7 +57,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
 @Component({
   selector: 'app-consignor-garment-tracking',
-  imports: [PageSkeleton, PageHeader, 
+  imports: [
     ProgressTracker,
     ReceptionRemarks,
     Timeline,
@@ -74,23 +66,23 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
     ConfirmModal,
     MoneyPipe,
     ShortDatePipe,
+    LoadingSpinner,
     ErrorState,
-    RouterLink,
-    NgTemplateOutlet,
   ],
   template: `
     @if (isLoading()) {
-      <app-page-skeleton layout="detail" />
+      <app-loading-spinner />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta prenda." link="/c" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <app-page-header [title]="d.garment.name" section="Seguimiento" [icon]="headerIcon">
-          <div lead class="mt-3 flex flex-wrap items-center gap-3">
-            <app-status-badge [status]="d.garment.status" />
-            <span class="text-sm text-trama-muted">Cargada el {{ d.garment.createdAt | shortDate }}</span>
-          </div>
-        </app-page-header>
+        <div class="flex flex-wrap items-center gap-3">
+          <h1 class="text-2xl font-semibold text-trama-dark">{{ d.garment.name }}</h1>
+          <app-status-badge [status]="d.garment.status" />
+          <span class="text-sm text-trama-dark/50"
+            >Cargada el {{ d.garment.createdAt | shortDate }}</span
+          >
+        </div>
 
         <div class="grid gap-6 md:grid-cols-3">
           <div class="md:col-span-1">
@@ -99,54 +91,48 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
 
           <div class="space-y-6 md:col-span-2">
             <div class="grid grid-cols-2 gap-4">
-              <div class="t-card p-4">
-                <p class="text-[13px] font-semibold text-trama-body">Precio que pediste</p>
-                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
+              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <p class="text-xs text-trama-dark/50">Precio que pediste</p>
+                <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.proposal?.requestedConsignorPrice | money }}
                 </p>
               </div>
-              <div class="t-card p-4">
-                <p class="text-[13px] font-semibold text-trama-body">Precio de venta acordado</p>
-                <p class="mt-1 font-display text-xl font-extrabold tabular-nums text-trama-dark">
+              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
+                <p class="text-xs text-trama-dark/50">Precio de venta acordado</p>
+                <p class="mt-1 text-lg font-semibold text-trama-dark">
                   {{ d.agreement?.agreedSalePrice | money }}
                 </p>
               </div>
             </div>
 
-            <div class="t-card p-4">
+            <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
               <app-progress-tracker [currentStatus]="d.garment.status" />
             </div>
 
             @switch (d.garment.status) {
               @case ('under_review') {
-                <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-body">
-                    Tu propuesta está siendo evaluada por el comercio. Podés editarla mientras tanto.
+                <div class="rounded-2xl bg-trama-sand-50 p-5">
+                  <p class="text-sm text-trama-dark/80">
+                    Tu propuesta está siendo evaluada por el comercio.
                   </p>
-                  <a
-                    [routerLink]="['/c/garment', d.garment.id, 'edit']"
-                    class="shrink-0 t-btn t-btn-secondary"
-                  >
-                    Editar consignación
-                  </a>
                 </div>
               }
               @case ('counteroffer') {
                 <div class="space-y-4 rounded-2xl border border-status-counter/20 bg-status-counter-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">
+                  <p class="text-sm font-medium text-trama-dark">
                     El comercio te hizo una contraoferta.
                   </p>
                   @if (d.proposal?.counteroffer; as counter) {
                     <div class="grid grid-cols-2 gap-4">
                       <div>
-                        <p class="text-[13px] font-semibold text-trama-body">Recibirías</p>
-                        <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                        <p class="text-xs text-trama-dark/50">Recibirías</p>
+                        <p class="text-lg font-semibold text-trama-dark">
                           {{ counter.consignorPrice | money }}
                         </p>
                       </div>
                       <div>
-                        <p class="text-[13px] font-semibold text-trama-body">Se vendería a</p>
-                        <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                        <p class="text-xs text-trama-dark/50">Se vendería a</p>
+                        <p class="text-lg font-semibold text-trama-dark">
                           {{ counter.salePrice | money }}
                         </p>
                       </div>
@@ -157,7 +143,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       type="button"
                       (click)="openAccept()"
                       [disabled]="acting()"
-                      class="t-btn t-btn-primary"
+                      class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                     >
                       Aceptar
                     </button>
@@ -165,7 +151,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
                       type="button"
                       (click)="openReject()"
                       [disabled]="acting()"
-                      class="t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
+                      class="rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
                     >
                       Rechazar
                     </button>
@@ -174,149 +160,72 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('agreed') {
                 <div class="space-y-2 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">
+                  <p class="text-sm font-medium text-trama-dark">
                     ¡Acuerdo confirmado! Coordiná la entrega:
                   </p>
                   @if (d.salesPoint; as point) {
-                    <p class="text-sm text-trama-body">
+                    <p class="text-sm text-trama-dark/80">
                       <span class="font-medium">{{ point.name }}</span> — {{ point.address }}
                     </p>
-                    <p class="text-sm text-trama-body">
+                    <p class="text-sm text-trama-dark/70">
                       Recepción: {{ point.receptionSchedule.days }}
                       {{ point.receptionSchedule.hours }}
                     </p>
-                    <p class="text-sm text-trama-body">
+                    <p class="text-sm text-trama-dark/70">
                       {{ point.receptionSchedule.instructions }}
                     </p>
                   }
-                  @if (d.agreement?.deliveryDeadline; as deadline) {
-                    <p class="flex flex-wrap items-center gap-2 pt-1 text-sm text-trama-body">
-                      <span>Entregala antes del <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span></span>
-                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 2)">{{ countdown(deadline) }}</span>
+                  @if (d.agreement; as agreement) {
+                    <p class="text-sm text-trama-dark/70">
+                      Plazo de entrega: hasta {{ agreement.saleDeadline | shortDate }}
                     </p>
-                    <p class="text-[13px] text-trama-muted">Si no la entregás a tiempo, el acuerdo queda sin efecto.</p>
                   }
                 </div>
               }
               @case ('rejected') {
                 <div class="space-y-3 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-sm text-trama-body">El comercio rechazó la recepción.</p>
+                  <p class="text-sm text-trama-dark/80">El comercio rechazó la recepción.</p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
-                  @if (d.agreement?.deliveryDeadline; as deadline) {
-                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
-                      <span>Podés volver a entregarla hasta el <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span></span>
-                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 2)">{{ countdown(deadline) }}</span>
-                    </p>
-                  }
-                  <div class="pt-2">
-                    <button
-                      type="button"
-                      (click)="openRedeliver()"
-                      [disabled]="acting()"
-                      class="t-btn t-btn-primary"
-                    >
-                      Coordinar nueva entrega
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    (click)="openRedeliver()"
+                    [disabled]="acting()"
+                    class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+                  >
+                    Coordinar nueva entrega
+                  </button>
                 </div>
               }
               @case ('with_remarks') {
                 <div class="space-y-3 rounded-2xl border border-status-pending/20 bg-status-pending-soft p-5">
-                  <p class="text-sm text-trama-body">
+                  <p class="text-sm text-trama-dark/80">
                     Tu prenda está en el comercio, recibida con observaciones.
                   </p>
                   @if (d.reception; as reception) {
                     <app-reception-remarks [reception]="reception" />
                   }
-                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
                 </div>
               }
               @case ('in_stock') {
-                <div class="space-y-2 rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
-                  <p class="text-sm text-trama-body">Tu prenda está en el comercio, en venta.</p>
-                  <ng-container *ngTemplateOutlet="saleWindow; context: { $implicit: d }" />
-                </div>
-              }
-              @case ('awaiting_pickup') {
-                <div class="space-y-3 rounded-2xl border border-status-pending/30 bg-status-pending-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Tu prenda no se vendió: pasá a retirarla</p>
-                  @if (d.salesPoint; as point) {
-                    <div class="space-y-1 text-sm text-trama-body">
-                      <p><span class="font-semibold text-trama-dark">{{ point.name }}</span> — {{ point.address }}</p>
-                      <p>Horario: {{ point.receptionSchedule.days }} {{ point.receptionSchedule.hours }}</p>
-                      <a
-                        class="inline-block font-semibold text-trama-dark underline underline-offset-2"
-                        [href]="mapsUrl(point.geo.lat, point.geo.lng)"
-                        target="_blank"
-                        rel="noopener"
-                        >Cómo llegar</a
-                      >
-                    </div>
-                  }
-                  @if (d.agreement?.pickupDeadline; as deadline) {
-                    <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
-                      <span>Retirala antes del <span class="font-semibold text-trama-dark">{{ deadline | shortDate }}</span></span>
-                      <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(deadline, 3)">{{ countdown(deadline) }}</span>
-                    </p>
-                  }
-                  <p class="text-sm text-trama-body">Llevá tu DNI: el comercio lo verifica antes de entregártela.</p>
-                  <p class="text-[13px] text-trama-muted">
-                    Si no la retirás a tiempo, el comercio puede disponer de la prenda según los términos.
-                    <a routerLink="/ayuda/faq" fragment="no-se-vende" class="underline underline-offset-2">Más información</a>
-                  </p>
-                </div>
-              }
-              @case ('returned') {
-                <div class="space-y-1 rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Retiraste tu prenda</p>
-                  @if (d.returned; as ret) {
-                    <p class="text-sm text-trama-body">
-                      {{ ret.returnedAt | shortDate }}
-                      @if (d.salesPoint) { · {{ d.salesPoint.name }} }
-                      · Comp. {{ ret.receiptNumber }}
-                    </p>
-                  }
-                </div>
-              }
-              @case ('unclaimed') {
-                <div class="space-y-1 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Venció el plazo para retirarla</p>
-                  <p class="text-sm text-trama-body">
-                    La prenda no se retiró a tiempo y el comercio puede disponer de ella según los términos.
-                  </p>
-                  @if (d.garment.unclaimedDisposition; as disposition) {
-                    <p class="text-sm text-trama-body">
-                      Destino registrado por el comercio:
-                      <span class="font-semibold text-trama-dark">{{ dispositionLabel(disposition.disposition) }}</span>
-                      ({{ disposition.date | shortDate }}).
-                    </p>
-                  }
-                </div>
-              }
-              @case ('delivery_expired') {
-                <div class="space-y-1 rounded-2xl border border-status-none/20 bg-status-none-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">Venció el plazo de entrega</p>
-                  <p class="text-sm text-trama-body">
-                    La prenda no se entregó a tiempo y el acuerdo quedó sin efecto.
-                    @if (d.agreement?.deliveryDeadline; as deadline) { El plazo vencía el {{ deadline | shortDate }}. }
-                  </p>
+                <div class="rounded-2xl border border-status-agreed/20 bg-status-agreed-soft p-5">
+                  <p class="text-sm text-trama-dark/80">Tu prenda está en el comercio, en venta.</p>
                 </div>
               }
               @case ('sold') {
                 <div class="space-y-2 rounded-2xl border border-status-sold/20 bg-status-sold-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">¡Tu prenda fue vendida!</p>
+                  <p class="text-sm font-medium text-trama-dark">¡Tu prenda fue vendida!</p>
                   <div class="grid grid-cols-2 gap-4">
                     <div>
-                      <p class="text-[13px] font-semibold text-trama-body">Te corresponde</p>
-                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      <p class="text-xs text-trama-dark/50">Te corresponde</p>
+                      <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementConsignor() | money }}
                       </p>
                     </div>
                     <div>
-                      <p class="text-[13px] font-semibold text-trama-body">Comisión del comercio</p>
-                      <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                      <p class="text-xs text-trama-dark/50">Comisión del comercio</p>
+                      <p class="text-lg font-semibold text-trama-dark">
                         {{ settlementMerchant() | money }}
                       </p>
                     </div>
@@ -325,16 +234,16 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('paid_out') {
                 <div class="space-y-2 rounded-2xl border border-status-settled/20 bg-status-settled-soft p-5">
-                  <p class="text-[15px] font-bold text-trama-dark">¡Recibiste tu pago!</p>
+                  <p class="text-sm font-medium text-trama-dark">¡Recibiste tu pago!</p>
                   <div>
-                    <p class="text-[13px] font-semibold text-trama-body">Cobraste</p>
-                    <p class="font-display text-xl font-extrabold tabular-nums text-trama-dark">
+                    <p class="text-xs text-trama-dark/50">Cobraste</p>
+                    <p class="text-lg font-semibold text-trama-dark">
                       {{ settlementConsignor() | money }}
                     </p>
                   </div>
                   @if (d.sale; as sale) {
                     @if (sale.paidAt) {
-                      <p class="text-sm text-trama-body">
+                      <p class="text-sm text-trama-dark/70">
                         {{ methodLabel(sale.paymentMethod) }}
                         @if (sale.receiptNumber) {
                           · Comp. {{ sale.receiptNumber }}
@@ -347,7 +256,7 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               }
               @case ('no_agreement') {
                 <div class="rounded-2xl border border-trama-sand-200 bg-trama-sand-50 p-5">
-                  <p class="text-sm text-trama-body">No hubo acuerdo con el comercio.</p>
+                  <p class="text-sm text-trama-dark/70">No hubo acuerdo con el comercio.</p>
                 </div>
               }
             }
@@ -355,10 +264,10 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
         </div>
 
         @if (canCancel()) {
-          <div class="flex items-center justify-between gap-3 rounded-2xl border border-status-none/20 bg-trama-paper p-5">
+          <div class="flex items-center justify-between gap-3 rounded-2xl border border-status-none/20 bg-white p-5">
             <div>
-              <p class="text-[15px] font-bold text-trama-dark">¿Ya no querés consignar esta prenda?</p>
-              <p class="text-[13px] font-semibold text-trama-body">
+              <p class="text-sm font-medium text-trama-dark">¿Ya no querés consignar esta prenda?</p>
+              <p class="text-xs text-trama-dark/50">
                 Podés darla de baja mientras el comercio no la haya recibido.
               </p>
             </div>
@@ -366,32 +275,18 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
               type="button"
               (click)="openCancel()"
               [disabled]="acting()"
-              class="shrink-0 t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
+              class="shrink-0 rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
             >
               Cancelar prenda
             </button>
           </div>
         }
 
-        <div class="t-card p-5">
-          <h2 class="mb-4 text-title-3 text-trama-dark">Historial</h2>
+        <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <h2 class="mb-4 text-sm font-medium text-trama-dark/60">Historial</h2>
           <app-timeline [events]="d.garment.timeline" />
         </div>
       </div>
-
-      <ng-template #saleWindow let-d>
-        @if (d.agreement; as agreement) {
-          <p class="flex flex-wrap items-center gap-2 text-sm text-trama-body">
-            <span>En venta hasta el <span class="font-semibold text-trama-dark">{{ agreement.saleDeadline | shortDate }}</span></span>
-            <span class="rounded-full px-2.5 py-0.5 text-[12px] font-semibold" [class]="countdownClass(agreement.saleDeadline, 7)">{{ countdown(agreement.saleDeadline) }}</span>
-          </p>
-          @if (agreement.pickupDays) {
-            <p class="text-[13px] text-trama-muted">
-              Si no se vende, sale de exhibición y vas a tener {{ agreement.pickupDays }} días para retirarla.
-            </p>
-          }
-        }
-      </ng-template>
 
       <app-confirm-modal
         [open]="activeModal() !== null"
@@ -406,7 +301,6 @@ type ActiveModal = 'accept' | 'reject' | 'redeliver' | 'cancel' | null;
   `,
 })
 export class ConsignorGarmentTracking {
-  protected readonly headerIcon = Route;
   private readonly route = inject(ActivatedRoute);
   private readonly garmentsService = inject(GarmentsService);
   private readonly proposalsService = inject(ProposalsService);
@@ -414,7 +308,6 @@ export class ConsignorGarmentTracking {
   private readonly merchantsService = inject(MerchantsService);
   private readonly receptionsService = inject(ReceptionsService);
   private readonly salesService = inject(SalesService);
-  private readonly returnsService = inject(ReturnsService);
   private readonly toast = inject(ToastService);
 
   private readonly garmentId = toSignal(
@@ -455,26 +348,6 @@ export class ConsignorGarmentTracking {
     if (d?.agreement) return d.agreement.agreedSalePrice - d.agreement.agreedConsignorPrice;
     return 0;
   });
-
-  protected countdown(deadline: Date): string {
-    return countdownLabel(deadline);
-  }
-
-  // Ámbar cuando faltan `soonDays` días o menos, rojo si ya venció, neutro en otro caso.
-  protected countdownClass(deadline: Date, soonDays: number): string {
-    const days = daysUntil(deadline);
-    if (days < 0) return 'bg-status-none-soft text-status-none';
-    if (days <= soonDays) return 'bg-status-pending-soft text-status-pending';
-    return 'bg-trama-paper text-trama-body';
-  }
-
-  protected mapsUrl(lat: number, lng: number): string {
-    return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-  }
-
-  protected dispositionLabel(value: keyof typeof DISPOSITION_LABELS): string {
-    return DISPOSITION_LABELS[value];
-  }
 
   protected methodLabel(method?: PaymentMethod): string {
     return method ? PAYMENT_METHOD_LABELS[method] : '—';
@@ -524,7 +397,7 @@ export class ConsignorGarmentTracking {
     }
   });
 
-  protected readonly modalColor = computed<'green' | 'red'>(() =>
+  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
     this.activeModal() === 'reject' || this.activeModal() === 'cancel' ? 'red' : 'green',
   );
 
@@ -626,11 +499,9 @@ export class ConsignorGarmentTracking {
             : of(undefined),
           reception: this.receptionsService.byGarment(id),
           sale: this.salesService.byGarment(id),
-          returned:
-            garment.status === 'returned' ? this.returnsService.byGarment(id) : of(undefined),
         }).pipe(
           map(
-            ({ proposal, agreement, merchant, reception, sale, returned }): TrackingData => ({
+            ({ proposal, agreement, merchant, reception, sale }): TrackingData => ({
               garment,
               proposal,
               agreement,
@@ -638,7 +509,6 @@ export class ConsignorGarmentTracking {
               salesPoint: merchant?.salesPoints.find((point) => point.id === garment.salesPointId),
               reception,
               sale,
-              returned,
             }),
           ),
         );

@@ -17,13 +17,4 @@ export interface ConsignorPerformance {
   merchantProfit: number;
   paidCount: number;
   avgPayoutDays: number | null;
-  // Cumplimiento del cedente con este comercio (nunca cruza datos de otros comercios).
-  deliveredCount: number;
-  deliveryExpiredCount: number;
-  deliveryRate: number | null;
-  expiredCount: number;
-  returnedCount: number;
-  unclaimedCount: number;
-  awaitingPickupCount: number;
-  pickupRate: number | null;
 }

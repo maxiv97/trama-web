@@ -10,11 +10,6 @@ export interface NewSale {
   soldAt: string;
 }
 
-export interface BulkSaleResult {
-  sold: string[];
-  failed: { garmentId: string; reason: string }[];
-}
-
 @Injectable({ providedIn: 'root' })
 export class SalesService {
   private readonly http = inject(HttpClient);
@@ -32,10 +27,5 @@ export class SalesService {
 
   create(input: NewSale): Observable<Sale> {
     return this.http.post<Sale>(`${this.api}/sales`, input);
-  }
-
-  // Marca varias prendas como vendidas a la vez (al precio acordado de cada una).
-  bulkCreate(garmentIds: string[], soldAt: string): Observable<BulkSaleResult> {
-    return this.http.post<BulkSaleResult>(`${this.api}/sales/bulk`, { garmentIds, soldAt });
   }
 }

@@ -6,6 +6,7 @@ import { DashboardFiltersService } from '../../../../core/services/dashboard-fil
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 
@@ -20,69 +21,60 @@ type State =
 
 @Component({
   selector: 'app-cedentes-card',
-  imports: [MoneyPipe, ErrorState, EmptyState],
+  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
-    <div id="rep-cedentes" class="t-card scroll-mt-24 p-6">
+    <div id="rep-cedentes" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="text-title-3 text-trama-dark">
+          <h2 class="font-display text-lg font-semibold text-trama-dark">
             {{ sort() === 'ganancia' ? '¿Quiénes me dan más ganancia?' : '¿Qué cedentes venden mejor lo que recibo?' }}
           </h2>
-          <p class="mt-1 text-sm text-trama-muted">
+          <p class="mt-1 text-sm text-trama-dark/50">
             Ganancia del período; la tasa de venta muestra, de todo lo recibido, cuánto se vendió.
           </p>
         </div>
         @if (rows().length) {
           <button
             (click)="exportCsv()"
-            class="shrink-0 t-btn t-btn-secondary t-btn-sm"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
           >
             CSV
           </button>
         }
       </div>
 
-      @if (rows().length) {
-        <!-- En el celular la tabla pasa a tarjetas y el encabezado (que ordena) no se ve. -->
-        <div class="mb-3 flex flex-wrap items-center gap-2 sm:hidden" role="radiogroup" aria-label="Ordenar por">
-          <span class="w-full text-[13px] font-semibold text-trama-muted">Ordenar por</span>
-          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'ganancia'" (click)="sortBy('ganancia')">Ganancia</button>
-          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'rate'" (click)="sortBy('rate')">Tasa de venta</button>
-        </div>
-      }
       @if (isLoading()) {
-        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
+        <app-loading-spinner />
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (rows().length) {
         <div class="overflow-x-auto">
-          <table class="t-table t-table-narrow">
-            <thead>
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-trama-sand-200 text-trama-dark/60">
               <tr>
-                <th>Cedente</th>
-                <th>Recibidas</th>
-                <th>Vendidas</th>
-                <th>
+                <th class="py-2 pr-4 font-medium">Cedente</th>
+                <th class="py-2 pr-4 font-medium">Recibidas</th>
+                <th class="py-2 pr-4 font-medium">Vendidas</th>
+                <th class="py-2 pr-4 font-medium">
                   <button (click)="sortBy('rate')" [class]="thClass('rate')">Tasa de venta</button>
                 </th>
-                <th>
+                <th class="py-2 pr-4 font-medium">
                   <button (click)="sortBy('ganancia')" [class]="thClass('ganancia')">Ganancia</button>
                 </th>
-                <th>Le debo</th>
+                <th class="py-2 font-medium">Le debo</th>
               </tr>
             </thead>
             <tbody>
               @for (row of visible(); track row.consignorId) {
-                <tr>
-                  <!-- En la tarjeta del celular van primero la ganancia y la tasa de venta. -->
-                  <td class="t-cell-main font-bold">{{ row.name }}</td>
-                  <td data-label="Recibidas" class="text-trama-body max-sm:order-3">{{ row.receivedCount }}</td>
-                  <td data-label="Vendidas" class="text-trama-body max-sm:order-3">{{ row.soldCount }}</td>
-                  <td data-label="Tasa de venta" class="text-trama-body max-sm:order-2">
+                <tr class="border-b border-trama-sand-100 last:border-0">
+                  <td class="py-3 pr-4 font-medium text-trama-dark">{{ row.name }}</td>
+                  <td class="py-3 pr-4 text-trama-dark/70">{{ row.receivedCount }}</td>
+                  <td class="py-3 pr-4 text-trama-dark/70">{{ row.soldCount }}</td>
+                  <td class="py-3 pr-4 text-trama-dark/70">
                     {{ row.sellThroughRate === null ? '—' : row.sellThroughRate + '%' }}
                   </td>
-                  <td data-label="Ganancia" class="t-amount max-sm:order-1">{{ row.merchantProfit | money }}</td>
-                  <td data-label="Le debo" class="text-trama-body max-sm:order-3">{{ row.pendingAmount | money }}</td>
+                  <td class="py-3 pr-4 font-medium text-trama-green-700">{{ row.merchantProfit | money }}</td>
+                  <td class="py-3 text-trama-dark/70">{{ row.pendingAmount | money }}</td>
                 </tr>
               }
             </tbody>

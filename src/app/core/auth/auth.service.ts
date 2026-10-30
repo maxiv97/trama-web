@@ -59,11 +59,6 @@ export class AuthService {
     return this.http.post<{ sent: boolean }>(`${environment.apiUrl}/auth/resend-code`, {});
   }
 
-  /** Datos de la sesión actual, con el email (se usa para precargar el contacto de ayuda). */
-  me(): Observable<SessionUser & { email?: string }> {
-    return this.http.get<SessionUser & { email?: string }>(`${environment.apiUrl}/auth/me`);
-  }
-
   logout(): void {
     this.currentUser.set(null);
     localStorage.removeItem(AuthService.SESSION_KEY);

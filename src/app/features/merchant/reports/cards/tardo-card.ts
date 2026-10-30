@@ -7,6 +7,7 @@ import { DashboardFiltersService } from '../../../../core/services/dashboard-fil
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 
 const TOP = 5;
@@ -19,20 +20,20 @@ type State =
 
 @Component({
   selector: 'app-tardo-card',
-  imports: [ErrorState, EmptyState],
+  imports: [LoadingSpinner, ErrorState, EmptyState],
   template: `
-    <div id="rep-tardo" class="t-card scroll-mt-24 p-6">
+    <div id="rep-tardo" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="text-title-3 text-trama-dark">¿Cuánto tardo en liquidar?</h2>
-          <p class="mt-1 text-sm text-trama-muted">
+          <h2 class="font-display text-lg font-semibold text-trama-dark">¿Cuánto tardo en liquidar?</h2>
+          <p class="mt-1 text-sm text-trama-dark/50">
             Días promedio entre la venta y el pago al cedente · histórico, no depende del período.
           </p>
         </div>
         @if (ranked().length) {
           <button
             (click)="exportCsv()"
-            class="shrink-0 t-btn t-btn-secondary t-btn-sm"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50"
           >
             CSV
           </button>
@@ -40,13 +41,13 @@ type State =
       </div>
 
       @if (isLoading()) {
-        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
+        <app-loading-spinner />
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (ranked().length) {
         <div class="mb-4 flex items-baseline justify-between rounded-xl bg-trama-sand-50 px-4 py-3">
-          <span class="text-sm text-trama-body">Promedio general</span>
-          <span class="text-number text-trama-dark">{{ avg() }} días</span>
+          <span class="text-sm text-trama-dark/60">Promedio general</span>
+          <span class="font-display text-2xl font-semibold text-trama-dark">{{ avg() }} días</span>
         </div>
 
         <div class="divide-y divide-trama-sand-100">
@@ -55,9 +56,9 @@ type State =
               <span class="font-medium text-trama-dark">{{ row.name }}</span>
               <div class="flex items-center gap-3 justify-self-end">
                 <span class="font-semibold text-trama-dark">{{ row.avgPayoutDays }} días</span>
-                <span class="text-[13px] font-semibold text-trama-body">{{ liqsLabel(row.paidCount) }}</span>
+                <span class="text-xs text-trama-dark/50">{{ liqsLabel(row.paidCount) }}</span>
                 @if (row.paidCount < smallSample) {
-                  <span class="rounded-full bg-status-pending-soft px-2.5 py-0.5 text-xs font-semibold text-status-pending">
+                  <span class="rounded-full bg-trama-gold/15 px-2 py-0.5 text-xs font-semibold text-trama-gold">
                     muestra chica
                   </span>
                 }
@@ -72,8 +73,8 @@ type State =
           </button>
         }
         @if (hasSmallSample()) {
-          <p class="mt-4 border-t border-trama-sand-100 pt-3 text-[13px] font-semibold text-trama-body">
-            <b class="font-semibold text-trama-body">Muestra chica:</b> cedentes con menos de
+          <p class="mt-4 border-t border-trama-sand-100 pt-3 text-xs text-trama-dark/50">
+            <b class="font-semibold text-trama-dark/70">Muestra chica:</b> cedentes con menos de
             {{ smallSample }} liquidaciones pagadas — el promedio todavía no es representativo.
           </p>
         }

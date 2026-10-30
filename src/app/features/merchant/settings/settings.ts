@@ -1,4 +1,3 @@
-import { Settings as SettingsIcon } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -8,28 +7,27 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Merchant } from '../../../core/models/user.model';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
-import { HelpTip } from '../../../shared/components/help-tip/help-tip';
 
 @Component({
   selector: 'app-settings',
-  imports: [PageSkeleton, PageHeader, ReactiveFormsModule, RouterLink, ErrorState, HelpTip],
+  imports: [ReactiveFormsModule, RouterLink, LoadingSpinner, ErrorState],
   template: `
     @if (loading()) {
-      <app-page-skeleton layout="form" />
+      <app-loading-spinner />
     } @else if (error()) {
       <app-error-state message="No pudimos cargar la configuración." (retry)="retry()" />
     } @else {
       <form [formGroup]="form" (ngSubmit)="save()" class="mx-auto max-w-2xl space-y-6">
-        <app-page-header title="Configuración" section="Configuración" [icon]="headerIcon" lead="Los datos de tu comercio y las condiciones que ven los cedentes.">
-          <div actions class="flex gap-3">
+        <div class="flex items-center justify-between gap-3">
+          <h1 class="text-2xl font-semibold text-trama-dark">Configuración</h1>
+          <div class="flex gap-3">
             @if (form.dirty) {
               <button
                 type="button"
                 (click)="discard()"
-                class="t-btn t-btn-ghost"
+                class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
               >
                 Descartar cambios
               </button>
@@ -37,195 +35,159 @@ import { HelpTip } from '../../../shared/components/help-tip/help-tip';
             <button
               type="submit"
               [disabled]="form.invalid || form.pristine || saving()"
-              class="t-btn t-btn-primary"
+              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
             >
               {{ saving() ? 'Guardando…' : 'Guardar' }}
             </button>
           </div>
-        </app-page-header>
+        </div>
 
-        <section formGroupName="profile" class="t-card space-y-4 p-5">
-          <h2 class="text-title-3 text-trama-dark">Datos del comercio</h2>
+        <section formGroupName="profile" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <h2 class="text-sm font-semibold text-trama-dark">Datos del comercio</h2>
 
-          <label class="block">
-            <span class="t-label">Nombre del negocio</span>
+          <label class="block text-sm">
+            <span class="text-trama-dark/70">Nombre del negocio</span>
             <input
               formControlName="businessName"
-              class="t-input"
+              class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
             />
             @if (invalid('profile', 'businessName')) {
-              <span class="t-error">Ingresá el nombre del negocio.</span>
+              <span class="mt-1 block text-xs text-status-none">Ingresá el nombre del negocio.</span>
             }
           </label>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block">
-              <span class="t-label">Email</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Email</span>
               <input
                 formControlName="email"
                 type="email"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'email')) {
-                <span class="t-error">Ingresá un email válido.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá un email válido.</span>
               }
             </label>
-            <label class="block">
-              <span class="t-label">Teléfono</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Teléfono</span>
               <input
                 formControlName="phone"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'phone')) {
-                <span class="t-error">Ingresá el teléfono.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá el teléfono.</span>
               }
             </label>
           </div>
 
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block">
-              <span class="t-label">Barrio</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Barrio</span>
               <input
                 formControlName="neighborhood"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'neighborhood')) {
-                <span class="t-error">Ingresá el barrio.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá el barrio.</span>
               }
             </label>
-            <label class="block">
-              <span class="t-label">Ciudad</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Ciudad</span>
               <input
                 formControlName="city"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('profile', 'city')) {
-                <span class="t-error">Ingresá la ciudad.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá la ciudad.</span>
               }
             </label>
           </div>
         </section>
 
-        <section formGroupName="commission" class="t-card space-y-4 p-5">
-          <h2 class="text-title-3 text-trama-dark">Comisión</h2>
-          <p class="text-[13px] font-semibold text-trama-body">
+        <section formGroupName="commission" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <h2 class="text-sm font-semibold text-trama-dark">Comisión</h2>
+          <p class="text-xs text-trama-dark/50">
             El porcentaje del comercio se calcula como el complemento del cedente.
           </p>
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label class="block">
-              <span class="t-label">% para el cedente</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">% para el cedente</span>
               <input
                 formControlName="consignorPercentage"
                 type="number"
                 min="0"
                 max="100"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('commission', 'consignorPercentage')) {
-                <span class="t-error">Ingresá un valor entre 0 y 100.</span>
+                <span class="mt-1 block text-xs text-status-none">Ingresá un valor entre 0 y 100.</span>
               }
             </label>
-            <label class="block">
-              <span class="t-label">% para el comercio</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">% para el comercio</span>
               <input
                 [value]="merchantPercentage()"
                 disabled
-                class="mt-1 w-full rounded-lg border border-trama-sand-100 bg-trama-sand-100 px-3 py-2 text-sm text-trama-body"
+                class="mt-1 w-full rounded-lg border border-trama-sand-100 bg-trama-sand-100 px-3 py-2 text-sm text-trama-dark/60"
               />
             </label>
           </div>
         </section>
 
-        <section formGroupName="terms" class="t-card space-y-4 p-5">
-          <h2 class="text-title-3 text-trama-dark">Términos de consignación</h2>
-          <p class="text-sm text-trama-body">
-            Rigen para las propuestas que aceptes desde ahora: cada acuerdo conserva los plazos con
-            los que se cerró.
-          </p>
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <label class="block">
-              <span class="t-label inline-flex items-center gap-1.5">
-                Plazo de entrega (días)
-                <app-help-tip
-                  label="Ayuda sobre el plazo de entrega"
-                  text="Días que tiene el cedente para traer la prenda después del acuerdo. Si no la entrega, el acuerdo vence solo."
-                />
-              </span>
-              <input
-                formControlName="deliveryDays"
-                type="number"
-                min="1"
-                max="30"
-                class="t-input"
-              />
-              @if (invalid('terms', 'deliveryDays')) {
-                <span class="t-error">Entre 1 y 30 días.</span>
-              }
-            </label>
-            <label class="block">
-              <span class="t-label inline-flex items-center gap-1.5">
-                Ventana de venta (meses)
-                <app-help-tip
-                  label="Ayuda sobre la ventana de venta"
-                  text="Cuánto tiempo está la prenda a la venta, contado desde que la recibís."
-                />
-              </span>
+        <section formGroupName="terms" class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+          <h2 class="text-sm font-semibold text-trama-dark">Términos de consignación</h2>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Ventana de venta (meses)</span>
               <input
                 formControlName="saleWindowMonths"
                 type="number"
                 min="1"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('terms', 'saleWindowMonths')) {
-                <span class="t-error">Mínimo 1 mes.</span>
+                <span class="mt-1 block text-xs text-status-none">Mínimo 1 mes.</span>
               }
             </label>
-            <label class="block">
-              <span class="t-label inline-flex items-center gap-1.5">
-                Plazo para retirar (días)
-                <app-help-tip
-                  label="Ayuda sobre el plazo para retirar"
-                  text="Si la prenda no se vende, sale de exhibición y el cedente tiene estos días para retirarla."
-                />
-              </span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Gracia (meses)</span>
               <input
-                formControlName="pickupDays"
+                formControlName="graceMonths"
                 type="number"
-                min="1"
-                max="60"
-                class="t-input"
+                min="0"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
-              @if (invalid('terms', 'pickupDays')) {
-                <span class="t-error">Entre 1 y 60 días.</span>
+              @if (invalid('terms', 'graceMonths')) {
+                <span class="mt-1 block text-xs text-status-none">No puede ser negativo.</span>
               }
             </label>
-            <label class="block">
-              <span class="t-label">Día de pago</span>
+            <label class="block text-sm">
+              <span class="text-trama-dark/70">Día de pago</span>
               <input
                 formControlName="payoutDay"
                 type="number"
                 min="1"
                 max="28"
-                class="t-input"
+                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
               />
               @if (invalid('terms', 'payoutDay')) {
-                <span class="t-error">Entre 1 y 28.</span>
+                <span class="mt-1 block text-xs text-status-none">Entre 1 y 28.</span>
               }
             </label>
           </div>
         </section>
 
-        <section class="t-card flex items-center justify-between gap-3 p-5">
+        <section class="flex items-center justify-between gap-3 rounded-2xl border border-trama-sand-200 bg-white p-5">
           <div>
-            <h2 class="text-title-3 text-trama-dark">Puntos de venta</h2>
-            <p class="text-sm text-trama-body">
+            <h2 class="text-sm font-semibold text-trama-dark">Puntos de venta</h2>
+            <p class="text-sm text-trama-dark/60">
               {{ salesPointsCount() }}
               {{ salesPointsCount() === 1 ? 'punto configurado' : 'puntos configurados' }}
             </p>
           </div>
           <a
             routerLink="/m/sales-points"
-            class="t-btn t-btn-secondary"
+            class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
           >
             Administrar
           </a>
@@ -235,7 +197,6 @@ import { HelpTip } from '../../../shared/components/help-tip/help-tip';
   `,
 })
 export class Settings {
-  protected readonly headerIcon = SettingsIcon;
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly merchantsService = inject(MerchantsService);
@@ -266,8 +227,7 @@ export class Settings {
     }),
     terms: this.fb.nonNullable.group({
       saleWindowMonths: [1, [Validators.required, Validators.min(1)]],
-      deliveryDays: [7, [Validators.required, Validators.min(1), Validators.max(30)]],
-      pickupDays: [15, [Validators.required, Validators.min(1), Validators.max(60)]],
+      graceMonths: [0, [Validators.required, Validators.min(0)]],
       payoutDay: [1, [Validators.required, Validators.min(1), Validators.max(28)]],
     }),
   });
@@ -342,8 +302,7 @@ export class Settings {
       },
       terms: {
         saleWindowMonths: value.terms.saleWindowMonths,
-        deliveryDays: value.terms.deliveryDays,
-        pickupDays: value.terms.pickupDays,
+        graceMonths: value.terms.graceMonths,
         payoutDay: value.terms.payoutDay,
       },
     };
@@ -375,8 +334,7 @@ export class Settings {
       commission: { consignorPercentage: merchant.commissionConfig.consignorPercentage },
       terms: {
         saleWindowMonths: merchant.terms.saleWindowMonths,
-        deliveryDays: merchant.terms.deliveryDays ?? 7,
-        pickupDays: merchant.terms.pickupDays ?? 15,
+        graceMonths: merchant.terms.graceMonths,
         payoutDay: merchant.terms.payoutDay,
       },
     });

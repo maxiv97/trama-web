@@ -8,20 +8,12 @@ import { GarmentsService } from '../../../../core/services/garments.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { EmptyState } from '../../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../../shared/pipes/money.pipe';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
 import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
 
-// Recibidas físicamente (en stock, vendidas o ya sin vender), igual que la base de conversión de la API.
-const RECEIVED: GarmentStatus[] = [
-  'in_stock',
-  'with_remarks',
-  'sold',
-  'paid_out',
-  'awaiting_pickup',
-  'returned',
-  'unclaimed',
-];
+const RECEIVED: GarmentStatus[] = ['in_stock', 'with_remarks', 'sold', 'paid_out'];
 
 type SortKey = 'ganancia' | 'conversion' | 'dias';
 
@@ -32,16 +24,16 @@ type State =
 
 @Component({
   selector: 'app-conviene-card',
-  imports: [MoneyPipe, ErrorState, EmptyState, DrillModal],
+  imports: [MoneyPipe, LoadingSpinner, ErrorState, EmptyState, DrillModal],
   template: `
     <div
       id="rep-conviene"
-      class="t-card scroll-mt-24 p-6"
+      class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5"
     >
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="text-title-3 text-trama-dark">¿Qué me conviene recibir?</h2>
-          <p class="mt-1 text-sm text-trama-muted">
+          <h2 class="font-display text-lg font-semibold text-trama-dark">¿Qué me conviene recibir?</h2>
+          <p class="mt-1 text-sm text-trama-dark/50">
             Ganancia, conversión y días a venta del período filtrado; stock a hoy.
           </p>
         </div>
@@ -50,56 +42,47 @@ type State =
         }
       </div>
 
-      @if (rows().length) {
-        <!-- En el celular la tabla pasa a tarjetas y el encabezado (que ordena) no se ve. -->
-        <div class="mb-3 flex flex-wrap items-center gap-2 sm:hidden" role="radiogroup" aria-label="Ordenar por">
-          <span class="w-full text-[13px] font-semibold text-trama-muted">Ordenar por</span>
-          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'ganancia'" (click)="sortBy('ganancia')">Ganancia</button>
-          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'conversion'" (click)="sortBy('conversion')">Conversión</button>
-          <button type="button" role="radio" class="t-chip px-3! py-1.5! text-[13px]!" [attr.aria-checked]="sort() === 'dias'" (click)="sortBy('dias')">Días a venta</button>
-        </div>
-      }
       @if (isLoading()) {
-        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
+        <app-loading-spinner />
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (rows().length) {
         <div class="overflow-x-auto">
-          <table class="t-table t-table-narrow">
-            <thead>
+          <table class="w-full text-left text-sm">
+            <thead class="border-b border-trama-sand-200 text-trama-dark/60">
               <tr>
-                <th>Categoría</th>
-                <th>
+                <th class="py-2 pr-4 font-medium">Categoría</th>
+                <th class="py-2 pr-4 font-medium">
                   <button (click)="sortBy('ganancia')" [class]="thClass('ganancia')">Ganancia</button>
                 </th>
-                <th>
+                <th class="py-2 pr-4 font-medium">
                   <button (click)="sortBy('conversion')" [class]="thClass('conversion')">Conversión</button>
                 </th>
-                <th>
+                <th class="py-2 pr-4 font-medium">
                   <button (click)="sortBy('dias')" [class]="thClass('dias')">Días a venta</button>
                 </th>
-                <th>En stock</th>
+                <th class="py-2 font-medium">En stock</th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.category) {
-                <tr>
-                  <td class="t-cell-main">
+                <tr class="border-b border-trama-sand-100 last:border-0">
+                  <td class="py-3 pr-4">
                     <button
                       (click)="openDrill(row.category)"
-                      class="text-left font-medium text-trama-dark hover:text-trama-brand hover:underline max-sm:font-bold"
+                      class="font-medium text-trama-dark hover:text-trama-brand hover:underline"
                     >
                       {{ row.category }}
                     </button>
                   </td>
-                  <td data-label="Ganancia" class="t-amount">{{ row.merchantProfit | money }}</td>
-                  <td data-label="Conversión" class="text-trama-body">
+                  <td class="py-3 pr-4 font-medium text-trama-green-700">{{ row.merchantProfit | money }}</td>
+                  <td class="py-3 pr-4 text-trama-dark/70">
                     {{ row.conversion === null ? '—' : row.conversion + '%' }}
                   </td>
-                  <td data-label="Días a venta" class="text-trama-body">
+                  <td class="py-3 pr-4 text-trama-dark/70">
                     {{ row.avgDaysToSale === null ? '—' : row.avgDaysToSale + ' días' }}
                   </td>
-                  <td data-label="En stock" class="text-trama-body">{{ row.inStockCount }}</td>
+                  <td class="py-3 text-trama-dark/70">{{ row.inStockCount }}</td>
                 </tr>
               }
             </tbody>
@@ -111,7 +94,6 @@ type State =
 
       @if (drill(); as d) {
         <app-drill-modal
-          question="¿Qué me conviene recibir?"
           [title]="d.title"
           [rows]="d.rows"
           [csvName]="d.csvName"
@@ -162,7 +144,7 @@ export class ConvieneCard {
   });
 
   protected readonly csvBtn =
-    'shrink-0 t-btn t-btn-secondary t-btn-sm';
+    'shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50';
 
   protected exportCsv(): void {
     downloadCsv(
@@ -183,7 +165,7 @@ export class ConvieneCard {
   protected openDrill(category: string): void {
     const sp = this.filters.salesPointId();
     const consignor = this.filters.consignorId();
-    this.garmentsService.listMeta().subscribe((garments) => {
+    this.garmentsService.list().subscribe((garments) => {
       const rows: DrillRow[] = garments
         .filter(
           (g) =>

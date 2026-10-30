@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { CategoriesService } from './categories.service';
+import { CATEGORIES } from '../models/garment-taxonomy';
 import { ReportsService } from './reports.service';
 import { SalesPointsService } from './sales-points.service';
 
@@ -9,19 +9,14 @@ export interface FilterOption {
   label: string;
 }
 
-// Feeds the recorte dropdowns: categories, sales points and consignors come from
-// the merchant's own data (el catálogo de categorías del comercio, base + propias).
+// Feeds the recorte dropdowns: categories are the known taxonomy, sales points and consignors
+// come from the merchant's own data.
 @Injectable({ providedIn: 'root' })
 export class DashboardFilterOptionsService {
   private readonly salesPointsService = inject(SalesPointsService);
   private readonly reportsService = inject(ReportsService);
-  private readonly categoriesService = inject(CategoriesService);
 
-  categories(merchantId: string): Observable<FilterOption[]> {
-    return this.categoriesService
-      .forMerchant(merchantId)
-      .pipe(map((categories) => categories.map((c) => ({ value: c.label, label: c.label }))));
-  }
+  readonly categories: FilterOption[] = CATEGORIES.map((c) => ({ value: c.label, label: c.label }));
 
   salesPoints(merchantId: string): Observable<FilterOption[]> {
     return this.salesPointsService

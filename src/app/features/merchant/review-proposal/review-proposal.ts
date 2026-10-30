@@ -1,4 +1,3 @@
-import { Inbox } from 'lucide-angular';
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,12 +23,11 @@ import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { PhotoGallery } from '../../../shared/components/photo-gallery/photo-gallery';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
-import { PageHeader } from '../../../shared/components/page-header/page-header';
-import { PageSkeleton } from '../../../shared/components/page-skeleton/page-skeleton';
 
 interface ReviewData {
   proposal: Proposal;
@@ -45,78 +43,78 @@ type ReviewState =
 
 @Component({
   selector: 'app-review-proposal',
-  imports: [PageSkeleton, PageHeader, PhotoGallery, ConfirmModal, MoneyPipe, ErrorState],
+  imports: [PhotoGallery, ConfirmModal, MoneyPipe, LoadingSpinner, ErrorState],
   template: `
     @if (isLoading()) {
-      <app-page-skeleton layout="detail" />
+      <app-loading-spinner />
     } @else if (isError()) {
       <app-error-state message="No encontramos esta propuesta." link="/m" linkLabel="Volver al panel" />
     } @else if (data(); as d) {
       <div class="space-y-6">
-        <app-page-header title="Revisar propuesta" section="Propuestas" [icon]="headerIcon" lead="Mirá las fotos y el precio que pide el cedente. Podés aceptarla, mandar una contraoferta o rechazarla." />
+        <h1 class="text-2xl font-semibold text-trama-dark">Revisar propuesta</h1>
 
         <div class="grid gap-6 md:grid-cols-2">
           <div class="space-y-4">
             <app-photo-gallery [photos]="d.garment.photos" />
 
-            <div class="t-card p-5">
-              <h2 class="text-title-2 text-trama-dark">{{ d.garment.name }}</h2>
+            <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
+              <h2 class="text-lg font-semibold text-trama-dark">{{ d.garment.name }}</h2>
               <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div>
-                  <dt class="text-[13px] text-trama-muted">Categoría</dt>
-                  <dd class="font-semibold text-trama-dark">
+                  <dt class="text-trama-dark/50">Categoría</dt>
+                  <dd class="text-trama-dark/80">
                     {{ d.garment.category }}@if (d.garment.subcategory) {
                       · {{ d.garment.subcategory }}
                     }
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-[13px] text-trama-muted">Marca</dt>
-                  <dd class="font-semibold text-trama-dark">{{ d.garment.brand }}</dd>
+                  <dt class="text-trama-dark/50">Marca</dt>
+                  <dd class="text-trama-dark/80">{{ d.garment.brand }}</dd>
                 </div>
                 <div>
-                  <dt class="text-[13px] text-trama-muted">Talle</dt>
-                  <dd class="font-semibold text-trama-dark">{{ d.garment.size }}</dd>
+                  <dt class="text-trama-dark/50">Talle</dt>
+                  <dd class="text-trama-dark/80">{{ d.garment.size }}</dd>
                 </div>
                 <div>
-                  <dt class="text-[13px] text-trama-muted">Color</dt>
-                  <dd class="font-semibold text-trama-dark">{{ d.garment.color }}</dd>
+                  <dt class="text-trama-dark/50">Color</dt>
+                  <dd class="text-trama-dark/80">{{ d.garment.color }}</dd>
                 </div>
                 <div>
-                  <dt class="text-[13px] text-trama-muted">Temporada</dt>
-                  <dd class="font-semibold text-trama-dark">{{ d.garment.season }}</dd>
+                  <dt class="text-trama-dark/50">Temporada</dt>
+                  <dd class="text-trama-dark/80">{{ d.garment.season }}</dd>
                 </div>
                 <div>
-                  <dt class="text-[13px] text-trama-muted">Condición</dt>
-                  <dd class="font-semibold text-trama-dark">{{ conditionLabel(d.garment.condition) }}</dd>
+                  <dt class="text-trama-dark/50">Condición</dt>
+                  <dd class="text-trama-dark/80">{{ conditionLabel(d.garment.condition) }}</dd>
                 </div>
               </dl>
               @if (d.garment.description) {
-                <p class="mt-3 text-sm text-trama-body">{{ d.garment.description }}</p>
+                <p class="mt-3 text-sm text-trama-dark/70">{{ d.garment.description }}</p>
               }
-              <p class="mt-3 text-sm text-trama-muted">
-                Cedente: <span class="text-trama-body">{{ d.consignor?.name ?? '—' }}</span>
+              <p class="mt-3 text-sm text-trama-dark/50">
+                Cedente: <span class="text-trama-dark/80">{{ d.consignor?.name ?? '—' }}</span>
               </p>
             </div>
           </div>
 
-          <div class="t-card space-y-4 p-5">
-            <h2 class="text-title-3 text-trama-dark">Decisión</h2>
+          <div class="space-y-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
+            <h2 class="text-sm font-medium text-trama-dark/60">Decisión</h2>
             <div class="space-y-3">
               <div class="flex items-center justify-between">
-                <span class="text-sm text-trama-body">El cedente pide</span>
+                <span class="text-sm text-trama-dark/70">El cedente pide</span>
                 <span class="font-semibold text-trama-dark">
                   {{ d.proposal.requestedConsignorPrice | money }}
                 </span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm text-trama-body">Se vendería a</span>
+                <span class="text-sm text-trama-dark/70">Se vendería a</span>
                 <span class="font-semibold text-trama-dark">
                   {{ d.proposal.calculatedSalePrice | money }}
                 </span>
               </div>
               <div class="flex items-center justify-between">
-                <span class="text-sm text-trama-body">Comisión del comercio</span>
+                <span class="text-sm text-trama-dark/70">Comisión del comercio</span>
                 <span class="font-semibold text-trama-dark">
                   {{ d.merchant?.commissionConfig?.merchantPercentage }}%
                 </span>
@@ -133,12 +131,12 @@ type ReviewState =
                   min="1"
                   [value]="counterPrice() ?? ''"
                   (input)="counterPrice.set(toNumber($event))"
-                  class="t-input"
+                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
                 @if (counterSalePrice() !== null) {
-                  <p class="text-sm text-trama-body">
+                  <p class="text-sm text-trama-dark/70">
                     Se vendería a
-                    <span class="font-bold text-trama-dark">{{ counterSalePrice() | money }}</span>
+                    <span class="font-semibold text-trama-brand">{{ counterSalePrice() | money }}</span>
                   </p>
                 }
                 <div class="flex gap-2">
@@ -146,14 +144,14 @@ type ReviewState =
                     type="button"
                     (click)="sendCounteroffer()"
                     [disabled]="!counterValid() || acting()"
-                    class="t-btn t-btn-primary"
+                    class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                   >
                     Enviar contraoferta
                   </button>
                   <button
                     type="button"
                     (click)="countering.set(false)"
-                    class="t-btn t-btn-ghost"
+                    class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/60 hover:bg-trama-sand-100"
                   >
                     Cancelar
                   </button>
@@ -165,7 +163,7 @@ type ReviewState =
                   type="button"
                   (click)="activeModal.set('accept')"
                   [disabled]="acting()"
-                  class="t-btn t-btn-primary"
+                  class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                 >
                   Aceptar
                 </button>
@@ -173,7 +171,7 @@ type ReviewState =
                   type="button"
                   (click)="startCounteroffer(d.proposal.requestedConsignorPrice)"
                   [disabled]="acting()"
-                  class="t-btn t-btn-secondary"
+                  class="rounded-lg border border-trama-brand px-4 py-2 text-sm font-medium text-trama-brand hover:bg-trama-green-50 disabled:opacity-40"
                 >
                   Contraofertar
                 </button>
@@ -181,7 +179,7 @@ type ReviewState =
                   type="button"
                   (click)="activeModal.set('reject')"
                   [disabled]="acting()"
-                  class="t-btn border-status-none/40 text-status-none hover:bg-status-none-soft"
+                  class="rounded-lg border border-status-none/30 px-4 py-2 text-sm font-medium text-status-none hover:bg-status-none-soft disabled:opacity-40"
                 >
                   Rechazar
                 </button>
@@ -205,7 +203,6 @@ type ReviewState =
   `,
 })
 export class ReviewProposal {
-  protected readonly headerIcon = Inbox;
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly proposalsService = inject(ProposalsService);
@@ -267,7 +264,7 @@ export class ReviewProposal {
   protected readonly modalConfirmLabel = computed(() =>
     this.activeModal() === 'reject' ? 'Rechazar' : 'Aceptar',
   );
-  protected readonly modalColor = computed<'green' | 'red'>(() =>
+  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
     this.activeModal() === 'reject' ? 'red' : 'green',
   );
   protected readonly modalField = computed(() =>
@@ -320,7 +317,7 @@ export class ReviewProposal {
     this.proposalsService.counteroffer(garmentId, price).subscribe({
       next: () => {
         this.toast.show('Contraoferta enviada');
-        this.router.navigate(['/m/proposals']);
+        this.router.navigate(['/m']);
       },
       error: () => this.onActionError(),
     });

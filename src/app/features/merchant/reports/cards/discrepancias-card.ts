@@ -1,5 +1,4 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { BarDatum, BarThin } from '../../../../shared/components/charts/charts';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import {
   BehaviorSubject,
@@ -17,6 +16,7 @@ import { ReceptionDiscrepancyReport } from '../../../../core/models/reception-di
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
 import { ReportsService } from '../../../../core/services/reports.service';
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
+import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { XlsxSheet, downloadXlsx } from '../../../../shared/xlsx/to-xlsx';
 
 interface TypeRow {
@@ -32,15 +32,15 @@ type State =
 
 @Component({
   selector: 'app-discrepancias-card',
-  imports: [BarThin, ErrorState],
+  imports: [LoadingSpinner, ErrorState],
   template: `
-    <div id="rep-discrepancias" class="t-card scroll-mt-24 p-6">
+    <div id="rep-discrepancias" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
-          <h2 class="text-title-3 text-trama-dark">
+          <h2 class="font-display text-lg font-semibold text-trama-dark">
             ¿Cuántas prendas recibidas tuvieron observaciones?
           </h2>
-          <p class="mt-1 text-sm text-trama-muted">
+          <p class="mt-1 text-sm text-trama-dark/50">
             Prendas recibidas del período, tasa con observaciones y desglose por tipo.
           </p>
         </div>
@@ -48,7 +48,7 @@ type State =
           <button
             (click)="exportXlsx()"
             [disabled]="exporting()"
-            class="shrink-0 t-btn t-btn-secondary t-btn-sm"
+            class="shrink-0 rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-semibold text-trama-dark/70 hover:bg-trama-sand-50 disabled:opacity-50"
           >
             {{ exporting() ? 'Generando…' : 'Excel' }}
           </button>
@@ -56,23 +56,23 @@ type State =
       </div>
 
       @if (isLoading()) {
-        <div class="t-skeleton h-40" role="status" aria-label="Cargando"></div>
+        <app-loading-spinner />
       } @else if (isError()) {
         <app-error-state message="No pudimos cargar el reporte." (retry)="reload()" />
       } @else if (report(); as r) {
         <div class="mb-4 flex gap-6">
           <div>
-            <div class="text-[13px] font-semibold text-trama-body">Prendas recibidas</div>
-            <div class="text-number text-trama-dark">{{ r.totalReceptions }}</div>
+            <div class="text-xs text-trama-dark/50">Prendas recibidas</div>
+            <div class="font-display text-2xl font-semibold text-trama-dark">{{ r.totalReceptions }}</div>
           </div>
           <div>
-            <div class="text-[13px] font-semibold text-trama-body">Con observaciones</div>
-            <div class="text-number text-trama-dark">{{ r.withDiscrepancies }}</div>
+            <div class="text-xs text-trama-dark/50">Con observaciones</div>
+            <div class="font-display text-2xl font-semibold text-trama-dark">{{ r.withDiscrepancies }}</div>
           </div>
           <div>
-            <div class="text-[13px] font-semibold text-trama-body">Tasa</div>
+            <div class="text-xs text-trama-dark/50">Tasa</div>
             <div
-              class="text-number"
+              class="font-display text-2xl font-semibold"
               [class]="(r.rate ?? 0) > 25 ? 'text-status-none' : 'text-trama-dark'"
             >
               {{ r.rate === null ? '—' : r.rate + '%' }}
@@ -81,13 +81,24 @@ type State =
         </div>
 
         @if (typeRows().length) {
-          <app-bar-thin [data]="typeBars()" [labelWidth]="170" />
-          <p class="mt-4 text-[13px] font-semibold text-trama-body">
+          <div class="space-y-2">
+            @for (row of typeRows(); track row.label) {
+              <div class="flex items-center gap-3 text-sm">
+                <span class="w-44 font-medium text-trama-dark">{{ row.label }}</span>
+                <span class="h-2 flex-1 overflow-hidden rounded-full bg-trama-sand-100">
+                  <span class="block h-2 rounded-full bg-trama-green-700" [style.width.%]="row.share"></span>
+                </span>
+                <span class="w-10 text-right text-trama-dark/60">{{ row.share }}%</span>
+                <span class="w-8 text-right font-medium text-trama-dark">{{ row.count }}</span>
+              </div>
+            }
+          </div>
+          <p class="mt-4 text-xs text-trama-dark/50">
             Una prenda puede tener más de una observación; el porcentaje es sobre el total de
             observaciones del período.
           </p>
         } @else {
-          <p class="text-sm text-trama-body">Ninguna prenda del período se recibió con observaciones.</p>
+          <p class="text-sm text-trama-dark/60">Ninguna prenda del período se recibió con observaciones.</p>
         }
       }
     </div>
@@ -120,9 +131,6 @@ export class DiscrepanciasCard {
     return current.status === 'loaded' ? current.data : null;
   });
 
-  protected readonly typeBars = computed<BarDatum[]>(() =>
-    this.typeRows().map((r) => ({ label: r.label, value: r.count, display: r.count + ' · ' + r.share + '%' })),
-  );
   protected readonly typeRows = computed<TypeRow[]>(() => {
     const byType = this.report()?.byType ?? [];
     const total = byType.reduce((sum, t) => sum + t.count, 0);
