@@ -27,6 +27,7 @@ import { ReceptionsService } from '../../../core/services/receptions.service';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { compressImage } from '../../../core/utils/image.util';
 
 interface ReviewData {
   garment: Garment;
@@ -251,9 +252,9 @@ export class RegisterReception {
     Array.from(input.files ?? [])
       .filter((file) => file.type.startsWith('image/'))
       .forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => this.evidence.update((list) => [...list, reader.result as string]);
-        reader.readAsDataURL(file);
+        compressImage(file)
+          .then((dataUrl) => this.evidence.update((list) => [...list, dataUrl]))
+          .catch(() => this.toast.show('No se pudo procesar una foto', 'error'));
       });
     input.value = '';
   }
