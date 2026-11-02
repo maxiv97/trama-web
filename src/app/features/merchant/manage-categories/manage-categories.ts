@@ -40,6 +40,13 @@ type CategoriesState =
               <div class="flex items-center justify-between rounded-2xl border border-trama-sand-200 bg-white p-4">
                 <span class="font-medium text-trama-dark">{{ b.label }}</span>
                 <span class="text-xs text-trama-dark/50">{{ b.hidden ? 'Oculta' : 'Visible' }}</span>
+                  <button
+                    type="button"
+                    (click)="toggleHidden(b)"
+                    class="rounded-lg border border-trama-sand-200 px-3 py-1.5 text-xs font-medium text-trama-dark hover:bg-trama-sand-100"
+                  >
+                    {{ b.hidden ? 'Mostrar' : 'Ocultar' }}
+                  </button>
               </div>
             }
           </div>
@@ -95,9 +102,20 @@ export class ManageCategories {
     this.reload.next();
   }
 
+  protected toggleHidden(row: Category & { hidden: boolean }): void {
+    const current = this.data()?.base.filter((b) => b.hidden).map((b) => b.label) ?? [];
+    const next = row.hidden
+      ? current.filter((l) => l !== row.label)
+      : [...current, row.label];
+    this.categoriesService.setHidden(next).subscribe({
+      next: () => this.reload.next(),
+      error: () => this.toast.show('No pudimos actualizar la categoría', 'error'),
+    });
+  }
+
   private load(): Observable<CategoriesData> {
     const ownId = this.auth.user()?.id ?? '';
-    return forkJoin({ 
+    return forkJoin({
       allBase: this.categoriesService.forMerchant(),
       mine: this.categoriesService.forMerchant(ownId)
     }).pipe(
