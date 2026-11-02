@@ -134,6 +134,13 @@ export const routes: Routes = [
             (m) => m.MerchantNotifications,
           ),
       },
+      {
+        path: 'categories',
+        loadComponent: () =>
+          import('./features/merchant/manage-categories/manage-categories').then(
+            (m) => m.ManageCategories,
+          ),
+      },
     ],
   },
 

@@ -13,6 +13,7 @@ import {
   Receipt,
   Settings,
   Users,
+  Tags,
 } from 'lucide-angular';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
@@ -43,6 +44,7 @@ const MENUS: Record<Role, NavItem[]> = {
     { label: 'Puntos de venta', link: '/m/sales-points', icon: MapPin },
     { label: 'Configuración', link: '/m/settings', icon: Settings },
     { label: 'Notificaciones', link: '/m/notifications', icon: Bell, badge: true },
+    { label: 'Categorías', link: '/m/categories', icon: Tags },
   ],
 };
 
