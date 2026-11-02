@@ -7,3 +7,15 @@ export interface Category {
   parentLabel?: string;
   active: boolean;
 }
+
+export interface CategoryInput {
+  label: string;
+  subcategories?: string[];
+  parentLabel?: string;
+}
+
+export interface CategoryUpdate {
+  label?: string;
+  subcategories?: string[];
+  parentLabel?: string;
+}
