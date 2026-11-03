@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
-import { StatusBadge } from './status-badge';
+import { StatusBadge } from '../../../../../src/app/shared/components/status-badge/status-badge';
 
 describe('StatusBadge', () => {
   it('renderiza el label en español del status', () => {
