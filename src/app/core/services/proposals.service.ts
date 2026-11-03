@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Proposal } from '../models/proposal.model';
+import { GarmentStatus } from '../models/garment.model';
 
 export interface NewProposal {
   garmentId: string;
@@ -34,6 +35,12 @@ export class ProposalsService {
 
   pendingForMerchant(_merchantId: string): Observable<Proposal[]> {
     return this.http.get<Proposal[]>(`${this.api}/proposals`);
+  }
+
+  proposalsForMerchant(statuses: readonly GarmentStatus[]): Observable<Proposal[]> {
+    return this.http.get<Proposal[]>(`${this.api}/proposals`, {
+      params: { status: statuses.join(',') },
+    });
   }
 
   accept(garmentId: string): Observable<Proposal> {
