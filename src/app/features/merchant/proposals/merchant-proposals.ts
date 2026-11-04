@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   BehaviorSubject,
   Observable,
@@ -32,7 +32,7 @@ import {
   parseStatusFilter,
   salesPointOptions,
 } from './proposal-filters';
-import { PROPOSAL_STATUSES, ProposalRow, buildProposalRows } from './proposal-rows';
+import { PROPOSAL_STATUSES, ProposalRow, buildProposalRows, proposalLink } from './proposal-rows';
 
 type ProposalsState =
   | { status: 'loading' }
@@ -49,7 +49,15 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 
 @Component({
   selector: 'app-merchant-proposals',
-  imports: [LoadingSpinner, ErrorState, EmptyState, StatusBadge, MoneyPipe, ShortDatePipe],
+  imports: [
+    LoadingSpinner,
+    ErrorState,
+    EmptyState,
+    StatusBadge,
+    MoneyPipe,
+    ShortDatePipe,
+    RouterLink,
+  ],
   template: `
     @if (isLoading()) {
       <app-loading-spinner />
@@ -120,11 +128,15 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
                   <th class="px-4 py-3 font-medium">Para el cedente</th>
                   <th class="px-4 py-3 font-medium">Precio de venta</th>
                   <th class="px-4 py-3 font-medium">Fecha</th>
+                  <th class="px-4 py-3"><span class="sr-only">Acciones</span></th>
                 </tr>
               </thead>
               <tbody>
                 @for (row of filteredRows(); track row.garmentId) {
-                  <tr class="border-b border-trama-sand-100 last:border-0">
+                  <tr
+                    [routerLink]="linkTo(row)"
+                    class="cursor-pointer border-b border-trama-sand-100 last:border-0 hover:bg-trama-sand-50"
+                  >
                     <td class="px-4 py-3">
                       <div class="flex items-center gap-3">
                         @if (row.photo) {
@@ -142,6 +154,16 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
                     <td class="px-4 py-3 text-trama-dark/70">{{ row.consignorPrice | money }}</td>
                     <td class="px-4 py-3 text-trama-dark/70">{{ row.salePrice | money }}</td>
                     <td class="px-4 py-3 text-trama-dark/70">{{ row.createdAt | shortDate }}</td>
+                    <td class="px-4 py-3 text-right">
+                      @if (row.status === 'under_review' && row.proposalId) {
+                        <a
+                          [routerLink]="linkTo(row)"
+                          class="inline-block rounded-lg bg-trama-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-trama-green-700"
+                        >
+                          Revisar
+                        </a>
+                      }
+                    </td>
                   </tr>
                 }
               </tbody>
@@ -175,6 +197,8 @@ export class MerchantProposals {
 
   protected readonly all = ALL;
   protected readonly statusOptions = STATUS_OPTIONS;
+
+  protected readonly linkTo = proposalLink;
 
   protected readonly filters = signal<ProposalFilters>(this.filtersFromUrl());
 

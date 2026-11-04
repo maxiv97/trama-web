@@ -83,3 +83,10 @@ export function buildProposalRows(
     )
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 }
+
+export function proposalLink(row: ProposalRow): string[] {
+  if (row.status === 'under_review' && row.proposalId) {
+    return ['/m/proposal', row.proposalId];
+  }
+  return ['/m/garment', row.garmentId];
+}
