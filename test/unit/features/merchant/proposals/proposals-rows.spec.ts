@@ -5,6 +5,7 @@ import {
   MISSING_LABEL,
   buildProposalRows,
   isProposalStage,
+  proposalLink,
 } from '../../../../../src/app/features/merchant/proposals/proposal-rows';
 
 function buildGarment(overrides: Partial<Garment> = {}): Garment {
@@ -147,5 +148,25 @@ describe('buildProposalRows', () => {
     );
 
     expect(rows.map((row) => row.garmentId)).toEqual(['sin-propuesta', 'con-propuesta']);
+  });
+
+  describe('proposalLink', () => {
+    it('lleva a revisar la propuesta cuando espera al comercio', () => {
+      const [row] = rowsFor([buildGarment()], [buildProposal()]);
+      expect(proposalLink(row)).toEqual(['/m/proposal', 'p1']);
+    });
+
+    it('lleva al seguimiento de la prenda en los demás estados', () => {
+      const [row] = rowsFor(
+        [buildGarment({ status: 'counteroffer' })],
+        [buildProposal({ status: 'counteroffer' })],
+      );
+      expect(proposalLink(row)).toEqual(['/m/garment', 'g1']);
+    });
+
+    it('lleva al seguimiento si la prenda en revisión no tiene propuesta', () => {
+      const [row] = rowsFor([buildGarment()]);
+      expect(proposalLink(row)).toEqual(['/m/garment', 'g1']);
+    });
   });
 });
