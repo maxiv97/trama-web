@@ -1,21 +1,23 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
+import { Category } from '../../../core/models/category.model';
 import { GarmentCondition } from '../../../core/models/garment.model';
 import { GarmentsService } from '../../../core/services/garments.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ConsignorsService } from '../../../core/services/consignors.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { CategoriesService } from '../../../core/services/categories.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { distanceKm } from '../../../core/utils/geo.util';
 import { compressImage } from '../../../core/utils/image.util';
-import { CATEGORIES, SEASONS } from '../../../core/models/garment-taxonomy';
+import { SEASONS } from '../../../core/models/garment-taxonomy';
 
 interface MerchantOption {
   merchantId: string;
@@ -40,7 +42,7 @@ const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'fair', label: 'Regular' },
 ];
 
-const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
+const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
 
 @Component({
   selector: 'app-upload-garment',
@@ -142,7 +144,7 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
               </div>
             </div>
           }
-          @case (2) {
+          @case (3) {
             <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div class="sm:col-span-2">
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
@@ -159,7 +161,7 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 >
                   <option value="">Elegí una categoría</option>
-                  @for (category of categories; track category.label) {
+                  @for (category of categories(); track category.label) {
                     <option [value]="category.label">{{ category.label }}</option>
                   }
                 </select>
@@ -230,7 +232,7 @@ const STEPS = ['Fotos', 'Descripción', 'Comercio', 'Precio'];
               </div>
             </form>
           }
-          @case (3) {
+          @case (2) {
             <div class="space-y-4">
               <input
                 type="search"
@@ -338,11 +340,11 @@ export class UploadGarment {
   private readonly proposalsService = inject(ProposalsService);
   private readonly merchantsService = inject(MerchantsService);
   private readonly consignorsService = inject(ConsignorsService);
+  private readonly categoriesService = inject(CategoriesService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
 
   protected readonly steps = STEPS;
-  protected readonly categories = CATEGORIES;
   protected readonly seasons = SEASONS;
   protected readonly conditions = CONDITIONS;
 
@@ -374,6 +376,10 @@ export class UploadGarment {
     { initialValue: undefined },
   );
 
+  protected readonly categories = toSignal(toObservable(this.selection).pipe(
+    switchMap((selected) => selected?.merchantId ? this.categoriesService.forMerchant(selected.merchantId).pipe(catchError(() => of<Category[]>([]))) : of<Category[]>([]))
+  ), { initialValue: [] as Category[]});
+
   private readonly categoryValue = toSignal(this.form.controls.category.valueChanges, {
     initialValue: this.form.controls.category.value,
   });
@@ -382,7 +388,7 @@ export class UploadGarment {
   });
 
   protected readonly subcategories = computed(
-    () => CATEGORIES.find((category) => category.label === this.categoryValue())?.subcategories ?? [],
+    () => this.categories().find((category) => category.label === this.categoryValue())?.subcategories ?? [],
   );
 
   protected readonly merchantOptions = computed<MerchantOption[]>(() => {
@@ -432,6 +438,13 @@ export class UploadGarment {
     this.form.controls.category.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(() => this.form.controls.subcategory.setValue(''));
+
+    toObservable(this.selection)
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => {
+        this.form.controls.category.setValue('');
+        this.form.controls.subcategory.setValue('');
+      });
   }
 
   protected circleClass(index: number): string {
@@ -490,9 +503,9 @@ export class UploadGarment {
       case 1:
         return this.photos().length >= 3;
       case 2:
-        return this.step2Valid();
-      case 3:
         return this.selection() !== null;
+      case 3:
+        return this.step2Valid();
       case 4:
         return this.form.controls.consignorPrice.valid;
       default:
