@@ -1,5 +1,6 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import {
   BehaviorSubject,
   Observable,
@@ -21,12 +22,30 @@ import { LoadingSpinner } from '../../../shared/components/loading-spinner/loadi
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
+import {
+  ALL,
+  EMPTY_FILTERS,
+  ProposalFilters,
+  StatusFilter,
+  consignorOptions,
+  filterProposalRows,
+  parseStatusFilter,
+  salesPointOptions,
+} from './proposal-filters';
 import { PROPOSAL_STATUSES, ProposalRow, buildProposalRows } from './proposal-rows';
 
 type ProposalsState =
   | { status: 'loading' }
   | { status: 'error' }
   | { status: 'loaded'; rows: ProposalRow[] };
+
+const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
+  { value: ALL, label: 'Todos los estados' },
+  { value: 'under_review', label: 'Por revisar' },
+  { value: 'counteroffer', label: 'Esperando al cedente' },
+  { value: 'no_agreement', label: 'Sin acuerdo' },
+  { value: 'cancelled', label: 'Canceladas' },
+];
 
 @Component({
   selector: 'app-merchant-proposals',
@@ -41,6 +60,54 @@ type ProposalsState =
         <h1 class="text-2xl font-semibold text-trama-dark">Propuestas</h1>
 
         @if (rows.length) {
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <input
+              type="search"
+              [value]="filters().search"
+              (input)="setFilter('search', $any($event.target).value)"
+              placeholder="Buscar por prenda"
+              class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            />
+            <select
+              (change)="setFilter('status', $any($event.target).value)"
+              class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            >
+              @for (option of statusOptions; track option.value) {
+                <option [value]="option.value" [selected]="filters().status === option.value">
+                  {{ option.label }}
+                </option>
+              }
+            </select>
+            <select
+              (change)="setFilter('consignorId', $any($event.target).value)"
+              class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            >
+              <option [value]="all" [selected]="filters().consignorId === all">
+                Todos los cedentes
+              </option>
+              @for (option of consignors(); track option.id) {
+                <option [value]="option.id" [selected]="filters().consignorId === option.id">
+                  {{ option.name }}
+                </option>
+              }
+            </select>
+            <select
+              (change)="setFilter('salesPointId', $any($event.target).value)"
+              class="rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+            >
+              <option [value]="all" [selected]="filters().salesPointId === all">
+                Todos los puntos de venta
+              </option>
+              @for (option of salesPoints(); track option.id) {
+                <option [value]="option.id" [selected]="filters().salesPointId === option.id">
+                  {{ option.name }}
+                </option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (filteredRows().length) {
           <div class="overflow-x-auto rounded-2xl border border-trama-sand-200 bg-white">
             <table class="w-full text-left text-sm">
               <thead class="border-b border-trama-sand-200 text-trama-dark/60">
@@ -56,7 +123,7 @@ type ProposalsState =
                 </tr>
               </thead>
               <tbody>
-                @for (row of rows; track row.garmentId) {
+                @for (row of filteredRows(); track row.garmentId) {
                   <tr class="border-b border-trama-sand-100 last:border-0">
                     <td class="px-4 py-3">
                       <div class="flex items-center gap-3">
@@ -80,6 +147,17 @@ type ProposalsState =
               </tbody>
             </table>
           </div>
+        } @else if (rows.length) {
+          <div class="space-y-3 text-center">
+            <app-empty-state message="No hay propuestas que coincidan con los filtros." />
+            <button
+              type="button"
+              (click)="clearFilters()"
+              class="text-sm font-medium text-trama-brand hover:underline"
+            >
+              Limpiar filtros
+            </button>
+          </div>
         } @else {
           <app-empty-state message="Todavía no recibiste propuestas de cedentes." />
         }
@@ -88,11 +166,17 @@ type ProposalsState =
   `,
 })
 export class MerchantProposals {
+  private readonly route = inject(ActivatedRoute);
   private readonly auth = inject(AuthService);
   private readonly garmentsService = inject(GarmentsService);
   private readonly proposalsService = inject(ProposalsService);
   private readonly consignorsService = inject(ConsignorsService);
   private readonly merchantsService = inject(MerchantsService);
+
+  protected readonly all = ALL;
+  protected readonly statusOptions = STATUS_OPTIONS;
+
+  protected readonly filters = signal<ProposalFilters>(this.filtersFromUrl());
 
   private readonly reload = new BehaviorSubject<void>(undefined);
 
@@ -116,8 +200,31 @@ export class MerchantProposals {
     return current.status === 'loaded' ? current.rows : null;
   });
 
+  protected readonly filteredRows = computed(() =>
+    filterProposalRows(this.rows() ?? [], this.filters()),
+  );
+  protected readonly consignors = computed(() => consignorOptions(this.rows() ?? []));
+  protected readonly salesPoints = computed(() => salesPointOptions(this.rows() ?? []));
+
+  protected setFilter<K extends keyof ProposalFilters>(key: K, value: ProposalFilters[K]): void {
+    this.filters.update((current) => ({ ...current, [key]: value }));
+  }
+
+  protected clearFilters(): void {
+    this.filters.set(EMPTY_FILTERS);
+  }
+
   protected retry(): void {
     this.reload.next();
+  }
+
+  private filtersFromUrl(): ProposalFilters {
+    const params = this.route.snapshot.queryParamMap;
+    return {
+      ...EMPTY_FILTERS,
+      status: parseStatusFilter(params.get('status')),
+      consignorId: params.get('consignor') ?? ALL,
+    };
   }
 
   private loadRows(): Observable<ProposalRow[]> {
