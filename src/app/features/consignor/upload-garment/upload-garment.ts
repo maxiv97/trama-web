@@ -14,6 +14,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { calculateSalePrice } from '../../../core/utils/price.util';
 import { distanceKm } from '../../../core/utils/geo.util';
+import { compressImage } from '../../../core/utils/image.util';
 import { CATEGORIES, SEASONS } from '../../../core/models/garment-taxonomy';
 
 interface MerchantOption {
@@ -474,9 +475,9 @@ export class UploadGarment {
     Array.from(files)
       .filter((file) => file.type.startsWith('image/'))
       .forEach((file) => {
-        const reader = new FileReader();
-        reader.onload = () => this.photos.update((list) => [...list, reader.result as string]);
-        reader.readAsDataURL(file);
+        compressImage(file)
+          .then((dataUrl) => this.photos.update((list) => [...list, dataUrl]))
+          .catch(() => this.toast.show('No se pudo procesar una foto', 'error'));
       });
   }
 
