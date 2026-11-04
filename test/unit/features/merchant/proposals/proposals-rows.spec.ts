@@ -6,6 +6,7 @@ import {
   buildProposalRows,
   isProposalStage,
   proposalLink,
+  summarizeProposals,
 } from '../../../../../src/app/features/merchant/proposals/proposal-rows';
 
 function buildGarment(overrides: Partial<Garment> = {}): Garment {
@@ -167,6 +168,39 @@ describe('buildProposalRows', () => {
     it('lleva al seguimiento si la prenda en revisión no tiene propuesta', () => {
       const [row] = rowsFor([buildGarment()]);
       expect(proposalLink(row)).toEqual(['/m/garment', 'g1']);
+    });
+  });
+
+  describe('summarizeProposals', () => {
+    it('cuenta las que esperan al comercio, las que esperan al cedente y suma su valor', () => {
+      const rows = rowsFor(
+        [
+          buildGarment({ id: 'a' }),
+          buildGarment({ id: 'b' }),
+          buildGarment({ id: 'c', status: 'counteroffer' }),
+          buildGarment({ id: 'd', status: 'no_agreement' }),
+        ],
+        [
+          buildProposal({ id: 'pa', garmentId: 'a', calculatedSalePrice: 10000 }),
+          buildProposal({ id: 'pb', garmentId: 'b', calculatedSalePrice: 4500 }),
+          buildProposal({ id: 'pc', garmentId: 'c', calculatedSalePrice: 8000 }),
+          buildProposal({ id: 'pd', garmentId: 'd', calculatedSalePrice: 7000 }),
+        ],
+      );
+
+      expect(summarizeProposals(rows)).toEqual({
+        toReview: 2,
+        waitingConsignor: 1,
+        toReviewSaleValue: 14500,
+      });
+    });
+
+    it('sin propuestas todo da cero', () => {
+      expect(summarizeProposals([])).toEqual({
+        toReview: 0,
+        waitingConsignor: 0,
+        toReviewSaleValue: 0,
+      });
     });
   });
 });

@@ -131,4 +131,26 @@ describe('MerchantProposals', () => {
     expect(element.textContent).toContain('Todavía no recibiste propuestas de cedentes.');
     expect(element.querySelector('select')).toBeNull();
   });
+
+  it('ofrece revisar solo las propuestas que esperan al comercio', () => {
+    const { element } = render();
+    const links = [...element.querySelectorAll('a')].filter(
+      (link) => link.textContent?.trim() === 'Revisar',
+    );
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/m/proposal/p-g1']);
+  });
+
+  it('resume las propuestas y el aviso lleva a las que hay que revisar', () => {
+    const { element, fixture, names } = render();
+    expect(element.textContent).toContain('Tenés 1 propuesta para revisar');
+
+    const notice = [...element.querySelectorAll('button')].find((button) =>
+      button.textContent?.includes('para revisar'),
+    );
+    notice!.click();
+    fixture.detectChanges();
+
+    expect(names()).toEqual(['Campera de jean']);
+    expect(element.textContent).not.toContain('Tenés 1 propuesta para revisar');
+  });
 });

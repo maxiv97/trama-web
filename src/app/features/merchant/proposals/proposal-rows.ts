@@ -26,6 +26,12 @@ export interface ProposalRow {
   createdAt: Date;
 }
 
+export interface ProposalsSummary {
+  toReview: number;
+  waitingConsignor: number;
+  toReviewSaleValue: number;
+}
+
 export function isProposalStage(status: GarmentStatus): boolean {
   return PROPOSAL_STATUSES.includes(status);
 }
@@ -89,4 +95,13 @@ export function proposalLink(row: ProposalRow): string[] {
     return ['/m/proposal', row.proposalId];
   }
   return ['/m/garment', row.garmentId];
+}
+
+export function summarizeProposals(rows: ProposalRow[]): ProposalsSummary {
+  const toReview = rows.filter((row) => row.status === 'under_review');
+  return {
+    toReview: toReview.length,
+    waitingConsignor: rows.filter((row) => row.status === 'counteroffer').length,
+    toReviewSaleValue: toReview.reduce((total, row) => total + (row.salePrice ?? 0), 0),
+  };
 }

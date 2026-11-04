@@ -20,6 +20,7 @@ import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
+import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 import { ShortDatePipe } from '../../../shared/pipes/short-date.pipe';
 import {
@@ -32,7 +33,13 @@ import {
   parseStatusFilter,
   salesPointOptions,
 } from './proposal-filters';
-import { PROPOSAL_STATUSES, ProposalRow, buildProposalRows, proposalLink } from './proposal-rows';
+import {
+  PROPOSAL_STATUSES,
+  ProposalRow,
+  buildProposalRows,
+  proposalLink,
+  summarizeProposals,
+} from './proposal-rows';
 
 type ProposalsState =
   | { status: 'loading' }
@@ -56,6 +63,7 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
     StatusBadge,
     MoneyPipe,
     ShortDatePipe,
+    StatCard,
     RouterLink,
   ],
   template: `
@@ -66,6 +74,31 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
     } @else if (rows(); as rows) {
       <div class="space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Propuestas</h1>
+
+        @if (summary().toReview > 0 && filters().status !== 'under_review') {
+          <button
+            type="button"
+            (click)="setFilter('status', 'under_review')"
+            class="flex w-full items-center justify-between rounded-2xl bg-status-pending-soft px-5 py-3 text-left text-sm hover:brightness-95"
+          >
+            <span class="font-medium text-trama-dark">
+              Tenés {{ summary().toReview }}
+              {{ summary().toReview === 1 ? 'propuesta para revisar' : 'propuestas para revisar' }}
+            </span>
+            <span class="font-medium text-trama-brand">Ver</span>
+          </button>
+        }
+
+        @if (rows.length) {
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <app-stat-card title="Por revisar" [value]="summary().toReview" />
+            <app-stat-card title="Esperando al cedente" [value]="summary().waitingConsignor" />
+            <app-stat-card
+              title="Valor de venta por revisar"
+              [value]="summary().toReviewSaleValue | money"
+            />
+          </div>
+        }
 
         @if (rows.length) {
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -229,6 +262,7 @@ export class MerchantProposals {
   );
   protected readonly consignors = computed(() => consignorOptions(this.rows() ?? []));
   protected readonly salesPoints = computed(() => salesPointOptions(this.rows() ?? []));
+  protected readonly summary = computed(() => summarizeProposals(this.rows() ?? []));
 
   protected setFilter<K extends keyof ProposalFilters>(key: K, value: ProposalFilters[K]): void {
     this.filters.update((current) => ({ ...current, [key]: value }));
