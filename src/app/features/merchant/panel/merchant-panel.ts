@@ -1,7 +1,16 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { CategorySales } from '../../../core/models/category-sales.model';
 import { SummaryReport } from '../../../core/models/summary.model';
@@ -20,6 +29,7 @@ interface Urgencia {
   meta: string;
   actionLabel: string;
   link: unknown[];
+  queryParams?: Record<string, string>;
   fragment?: string;
 }
 
@@ -63,7 +73,9 @@ const EXPIRY_URGENT_DAYS = 30;
             <h2 class="font-display text-lg font-semibold text-trama-dark">Qué hacer hoy</h2>
             <div class="overflow-hidden rounded-2xl border border-trama-sand-200 bg-white">
               @for (u of d.urgencias; track u.key) {
-                <div class="flex items-center gap-3 border-b border-trama-sand-100 px-4 py-3 last:border-0">
+                <div
+                  class="flex items-center gap-3 border-b border-trama-sand-100 px-4 py-3 last:border-0"
+                >
                   <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-trama-gold"></span>
                   <div class="min-w-0 flex-1">
                     <p class="text-sm font-semibold text-trama-dark">{{ u.title }}</p>
@@ -71,6 +83,7 @@ const EXPIRY_URGENT_DAYS = 30;
                   </div>
                   <a
                     [routerLink]="u.link"
+                    [queryParams]="u.queryParams"
                     [fragment]="u.fragment"
                     class="shrink-0 rounded-lg bg-trama-brand px-4 py-1.5 text-sm font-semibold text-white"
                   >
@@ -87,7 +100,9 @@ const EXPIRY_URGENT_DAYS = 30;
               >
               <div>
                 <p class="font-display font-semibold text-trama-dark">Todo al día</p>
-                <p class="text-sm text-trama-dark/50">No hay propuestas, vencimientos ni plazos urgentes.</p>
+                <p class="text-sm text-trama-dark/50">
+                  No hay propuestas, vencimientos ni plazos urgentes.
+                </p>
               </div>
             </div>
           }
@@ -95,14 +110,21 @@ const EXPIRY_URGENT_DAYS = 30;
 
         <!-- El período en números -->
         <section class="space-y-3">
-          <h2 class="text-xs font-semibold uppercase tracking-wide text-trama-dark/40">El mes en números</h2>
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-trama-dark/40">
+            El mes en números
+          </h2>
           <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
             @for (kpi of kpis(); track kpi.label) {
               <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
                 <p class="text-sm text-trama-dark/50">{{ kpi.label }}</p>
-                <p class="mt-1 font-display text-2xl font-semibold text-trama-dark">{{ kpi.value }}</p>
+                <p class="mt-1 font-display text-2xl font-semibold text-trama-dark">
+                  {{ kpi.value }}
+                </p>
                 @if (kpi.delta) {
-                  <p class="mt-1 text-xs font-medium" [class]="kpi.up ? 'text-trama-green-700' : 'text-status-none'">
+                  <p
+                    class="mt-1 text-xs font-medium"
+                    [class]="kpi.up ? 'text-trama-green-700' : 'text-status-none'"
+                  >
                     {{ kpi.delta }}
                   </p>
                 } @else {
@@ -117,8 +139,12 @@ const EXPIRY_URGENT_DAYS = 30;
           <!-- Ganancia por categoría -->
           <section class="rounded-2xl border border-trama-sand-200 bg-white p-5">
             <div class="mb-4 flex items-baseline justify-between">
-              <h2 class="font-display text-base font-semibold text-trama-dark">Ganancia por categoría</h2>
-              <a routerLink="/m/reports" class="text-xs font-semibold text-trama-brand">Ver reporte</a>
+              <h2 class="font-display text-base font-semibold text-trama-dark">
+                Ganancia por categoría
+              </h2>
+              <a routerLink="/m/reports" class="text-xs font-semibold text-trama-brand"
+                >Ver reporte</a
+              >
             </div>
             @if (d.categories.length) {
               <div class="space-y-3">
@@ -126,10 +152,15 @@ const EXPIRY_URGENT_DAYS = 30;
                   <div>
                     <div class="mb-1 flex justify-between text-sm">
                       <span class="text-trama-dark/70">{{ c.category }}</span>
-                      <span class="font-semibold text-trama-dark">{{ c.merchantProfit | money }}</span>
+                      <span class="font-semibold text-trama-dark">{{
+                        c.merchantProfit | money
+                      }}</span>
                     </div>
                     <span class="block h-2 rounded-full bg-trama-sand-100">
-                      <span class="block h-2 rounded-full bg-trama-green-700" [style.width.%]="catWidth(c)"></span>
+                      <span
+                        class="block h-2 rounded-full bg-trama-green-700"
+                        [style.width.%]="catWidth(c)"
+                      ></span>
                     </span>
                   </div>
                 }
@@ -142,20 +173,29 @@ const EXPIRY_URGENT_DAYS = 30;
           <!-- Ganancia por semana -->
           <section class="rounded-2xl border border-trama-sand-200 bg-white p-5">
             <div class="mb-4 flex items-baseline justify-between">
-              <h2 class="font-display text-base font-semibold text-trama-dark">Ganancia por semana</h2>
+              <h2 class="font-display text-base font-semibold text-trama-dark">
+                Ganancia por semana
+              </h2>
               <span class="text-xs text-trama-dark/40">últimas 6</span>
             </div>
             <div class="flex h-32 items-end gap-2 border-b border-trama-sand-200">
               @for (w of d.weekly; track w.weekStart) {
                 <div class="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                  <span class="text-[10px] text-trama-dark/40">{{ w.profit ? shortMoney(w.profit) : '' }}</span>
-                  <span class="w-full rounded-t bg-trama-green-700" [style.height.px]="weekHeight(w)"></span>
+                  <span class="text-[10px] text-trama-dark/40">{{
+                    w.profit ? shortMoney(w.profit) : ''
+                  }}</span>
+                  <span
+                    class="w-full rounded-t bg-trama-green-700"
+                    [style.height.px]="weekHeight(w)"
+                  ></span>
                 </div>
               }
             </div>
             <div class="mt-2 flex gap-2">
               @for (w of d.weekly; track w.weekStart) {
-                <span class="flex-1 text-center text-[10px] text-trama-dark/40">{{ weekLabel(w.weekStart) }}</span>
+                <span class="flex-1 text-center text-[10px] text-trama-dark/40">{{
+                  weekLabel(w.weekStart)
+                }}</span>
               }
             </div>
           </section>
@@ -199,10 +239,26 @@ export class MerchantPanel {
     const { current, previous } = d.summary;
     const money = (n: number): string => this.money.transform(n);
     return [
-      { label: 'Ganancia', value: money(current.profit), ...this.delta(current.profit, previous.profit) },
-      { label: 'Facturación', value: money(current.revenue), ...this.delta(current.revenue, previous.revenue) },
-      { label: 'Vendidas', value: String(current.soldCount), ...this.delta(current.soldCount, previous.soldCount) },
-      { label: 'Ticket promedio', value: money(current.avgTicket), ...this.delta(current.avgTicket, previous.avgTicket) },
+      {
+        label: 'Ganancia',
+        value: money(current.profit),
+        ...this.delta(current.profit, previous.profit),
+      },
+      {
+        label: 'Facturación',
+        value: money(current.revenue),
+        ...this.delta(current.revenue, previous.revenue),
+      },
+      {
+        label: 'Vendidas',
+        value: String(current.soldCount),
+        ...this.delta(current.soldCount, previous.soldCount),
+      },
+      {
+        label: 'Ticket promedio',
+        value: money(current.avgTicket),
+        ...this.delta(current.avgTicket, previous.avgTicket),
+      },
     ];
   });
 
@@ -232,7 +288,8 @@ export class MerchantPanel {
   }
 
   private delta(current: number, previous: number): { delta: string | null; up: boolean } {
-    if (previous === 0) return current > 0 ? { delta: 'nuevo', up: true } : { delta: null, up: true };
+    if (previous === 0)
+      return current > 0 ? { delta: 'nuevo', up: true } : { delta: null, up: true };
     const pct = Math.round(((current - previous) / previous) * 100);
     if (pct === 0) return { delta: 'igual que el período anterior', up: true };
     return { delta: `${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}% vs período anterior`, up: pct > 0 };
@@ -258,7 +315,8 @@ export class MerchantPanel {
             title: `${proposals.length} ${proposals.length === 1 ? 'propuesta para revisar' : 'propuestas para revisar'}`,
             meta: 'Cedentes esperando tu respuesta',
             actionLabel: 'Revisar',
-            link: ['/m/proposal', proposals[0].id],
+            link: ['/m/proposals'],
+            queryParams: { status: 'under_review' },
           });
         }
         if (overdue.length) {

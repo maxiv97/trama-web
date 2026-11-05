@@ -5,6 +5,7 @@ import { catchError, filter, map, of, switchMap } from 'rxjs';
 import {
   BarChart3,
   Bell,
+  Handshake,
   LayoutDashboard,
   LucideAngularModule,
   LucideIconData,
@@ -37,6 +38,7 @@ const MENUS: Record<Role, NavItem[]> = {
   ],
   merchant: [
     { label: 'Panel', link: '/m', icon: LayoutDashboard, exact: true },
+    { label: 'Propuestas', link: '/m/proposals', icon: Handshake },
     { label: 'Inventario', link: '/m/inventory', icon: Package },
     { label: 'Liquidaciones', link: '/m/payouts', icon: Receipt },
     { label: 'Reportes', link: '/m/reports', icon: BarChart3 },
@@ -70,9 +72,10 @@ const MENUS: Record<Role, NavItem[]> = {
                 <lucide-angular [img]="item.icon" [size]="20" />
                 <span>{{ item.label }}</span>
                 @if (item.badge && unread()) {
-                  <span class="ml-auto rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">{{
-                    unread()
-                  }}</span>
+                  <span
+                    class="ml-auto rounded-full bg-red-500 px-1.5 text-xs font-medium text-white"
+                    >{{ unread() }}</span
+                  >
                 }
               </a>
             }
@@ -161,9 +164,7 @@ export class Shell {
   protected readonly unread = toSignal(
     toObservable(this.unreadSource).pipe(
       switchMap(({ userId }) =>
-        userId
-          ? this.notifications.unreadCountFor(userId).pipe(catchError(() => of(0)))
-          : of(0),
+        userId ? this.notifications.unreadCountFor(userId).pipe(catchError(() => of(0))) : of(0),
       ),
     ),
     { initialValue: 0 },

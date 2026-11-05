@@ -101,7 +101,9 @@ type ConsignorsState =
                         —
                       } @else {
                         <div>{{ row.sellThroughRate }}%</div>
-                        <div class="text-trama-dark/50">{{ row.soldCount }} de {{ row.receivedCount }}</div>
+                        <div class="text-trama-dark/50">
+                          {{ row.soldCount }} de {{ row.receivedCount }}
+                        </div>
                       }
                     </td>
                     <td class="px-4 py-3 text-trama-dark/70">
@@ -155,7 +157,9 @@ export class Consignors {
     const totalDecided = rows.reduce((sum, r) => sum + r.decided, 0);
     const withPayout = rows.filter((r) => r.avgPayoutDays !== null);
     const payoutAvg = withPayout.length
-      ? Math.round(withPayout.reduce((sum, r) => sum + (r.avgPayoutDays ?? 0), 0) / withPayout.length)
+      ? Math.round(
+          withPayout.reduce((sum, r) => sum + (r.avgPayoutDays ?? 0), 0) / withPayout.length,
+        )
       : null;
     return {
       acceptanceRate: totalDecided ? Math.round((totalAccepted / totalDecided) * 100) : null,

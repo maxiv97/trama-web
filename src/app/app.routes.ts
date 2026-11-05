@@ -5,8 +5,7 @@ import { roleGuard } from './core/auth/role.guard';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./features/public/landing/landing').then((m) => m.Landing),
+    loadComponent: () => import('./features/public/landing/landing').then((m) => m.Landing),
   },
   {
     path: 'login',
@@ -65,6 +64,13 @@ export const routes: Routes = [
           import('./features/merchant/panel/merchant-panel').then((m) => m.MerchantPanel),
       },
       {
+        path: 'proposals',
+        loadComponent: () =>
+          import('./features/merchant/proposals/merchant-proposals').then(
+            (m) => m.MerchantProposals,
+          ),
+      },
+      {
         path: 'proposal/:id',
         loadComponent: () =>
           import('./features/merchant/review-proposal/review-proposal').then(
@@ -112,8 +118,7 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
-        loadComponent: () =>
-          import('./features/merchant/reports/reports').then((m) => m.Reports),
+        loadComponent: () => import('./features/merchant/reports/reports').then((m) => m.Reports),
       },
       { path: 'compliance', redirectTo: 'reports' },
       { path: 'financials', redirectTo: 'reports' },
