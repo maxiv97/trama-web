@@ -88,3 +88,52 @@
   /* radio de botón (el resto de la escala ya calza con rounded-lg/xl/2xl/full) */
   --radius-btn: 11px;
 }
+
+/* Estilos de texto responsive */
+@layer components {
+  .trama-display {
+    @apply font-display text-display;
+    @variant max-md {
+      font-size: 2.5rem;
+    }
+  }
+  .trama-title-1 {
+    @apply font-display text-title-1;
+    @variant max-md {
+      font-size: 1.875rem;
+    }
+  }
+  .trama-title-2 {
+    @apply font-display text-title-2;
+  }
+  .trama-title-3 {
+    @apply font-display text-title-3;
+  }
+  .trama-eyebrow {
+    @apply font-sans text-eyebrow uppercase;
+  }
+  .trama-lead {
+    @apply font-sans text-lead;
+    max-width: 70ch;
+  }
+  .trama-body {
+    @apply font-sans text-body;
+    max-width: 70ch;
+  }
+  .trama-label {
+    @apply font-sans text-label;
+  }
+  .trama-number {
+    @apply font-display text-number tabular-nums;
+  }
+}
+
+/* Títulos en Bricolage */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
+}
