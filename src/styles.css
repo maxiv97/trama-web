@@ -93,6 +93,22 @@
   --radius-modal: 24px;
   --radius-wizard: 26px;
   --radius-avatar: 18px;
+
+  /* sombras */
+  --shadow-elevated: 0 20px 60px rgba(31, 58, 43, 0.14);
+  --shadow-popover: 0 14px 40px rgba(31, 58, 43, 0.16);
+  --shadow-toast: 0 10px 30px rgba(31, 58, 43, 0.12);
+  --shadow-drawer: -16px 0 40px rgba(31, 58, 43, 0.18);
+  --color-trama-overlay: rgba(31, 58, 43, 0.28);
+
+  /* movimientos */
+  --duration-fast: 150ms; /* hover */
+  --duration-base: 250ms;
+  --duration-enter: 450ms;
+  --duration-stagger: 60ms;
+  --duration-sew: 750ms;
+  --ease-enter: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
 /* Estilos de texto responsive */
