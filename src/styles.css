@@ -4,18 +4,18 @@
   /* marca */
   --color-trama-brand: #2e7d54;
   --color-trama-teal: #1e8079;
-  --color-trama-gold: #e3a92b;
+  --color-trama-gold: #f2b636;
 
   /* tinta y neutrales */
-  --color-trama-dark: #1c2620;
-  --color-trama-muted: #868d83;
+  --color-trama-dark: #1f3a2b;
+  --color-trama-muted: #6b6a5e;
   --color-trama-faint: #9ca398;
 
   /* superficies */
-  --color-trama-sand-50: #edf2e5;
-  --color-trama-sand-100: #f2f6ec;
-  --color-trama-sand-200: rgba(0, 0, 0, 0.06);
-  --color-trama-sidebar: #19281d;
+  --color-trama-sand-50: #f6f0e2;
+  --color-trama-sand-100: #efebe0;
+  --color-trama-sand-200: rgba(31, 58, 43, 0.09);
+  --color-trama-sidebar: #1f3a2b;
 
   /* verdes derivados de marca (hover, rings, chips) */
   --color-trama-green-50: #dceddf;
