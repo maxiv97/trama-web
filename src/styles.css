@@ -1,17 +1,26 @@
 @import 'tailwindcss';
 
-@theme {
+@theme static {
   /* marca */
   --color-trama-brand: #2e7d54;
   --color-trama-teal: #1e8079;
   --color-trama-gold: #f2b636;
+  --color-trama-knot: #e07a3a;
+  --color-trama-sage: #7d9268;
+  --color-trama-terracotta: #b4553a;
+  --color-trama-red: #c0392b;
+  --color-trama-red-700: #a5301f;
 
   /* tinta y neutrales */
   --color-trama-dark: #1f3a2b;
+  --color-trama-body: #4f5a4e;
   --color-trama-muted: #6b6a5e;
   --color-trama-faint: #9ca398;
+  --color-trama-thread-light: #d6cfbb;
+  --color-trama-thread-faint: #c9c2ae;
 
   /* superficies */
+  --color-trama-paper: #fffdf7;
   --color-trama-sand-50: #f6f0e2;
   --color-trama-sand-100: #efebe0;
   --color-trama-sand-200: rgba(31, 58, 43, 0.09);
