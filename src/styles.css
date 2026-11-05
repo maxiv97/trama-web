@@ -85,8 +85,14 @@
   --text-number--line-height: 1.1;
   --text-number--font-weight: 800;
 
-  /* radio de botón (el resto de la escala ya calza con rounded-lg/xl/2xl/full) */
+  /* radios */
   --radius-btn: 11px;
+  --radius-field: 11px;
+  --radius-popover: 16px;
+  --radius-card: 20px;
+  --radius-modal: 24px;
+  --radius-wizard: 26px;
+  --radius-avatar: 18px;
 }
 
 /* Estilos de texto responsive */
