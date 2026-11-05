@@ -111,6 +111,20 @@
   --ease-bounce: cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
+/* accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-base: 150ms;
+    --duration-enter: 150ms;
+    --duration-stagger: 0ms;
+    --duration-sew: 0ms;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 /* Estilos de texto responsive */
 @layer components {
   .trama-display {
