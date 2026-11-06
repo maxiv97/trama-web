@@ -439,6 +439,63 @@
     border-color: transparent;
     box-shadow: var(--shadow-elevated);
   }
+
+  .trama-badge {
+    --badge-fg: var(--color-status-neutral);
+    --badge-bg: var(--color-status-neutral-soft);
+
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 11px;
+    border-radius: 999px;
+    background-color: var(--badge-bg);
+    color: var(--badge-fg);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem; /* 13px */
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+
+  .trama-badge::before {
+    content: '';
+    flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+  }
+
+  .trama-badge--pending {
+    --badge-fg: var(--color-status-pending);
+    --badge-bg: var(--color-status-pending-soft);
+  }
+
+  .trama-badge--counter {
+    --badge-fg: var(--color-status-counter);
+    --badge-bg: var(--color-status-counter-soft);
+  }
+
+  .trama-badge--agreed {
+    --badge-fg: var(--color-status-agreed);
+    --badge-bg: var(--color-status-agreed-soft);
+  }
+
+  .trama-badge--sold {
+    --badge-fg: var(--color-status-sold);
+    --badge-bg: var(--color-status-sold-soft);
+  }
+
+  .trama-badge--settled {
+    --badge-fg: var(--color-status-settled);
+    --badge-bg: var(--color-status-settled-soft);
+  }
+
+  .trama-badge--none {
+    --badge-fg: var(--color-status-none);
+    --badge-bg: var(--color-status-none-soft);
+  }
 }
 
 /* Títulos en Bricolage */
