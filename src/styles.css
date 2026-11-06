@@ -423,6 +423,24 @@
   }
 }
 
+/* Tarjetas, badges de estado y tablas */
+@layer components {
+  .trama-card {
+    padding: 24px;
+    border: 1px solid var(--color-trama-sand-200);
+    border-radius: var(--radius-card);
+    background-color: var(--color-trama-paper);
+    @variant md {
+      padding: 32px;
+    }
+  }
+
+  .trama-card--raised {
+    border-color: transparent;
+    box-shadow: var(--shadow-elevated);
+  }
+}
+
 /* Títulos en Bricolage */
 @layer base {
   h1,
