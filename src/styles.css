@@ -1,21 +1,30 @@
 @import 'tailwindcss';
 
-@theme {
+@theme static {
   /* marca */
   --color-trama-brand: #2e7d54;
   --color-trama-teal: #1e8079;
-  --color-trama-gold: #e3a92b;
+  --color-trama-gold: #f2b636;
+  --color-trama-knot: #e07a3a;
+  --color-trama-sage: #7d9268;
+  --color-trama-terracotta: #b4553a;
+  --color-trama-red: #c0392b;
+  --color-trama-red-700: #a5301f;
 
   /* tinta y neutrales */
-  --color-trama-dark: #1c2620;
-  --color-trama-muted: #868d83;
+  --color-trama-dark: #1f3a2b;
+  --color-trama-body: #4f5a4e;
+  --color-trama-muted: #6b6a5e;
   --color-trama-faint: #9ca398;
+  --color-trama-thread-light: #d6cfbb;
+  --color-trama-thread-faint: #c9c2ae;
 
   /* superficies */
-  --color-trama-sand-50: #edf2e5;
-  --color-trama-sand-100: #f2f6ec;
-  --color-trama-sand-200: rgba(0, 0, 0, 0.06);
-  --color-trama-sidebar: #19281d;
+  --color-trama-paper: #fffdf7;
+  --color-trama-sand-50: #f6f0e2;
+  --color-trama-sand-100: #efebe0;
+  --color-trama-sand-200: rgba(31, 58, 43, 0.09);
+  --color-trama-sidebar: #1f3a2b;
 
   /* verdes derivados de marca (hover, rings, chips) */
   --color-trama-green-50: #dceddf;
@@ -25,8 +34,8 @@
   /* semánticos de estado */
   --color-status-agreed: #2e7d54;
   --color-status-agreed-soft: #dceddf;
-  --color-status-sold: #1e8079;
-  --color-status-sold-soft: #d7ebe4;
+  --color-status-sold: #56703f;
+  --color-status-sold-soft: #e6ebda;
   --color-status-pending: #9a6b12;
   --color-status-pending-soft: #f7ebd2;
   --color-status-counter: #b5791f;
@@ -42,6 +51,125 @@
   --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
 
-  /* radio de botón (el resto de la escala ya calza con rounded-lg/xl/2xl/full) */
+  /* tamaño / interlineado / peso */
+  --text-display: 3.25rem;
+  --text-display--line-height: 1;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 800;
+  --text-title-1: 2.25rem;
+  --text-title-1--line-height: 1.05;
+  --text-title-1--letter-spacing: -0.025em;
+  --text-title-1--font-weight: 700;
+  --text-title-2: 1.5rem;
+  --text-title-2--line-height: 1.15;
+  --text-title-2--letter-spacing: -0.02em;
+  --text-title-2--font-weight: 700;
+  --text-title-3: 1.1875rem;
+  --text-title-3--line-height: 1.25;
+  --text-title-3--letter-spacing: -0.01em;
+  --text-title-3--font-weight: 600;
+  --text-eyebrow: 0.75rem;
+  --text-eyebrow--line-height: 1.3;
+  --text-eyebrow--letter-spacing: 0.1em;
+  --text-eyebrow--font-weight: 700;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.55;
+  --text-lead--font-weight: 400;
+  --text-body: 1rem;
+  --text-body--line-height: 1.55;
+  --text-body--font-weight: 400;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.4;
+  --text-label--font-weight: 600;
+  --text-number: 1.75rem;
+  --text-number--line-height: 1.1;
+  --text-number--font-weight: 800;
+
+  /* radios */
   --radius-btn: 11px;
+  --radius-field: 11px;
+  --radius-popover: 16px;
+  --radius-card: 20px;
+  --radius-modal: 24px;
+  --radius-wizard: 26px;
+  --radius-avatar: 18px;
+
+  /* sombras */
+  --shadow-elevated: 0 20px 60px rgba(31, 58, 43, 0.14);
+  --shadow-popover: 0 14px 40px rgba(31, 58, 43, 0.16);
+  --shadow-toast: 0 10px 30px rgba(31, 58, 43, 0.12);
+  --shadow-drawer: -16px 0 40px rgba(31, 58, 43, 0.18);
+  --color-trama-overlay: rgba(31, 58, 43, 0.28);
+
+  /* movimientos */
+  --duration-fast: 150ms; /* hover */
+  --duration-base: 250ms;
+  --duration-enter: 450ms;
+  --duration-stagger: 60ms;
+  --duration-sew: 750ms;
+  --ease-enter: cubic-bezier(0.2, 0.8, 0.3, 1);
+  --ease-bounce: cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+/* accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-base: 150ms;
+    --duration-enter: 150ms;
+    --duration-stagger: 0ms;
+    --duration-sew: 0ms;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Estilos de texto responsive */
+@layer components {
+  .trama-display {
+    @apply font-display text-display;
+    @variant max-md {
+      font-size: 2.5rem;
+    }
+  }
+  .trama-title-1 {
+    @apply font-display text-title-1;
+    @variant max-md {
+      font-size: 1.875rem;
+    }
+  }
+  .trama-title-2 {
+    @apply font-display text-title-2;
+  }
+  .trama-title-3 {
+    @apply font-display text-title-3;
+  }
+  .trama-eyebrow {
+    @apply font-sans text-eyebrow uppercase;
+  }
+  .trama-lead {
+    @apply font-sans text-lead;
+    max-width: 70ch;
+  }
+  .trama-body {
+    @apply font-sans text-body;
+    max-width: 70ch;
+  }
+  .trama-label {
+    @apply font-sans text-label;
+  }
+  .trama-number {
+    @apply font-display text-number tabular-nums;
+  }
+}
+
+/* Títulos en Bricolage */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+  }
 }
