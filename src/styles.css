@@ -18,6 +18,7 @@
   --color-trama-faint: #9ca398;
   --color-trama-thread-light: #d6cfbb;
   --color-trama-thread-faint: #c9c2ae;
+  --color-trama-placeholder: #8a8778;
 
   /* superficies */
   --color-trama-paper: #fffdf7;
@@ -282,6 +283,84 @@
     outline: 3px solid var(--color-trama-green-50);
     outline-offset: 2px;
     border-radius: 4px;
+  }
+}
+
+/* campos de formulario */
+@layer components {
+  .trama-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .trama-help {
+    color: var(--color-trama-muted);
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .trama-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-trama-red);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .trama-error::before {
+    content: '';
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M2 8h3.5M10.5 8H14M6.5 5.5l3 5M9.5 5.5l-3 5'/%3E%3C/svg%3E")
+      center / contain no-repeat;
+  }
+
+  .trama-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-field);
+    outline: 3px solid transparent;
+    background-color: var(--color-trama-sand-50);
+    color: var(--color-trama-dark);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem; /* 15px */
+    line-height: 1.4;
+    transition:
+      background-color var(--duration-fast),
+      border-color var(--duration-fast),
+      outline-color var(--duration-fast);
+  }
+
+  .trama-input::placeholder {
+    color: var(--color-trama-placeholder);
+    opacity: 1;
+  }
+
+  .trama-input:focus {
+    border-color: var(--color-trama-brand);
+    outline-color: var(--color-trama-green-50);
+    background-color: var(--color-trama-paper);
+  }
+
+  .trama-input[aria-invalid='true'] {
+    border-color: var(--color-trama-red);
+    outline-color: var(--color-status-none-soft);
+  }
+
+  .trama-input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  textarea.trama-input {
+    min-height: 6rem;
+    resize: vertical;
   }
 }
 
