@@ -74,7 +74,7 @@ function rangeFor(key: string): { from?: string; to?: string } {
           class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
         >
           <option value="">Todas las categorías</option>
-          @for (o of categories; track o.value) {
+          @for (o of categories(); track o.value) {
             <option [value]="o.value">{{ o.label }}</option>
           }
         </select>
@@ -122,7 +122,11 @@ export class ReportsFilterBar {
 
   protected readonly periods = PERIODS;
   protected readonly periodKey = signal<string>('all');
-  protected readonly categories = this.options.categories;
+
+  protected readonly categories = toSignal(
+    this.auth.user()?.id ? this.options.categories(this.auth.user()!.id) : of<FilterOption[]>([]),
+    { initialValue: [] as FilterOption[] },
+  );
 
   protected readonly salesPoints = toSignal(
     this.auth.user()?.id ? this.options.salesPoints(this.auth.user()!.id) : of<FilterOption[]>([]),
