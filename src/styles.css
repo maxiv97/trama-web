@@ -496,6 +496,103 @@
     --badge-fg: var(--color-status-none);
     --badge-bg: var(--color-status-none-soft);
   }
+
+  .trama-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.9375rem; /* 15px */
+  }
+
+  .trama-table th {
+    padding: 10px 12px 14px;
+    background-image: linear-gradient(to right, var(--color-trama-dark) 9px, transparent 9px);
+    background-position: left bottom;
+    background-repeat: repeat-x;
+    background-size: 16px 2.5px;
+    color: var(--color-trama-muted);
+    font-size: 0.75rem; /* 12px */
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .trama-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-trama-sand-100);
+    vertical-align: middle;
+    transition: background-color var(--duration-fast);
+  }
+
+  .trama-table tbody tr:last-child td {
+    border-bottom-color: transparent;
+  }
+
+  .trama-table tbody tr {
+    cursor: pointer;
+  }
+
+  .trama-table tbody tr:hover td {
+    background-color: var(--color-trama-sand-50);
+  }
+
+  .trama-table tbody tr:hover td:first-child {
+    border-radius: 14px 0 0 14px;
+  }
+
+  .trama-table tbody tr:hover td:last-child {
+    border-radius: 0 14px 14px 0;
+  }
+
+  .trama-table__meta {
+    display: block;
+    color: var(--color-trama-muted);
+    font-size: 0.8125rem; /* 13px */
+  }
+
+  .trama-table__amount {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .trama-table th.trama-table__amount {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    text-align: right;
+  }
+
+  .trama-table__chevron {
+    width: 24px;
+    color: var(--color-trama-thread-faint);
+    text-align: center;
+  }
+
+  .trama-table tbody tr:hover .trama-table__chevron {
+    color: var(--color-trama-dark);
+  }
+
+  .trama-table-scroll {
+    overflow-x: auto;
+  }
+
+  .trama-thumb {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background-color: var(--color-trama-sand-100);
+    object-fit: cover;
+  }
+
+  .trama-thumb--blob {
+    background-color: var(--color-trama-gold);
+    transform: rotate(-6deg);
+  }
 }
 
 /* Títulos en Bricolage */
