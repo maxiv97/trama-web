@@ -39,7 +39,8 @@ const TONES: Record<BlobTone, string> = {
     }
 
     .blob,
-    .glyph {
+    .glyph,
+    .initials {
       grid-area: 1 / 1;
     }
 
