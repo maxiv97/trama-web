@@ -38,6 +38,7 @@ const TONES: Record<BlobTone, string> = {
       color: var(--color-trama-dark);
     }
 
+    // Centrar el icono o iniciales
     .blob,
     .glyph,
     .initials {
