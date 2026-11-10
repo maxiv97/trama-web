@@ -10,7 +10,8 @@
     "test/unit/core/state-machine/garment.state-machine.spec.ts",
     "test/unit/core/utils/price.util.spec.ts",
     "test/unit/core/utils/geo.util.spec.ts",
-    "test/unit/shared/csv/to-csv.spec.ts"
+    "test/unit/shared/csv/to-csv.spec.ts",
+    "src/app/shared/components/blob-icon"
   ],
   "exclude": ["src/**/*.spec.ts"]
 }
