@@ -54,4 +54,28 @@ describe('BlobIcon', () => {
   it('es decorativo para los lectores de pantalla', () => {
     expect(render().host.getAttribute('aria-hidden')).toBe('true');
   });
+
+  it('como avatar muestra hasta dos iniciales en mayúscula, sin ícono', () => {
+    const fixture = TestBed.createComponent(BlobIcon);
+    fixture.componentRef.setInput('initials', 'lfx');
+    fixture.componentRef.setInput('size', 64);
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+    const initials = host.querySelector('.initials') as HTMLElement;
+
+    expect(initials.textContent?.trim()).toBe('LF');
+    expect(initials.style.fontSize).toBe('22px');
+    expect(host.querySelector('.glyph')).toBeNull();
+  });
+
+  it('si recibe ícono e iniciales, gana el ícono', () => {
+    const fixture = TestBed.createComponent(BlobIcon);
+    fixture.componentRef.setInput('icon', Inbox);
+    fixture.componentRef.setInput('initials', 'LF');
+    fixture.detectChanges();
+    const host = fixture.nativeElement as HTMLElement;
+
+    expect(host.querySelector('.glyph')).not.toBeNull();
+    expect(host.querySelector('.initials')).toBeNull();
+  });
 });

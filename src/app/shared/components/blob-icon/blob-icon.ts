@@ -24,7 +24,11 @@ const TONES: Record<BlobTone, string> = {
         d="M0,-28 C18,-28 30,-14 28,4 C26,22 12,30 -4,28 C-20,26 -30,12 -28,-6 C-26,-22 -14,-28 0,-28Z"
       />
     </svg>
-    <lucide-angular class="glyph" [img]="icon()" [size]="glyphSize()" [strokeWidth]="2" />
+    @if (icon(); as glyph) {
+      <lucide-angular class="glyph" [img]="glyph" [size]="glyphSize()" [strokeWidth]="2" />
+    } @else if (letters()) {
+      <span class="initials" [style.font-size.px]="initialsSize()">{{ letters() }}</span>
+    }
   `,
   styles: `
     :host {
@@ -39,18 +43,30 @@ const TONES: Record<BlobTone, string> = {
       grid-area: 1 / 1;
     }
 
+    .initials {
+      font-family: var(--font-display);
+      font-weight: 800;
+      line-height: 1;
+    }
+
     .glyph {
       display: flex;
     }
   `,
 })
 export class BlobIcon {
-  readonly icon = input.required<LucideIconData>();
+  readonly icon = input<LucideIconData>();
+  readonly initials = input<string>();
   // 34 px en encabezados y 72 px a 104 px en ilustraciones y estados vacíos
   readonly size = input(34);
   readonly tone = input<BlobTone>('gold');
 
   protected readonly fill = computed(() => TONES[this.tone()]);
+  protected readonly letters = computed(() =>
+    (this.initials() ?? '').trim().slice(0, 2).toUpperCase(),
+  );
+  // Iniciales: 22 px en blob de 64 px
+  protected readonly initialsSize = computed(() => Math.round(this.size() * 0.34));
   // Tamaño del icono sobre el blob
   // Encabezados: 18 px sobre 34 px
   // Ilustraciones: 36 px sobre 72 px o 52 px sobre 104 px
