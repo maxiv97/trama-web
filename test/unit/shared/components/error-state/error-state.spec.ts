@@ -31,4 +31,24 @@ describe('ErrorState', () => {
     expect(anchor?.textContent?.trim()).toBe('Volver al panel');
     expect(host.querySelector('button')).toBeNull();
   });
+
+  it('por defecto el título es "Se cortó el hilo" y debajo va el mensaje', () => {
+    const fixture = TestBed.createComponent(ErrorState);
+    fixture.componentRef.setInput('message', 'No pudimos cargar tu panel.');
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('.title')?.textContent?.trim()).toBe('Se cortó el hilo');
+    expect(host.querySelector('.message')?.textContent?.trim()).toBe('No pudimos cargar tu panel.');
+  });
+
+  it('se anuncia como alerta y la ilustración es decorativa', () => {
+    const fixture = TestBed.createComponent(ErrorState);
+    fixture.componentRef.setInput('message', 'No pudimos cargar.');
+    fixture.detectChanges();
+
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('[role="alert"]')).not.toBeNull();
+    expect(host.querySelector('svg.cut-thread')?.getAttribute('aria-hidden')).toBe('true');
+  });
 });
