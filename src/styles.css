@@ -634,6 +634,23 @@
   }
 }
 
+/* Pespunte */
+@layer components {
+  .trama-inner-stitch {
+    position: relative;
+  }
+
+  .trama-inner-stitch::after {
+    content: '';
+    position: absolute;
+    inset: var(--inner-stitch-inset, 9px);
+    border: var(--inner-stitch-width, 2.5px) dashed
+      var(--inner-stitch-color, var(--color-trama-thread-faint));
+    border-radius: var(--inner-stitch-radius, 13px);
+    pointer-events: none;
+  }
+}
+
 /* Títulos en Bricolage */
 @layer base {
   h1,
