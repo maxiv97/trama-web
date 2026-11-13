@@ -1,14 +1,15 @@
 import { Injectable, signal } from '@angular/core';
 
-export type ToastType = 'success' | 'error';
+export type ToastType = 'success' | 'error' | 'warning';
 
 export interface ToastMessage {
   id: number;
   text: string;
   type: ToastType;
+  detail?: string;
 }
 
-const DISMISS_MS = 3000;
+export const TOAST_DURATION_MS = 5000;
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
@@ -17,10 +18,10 @@ export class ToastService {
 
   readonly messages = this.toasts.asReadonly();
 
-  show(text: string, type: ToastType = 'success'): void {
+  show(text: string, type: ToastType = 'success', detail?: string): void {
     const id = ++this.sequence;
-    this.toasts.update((list) => [...list, { id, text, type }]);
-    setTimeout(() => this.dismiss(id), DISMISS_MS);
+    this.toasts.update((list) => [...list, { id, text, type, detail }]);
+    setTimeout(() => this.dismiss(id), TOAST_DURATION_MS);
   }
 
   dismiss(id: number): void {

@@ -41,12 +41,14 @@
   --color-status-sold-soft: #e6ebda;
   --color-status-pending: #9a6b12;
   --color-status-pending-soft: #f7ebd2;
+  --color-status-pending-ink: #6e4c0d;
   --color-status-counter: #b5791f;
   --color-status-counter-soft: #f6eccf;
   --color-status-settled: #a87a1b;
   --color-status-settled-soft: #f4ebc9;
   --color-status-none: #c0392b;
   --color-status-none-soft: #f7dedb;
+  --color-status-none-ink: #8f2a1f;
   --color-status-neutral: #586056;
   --color-status-neutral-soft: #dde4d2;
 
@@ -594,6 +596,58 @@
   .trama-thumb--blob {
     background-color: var(--color-trama-gold);
     transform: rotate(-6deg);
+  }
+}
+
+/* Alertas */
+@layer components {
+  .trama-alert {
+    --alert-bg: var(--color-status-pending-soft);
+    --alert-ink: var(--color-status-pending-ink);
+    --alert-icon-color: var(--color-status-pending);
+    --alert-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-dasharray='3 2.4'%3E%3Cpath d='M2 11c2-3 4-3 6 0s4 3 6 0 3-2 4-1'/%3E%3C/svg%3E");
+
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background-color: var(--alert-bg);
+    color: var(--alert-ink);
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  .trama-alert::before {
+    content: '';
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background-color: var(--alert-icon-color);
+    mask: var(--alert-icon) center / contain no-repeat;
+  }
+
+  .trama-alert--danger {
+    --alert-bg: var(--color-status-none-soft);
+    --alert-ink: var(--color-status-none-ink);
+    --alert-icon-color: var(--color-trama-red);
+    --alert-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M2 8h3.5M10.5 8H14M6.5 5.5l3 5M9.5 5.5l-3 5'/%3E%3C/svg%3E");
+  }
+}
+
+/* Pespunte */
+@layer components {
+  .trama-inner-stitch {
+    position: relative;
+  }
+
+  .trama-inner-stitch::after {
+    content: '';
+    position: absolute;
+    inset: var(--inner-stitch-inset, 9px);
+    border: var(--inner-stitch-width, 2.5px) dashed
+      var(--inner-stitch-color, var(--color-trama-thread-faint));
+    border-radius: var(--inner-stitch-radius, 13px);
+    pointer-events: none;
   }
 }
 

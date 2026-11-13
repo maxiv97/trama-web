@@ -1,56 +1,125 @@
 import { Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-type ConfirmColor = 'green' | 'red' | 'blue';
+/** Verde para confirmar, rojo para lo que no se puede deshacer (rechazar, cancelar). */
+export type ConfirmColor = 'green' | 'red';
 
-const COLOR_CLASSES: Record<ConfirmColor, string> = {
-  green: 'bg-trama-brand hover:bg-trama-green-700',
-  red: 'bg-status-none hover:brightness-90',
-  blue: 'bg-blue-600 hover:bg-blue-700',
-};
+let nextTitleId = 0;
 
 @Component({
   selector: 'app-confirm-modal',
   imports: [FormsModule],
+  host: { '(document:keydown.escape)': 'closeWithEscape()' },
   template: `
     @if (open()) {
-      <div
-        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-        (click)="cancelled.emit()"
-      >
-        <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg" (click)="$event.stopPropagation()">
-          <h2 class="text-lg font-semibold text-trama-dark">{{ title() }}</h2>
-          <p class="mt-2 text-sm text-trama-dark/70">{{ body() }}</p>
+      <div class="overlay" (click)="cancelled.emit()">
+        <div
+          class="dialog trama-inner-stitch"
+          role="dialog"
+          aria-modal="true"
+          [attr.aria-labelledby]="titleId"
+          (click)="$event.stopPropagation()"
+        >
+          <h2 class="title" [id]="titleId">{{ title() }}</h2>
+          <p class="body">{{ body() }}</p>
 
           @if (optionalField(); as fieldLabel) {
-            <label class="mt-4 block text-sm">
-              <span class="text-trama-dark/70">{{ fieldLabel }}</span>
-              <input
-                [(ngModel)]="fieldValue"
-                class="mt-1 w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm outline-none focus:border-trama-brand"
-              />
+            <label class="trama-field">
+              <span class="trama-label">{{ fieldLabel }}</span>
+              <input class="trama-input" [(ngModel)]="fieldValue" />
             </label>
           }
 
-          <div class="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              (click)="cancelled.emit()"
-              class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
-            >
+          <div class="actions">
+            <button type="button" class="trama-btn trama-btn--ghost" (click)="cancelled.emit()">
               Cancelar
             </button>
             <button
               type="button"
+              class="trama-btn"
+              [class.trama-btn--danger]="confirmColor() === 'red'"
               (click)="confirm()"
-              class="rounded-lg px-4 py-2 text-sm font-medium text-white"
-              [class]="confirmClass()"
             >
               {{ confirmLabel() }}
             </button>
           </div>
         </div>
       </div>
+    }
+  `,
+  styles: `
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background-color: var(--color-trama-overlay);
+      animation: modal-fade var(--duration-base) ease-out both;
+    }
+
+    .dialog {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 440px;
+      padding: 28px;
+      border-radius: var(--radius-card);
+      background-color: var(--color-trama-paper);
+      box-shadow: var(--shadow-elevated);
+      animation: modal-enter var(--duration-base) var(--ease-enter) both;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--color-trama-dark);
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .body {
+      margin: 0;
+      color: var(--color-trama-body);
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    @keyframes modal-fade {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes modal-enter {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .dialog {
+        animation: modal-fade 150ms ease-out both;
+      }
     }
   `,
 })
@@ -65,6 +134,7 @@ export class ConfirmModal {
   readonly confirmed = output<string | undefined>();
   readonly cancelled = output<void>();
 
+  protected readonly titleId = `confirm-modal-title-${nextTitleId++}`;
   protected fieldValue = '';
 
   protected confirm(): void {
@@ -72,7 +142,7 @@ export class ConfirmModal {
     this.confirmed.emit(value);
   }
 
-  protected confirmClass(): string {
-    return COLOR_CLASSES[this.confirmColor()];
+  protected closeWithEscape(): void {
+    if (this.open()) this.cancelled.emit();
   }
 }
