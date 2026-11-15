@@ -29,7 +29,7 @@ const ACTOR_LABELS: Record<EventActor, string> = {
             <p class="who">
               {{ actorLabel(event.actor) }}
               @if (event.note) {
-                · {{ event.note }}
+                - {{ event.note }}
               }
             </p>
           </div>
