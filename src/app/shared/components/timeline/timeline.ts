@@ -13,31 +13,106 @@ const ACTOR_LABELS: Record<EventActor, string> = {
   selector: 'app-timeline',
   imports: [StatusBadge, ShortDatePipe],
   template: `
-    <ol class="space-y-1">
+    <ol>
       @for (event of events(); track $index; let last = $last) {
-        <li class="flex gap-3">
-          <div class="flex flex-col items-center">
-            <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-trama-brand"></span>
-            @if (!last) {
-              <span class="w-px flex-1 bg-trama-sand-200"></span>
-            }
-          </div>
-          <div class="pb-4">
-            <div class="flex items-center gap-2">
+        <li [class.latest]="last">
+          <span class="thread" aria-hidden="true">
+            <span class="knot"></span>
+          </span>
+          <div class="event">
+            <div class="when">
               <app-status-badge [status]="event.status" />
-              <span class="text-xs text-trama-dark/50">{{ event.date | shortDate }}</span>
+              <time class="date" [attr.datetime]="isoDate(event.date)">{{
+                event.date | shortDate
+              }}</time>
             </div>
-            <p class="mt-1 text-sm text-trama-dark/70">
-              {{ actorLabel(event.actor) }}@if (event.note) {
-                <span> · {{ event.note }}</span>
+            <p class="who">
+              {{ actorLabel(event.actor) }}
+              @if (event.note) {
+                · {{ event.note }}
               }
             </p>
           </div>
         </li>
       } @empty {
-        <li class="text-sm text-trama-dark/50">Sin eventos todavía.</li>
+        <li class="empty">Sin eventos todavía.</li>
       }
     </ol>
+  `,
+  styles: `
+    ol {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    li {
+      display: flex;
+      gap: 14px;
+    }
+
+    .thread {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      width: 10px;
+    }
+
+    .knot {
+      width: 10px;
+      height: 10px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background-color: var(--color-trama-dark);
+    }
+
+    li:not(:last-child) .thread::after {
+      content: '';
+      flex: 1;
+      width: 3px;
+      margin-block: 4px;
+      background: linear-gradient(to bottom, var(--color-trama-dark) 9px, transparent 9px) 0 0 / 3px
+        15px repeat-y;
+    }
+
+    .latest .knot {
+      background-color: var(--color-trama-knot);
+    }
+
+    .event {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    li:not(:last-child) .event {
+      padding-bottom: 14px;
+    }
+
+    .when {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .date {
+      color: var(--color-trama-muted);
+      font-size: 0.8125rem; /* 13px */
+    }
+
+    .who {
+      margin: 0;
+      color: var(--color-trama-body);
+      font-size: 0.875rem; /* 14px */
+    }
+
+    .empty {
+      color: var(--color-trama-muted);
+      font-size: 0.875rem;
+    }
   `,
 })
 export class Timeline {
@@ -45,5 +120,9 @@ export class Timeline {
 
   protected actorLabel(actor: EventActor): string {
     return ACTOR_LABELS[actor];
+  }
+
+  protected isoDate(date: Date | string): string {
+    return new Date(date).toISOString();
   }
 }
