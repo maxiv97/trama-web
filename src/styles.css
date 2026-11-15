@@ -651,6 +651,42 @@
   }
 }
 
+/* Esqueleto */
+@layer components {
+  .trama-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: skeleton-breathe 1.4s ease-in-out infinite;
+  }
+
+  .trama-skeleton-block {
+    min-height: 56px;
+    border: 2px dashed var(--color-trama-thread-faint);
+    border-radius: var(--radius-popover);
+  }
+
+  .trama-skeleton-block--text {
+    min-height: 16px;
+    border-radius: 8px;
+  }
+
+  .trama-skeleton-block--title {
+    min-height: 30px;
+    border-radius: 10px;
+  }
+
+  .trama-skeleton-block--round {
+    border-radius: 999px;
+  }
+
+  @keyframes skeleton-breathe {
+    50% {
+      opacity: 0.55;
+    }
+  }
+}
+
 /* Títulos en Bricolage */
 @layer base {
   h1,
