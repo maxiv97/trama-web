@@ -10,7 +10,7 @@ import {
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 import { Coords, MapPickerDirective } from '../../../shared/directives/map-picker.directive';
-import { validationMessage } from '../../../core/utils/validation.util';
+import { notBlank, validationMessage } from '../../../core/utils/validation.util';
 
 interface StepDef {
   id: string;
@@ -240,15 +240,24 @@ interface SummaryRow {
                         <div class="sm:col-span-2">
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre y apellido</label>
                           <input formControlName="name" placeholder="María Vega" [class]="inputClass" />
+                          @if (errorFor(accountForm.controls.name); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                       } @else {
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
                           <input formControlName="firstName" placeholder="María" [class]="inputClass" />
+                          @if (errorFor(accountForm.controls.firstName); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Apellido</label>
                           <input formControlName="lastName" placeholder="Vega" [class]="inputClass" />
+                          @if (errorFor(accountForm.controls.lastName); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                       }
                       <div>
@@ -777,9 +786,19 @@ export class Register {
 
   protected pick(role: Role): void {
     this.role.set(role);
+    this.applyNameValidators(role);
     this.step.set(0);
     this.view.set('wizard');
     this.attempted.set(false);
+  }
+
+  private applyNameValidators(role: Role): void {
+    const { name, firstName, lastName } = this.accountForm.controls;
+    const isMerchant = role === 'merchant';
+    name.setValidators(isMerchant ? notBlank : null);
+    firstName.setValidators(isMerchant ? null : notBlank);
+    lastName.setValidators(isMerchant ? null : notBlank);
+    [name, firstName, lastName].forEach((control) => control.updateValueAndValidity());
   }
 
   protected circleClass(index: number): string {
@@ -845,19 +864,10 @@ export class Register {
     this.code.set(value.replace(/\D/g, '').slice(0, 6));
   }
 
-  // The consignor uses first/last name, the merchant a single name; names have no form validators
-  // (they differ by role), so check the right ones here.
-  private accountNamesValid(): boolean {
-    const { name, firstName, lastName } = this.accountForm.controls;
-    return this.role() === 'merchant'
-      ? !!name.value?.trim()
-      : !!firstName.value?.trim() && !!lastName.value?.trim();
-  }
-
   protected canAdvance(): boolean {
     switch (this.current().id) {
       case 'account':
-        return this.accountForm.valid && this.accountNamesValid() && !this.passwordMismatch();
+        return this.accountForm.valid && !this.passwordMismatch();
       case 'dni':
         return this.dniForm.valid;
       case 'location':

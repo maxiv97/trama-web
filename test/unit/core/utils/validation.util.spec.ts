@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FormControl, Validators } from '@angular/forms';
-import { validationMessage } from '../../../../src/app/core/utils/validation.util';
+import { notBlank, validationMessage } from '../../../../src/app/core/utils/validation.util';
 
 const errorsOf = (value: unknown, ...validators: Parameters<typeof Validators.compose>[0]) =>
   new FormControl(value, Validators.compose(validators)).errors;
@@ -37,5 +37,21 @@ describe('validationMessage', () => {
     const errors = errorsOf('12', Validators.pattern(/^\d{7,8}$/));
     expect(validationMessage(errors, '7 u 8 dígitos, sin puntos.')).toBe('7 u 8 dígitos, sin puntos.');
     expect(validationMessage(errors)).toBe('El formato no es válido.');
+  });
+});
+
+describe('notBlank', () => {
+  it('vacío o solo espacios cuenta como vacío', () => {
+    expect(notBlank(new FormControl(''))).toEqual({ required: true });
+    expect(notBlank(new FormControl('   '))).toEqual({ required: true });
+    expect(notBlank(new FormControl(null))).toEqual({ required: true });
+  });
+
+  it('con texto es válido', () => {
+    expect(notBlank(new FormControl(' Ana '))).toBeNull();
+  });
+
+  it('su error muestra el mismo mensaje que required', () => {
+    expect(validationMessage(notBlank(new FormControl('  ')))).toBe('Completá este campo.');
   });
 });

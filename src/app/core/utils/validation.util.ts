@@ -1,4 +1,4 @@
-import { ValidationErrors } from '@angular/forms';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 export function validationMessage(
   errors: ValidationErrors | null,
@@ -13,3 +13,6 @@ export function validationMessage(
   if (errors['pattern']) return patternMessage;
   return null;
 }
+
+export const notBlank: ValidatorFn = (control: AbstractControl): ValidationErrors | null =>
+  String(control.value ?? '').trim() ? null : { required: true };
