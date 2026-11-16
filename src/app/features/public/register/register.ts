@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
@@ -10,6 +10,7 @@ import {
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 import { Coords, MapPickerDirective } from '../../../shared/directives/map-picker.directive';
+import { notBlank, validationMessage } from '../../../core/utils/validation.util';
 
 interface StepDef {
   id: string;
@@ -239,33 +240,53 @@ interface SummaryRow {
                         <div class="sm:col-span-2">
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre y apellido</label>
                           <input formControlName="name" placeholder="María Vega" [class]="inputClass" />
+                          @if (errorFor(accountForm.controls.name); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                       } @else {
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
                           <input formControlName="firstName" placeholder="María" [class]="inputClass" />
+                          @if (errorFor(accountForm.controls.firstName); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Apellido</label>
                           <input formControlName="lastName" placeholder="Vega" [class]="inputClass" />
+                          @if (errorFor(accountForm.controls.lastName); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                       }
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Email</label>
+                        @if (errorFor(accountForm.controls.email); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                         <input formControlName="email" type="email" placeholder="maria@email.com" [class]="inputClass" />
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Teléfono</label>
                         <input formControlName="phone" type="tel" placeholder="+54 9 351 555 1234" [class]="inputClass" />
+                        @if (errorFor(accountForm.controls.phone); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Contraseña</label>
                         <input formControlName="password" type="password" placeholder="Mínimo 8 caracteres" [class]="inputClass" />
+                        @if (errorFor(accountForm.controls.password); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Repetir contraseña</label>
                         <input formControlName="password2" type="password" [class]="inputClass" />
-                        @if (passwordMismatch()) {
+                        @if (errorFor(accountForm.controls.password2); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        } @else if (passwordMismatch()) {
                           <p class="mt-1 text-xs text-status-none">Las contraseñas no coinciden.</p>
                         }
                       </div>
@@ -275,7 +296,11 @@ interface SummaryRow {
                     <form [formGroup]="dniForm" class="max-w-xs">
                       <label class="mb-1 block text-sm font-medium text-trama-dark">Número de DNI</label>
                       <input formControlName="dni" placeholder="30123456" [class]="inputClass" />
-                      <p class="mt-1 text-xs text-trama-dark/50">Sin puntos ni espacios.</p>
+                      @if (errorFor(dniForm.controls.dni, '7 u 8 dígitos, sin puntos ni espacios.'); as msg) {
+                        <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                      } @else {
+                        <p class="mt-1 text-xs text-trama-dark/50">Sin puntos ni espacios.</p>
+                      }
                     </form>
                   }
                   @case ('location') {
@@ -283,11 +308,17 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Calle</label>
                         <input formControlName="street" placeholder="Independencia" [class]="inputClass" />
+                        @if (errorFor(consignorLocationForm.controls.street); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div class="grid grid-cols-2 gap-4">
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Número</label>
                           <input formControlName="number" placeholder="742" [class]="inputClass" />
+                          @if (errorFor(consignorLocationForm.controls.number); as msg) {
+                            <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                          }
                         </div>
                         <div>
                           <label class="mb-1 block text-sm font-medium text-trama-dark">Depto / Piso <span class="text-trama-dark/40">(opcional)</span></label>
@@ -297,10 +328,16 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Nueva Córdoba" [class]="inputClass" />
+                        @if (errorFor(consignorLocationForm.controls.neighborhood); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
+                        @if (errorFor(consignorLocationForm.controls.city); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div class="sm:col-span-2">
                         <span class="mb-1 block text-sm font-medium text-trama-dark">Marcá tu ubicación en el mapa</span>
@@ -320,19 +357,32 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre del comercio</label>
                         <input formControlName="businessName" placeholder="Vuelta Showroom" [class]="inputClass" />
+                        @if (errorFor(businessForm.controls.businessName); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">CUIT</label>
                         <input formControlName="cuit" placeholder="30712345678" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">11 dígitos, sin guiones.</p>
+                        @if (errorFor(businessForm.controls.cuit, '11 dígitos, sin guiones.'); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">11 dígitos, sin guiones.</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Barrio</label>
                         <input formControlName="neighborhood" placeholder="Güemes" [class]="inputClass" />
+                        @if (errorFor(businessForm.controls.neighborhood); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Ciudad</label>
                         <input formControlName="city" placeholder="Córdoba" [class]="inputClass" />
+                        @if (errorFor(businessForm.controls.city); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                     </form>
                   }
@@ -341,14 +391,23 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre del punto de venta</label>
                         <input formControlName="spName" placeholder="Local Güemes" [class]="inputClass" />
+                        @if (errorFor(pdvForm.controls.spName); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Teléfono del local</label>
                         <input formControlName="spPhone" type="tel" placeholder="351 444 2020" [class]="inputClass" />
+                        @if (errorFor(pdvForm.controls.spPhone); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div class="sm:col-span-2">
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Dirección</label>
                         <input formControlName="spAddress" placeholder="Belgrano 800" [class]="inputClass" />
+                        @if (errorFor(pdvForm.controls.spAddress); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        }
                       </div>
                       <div class="sm:col-span-2">
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Instrucciones para el cedente</label>
@@ -377,6 +436,9 @@ interface SummaryRow {
                             </button>
                           }
                         </div>
+                        @if (attempted() && !hasDays()) {
+                          <p class="mt-1 text-xs text-status-none">Elegí al menos un día.</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Abre</label>
@@ -459,17 +521,29 @@ interface SummaryRow {
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Plazo de venta</label>
                         <input formControlName="saleWindowMonths" type="number" min="1" max="12" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">Meses en góndola (1 a 12).</p>
+                        @if (errorFor(conditionsForm.controls.saleWindowMonths); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">Meses en góndola (1 a 12).</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Período de gracia</label>
                         <input formControlName="graceMonths" type="number" min="0" max="6" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">Meses extra (0 a 6).</p>
+                        @if (errorFor(conditionsForm.controls.graceMonths); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">Meses extra (0 a 6).</p>
+                        }
                       </div>
                       <div>
                         <label class="mb-1 block text-sm font-medium text-trama-dark">Día de pago</label>
                         <input formControlName="payoutDay" type="number" min="1" max="28" [class]="inputClass" />
-                        <p class="mt-1 text-xs text-trama-dark/50">Del mes (1 a 28).</p>
+                        @if (errorFor(conditionsForm.controls.payoutDay); as msg) {
+                          <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                        } @else {
+                          <p class="mt-1 text-xs text-trama-dark/50">Del mes (1 a 28).</p>
+                        }
                       </div>
                     </form>
                   }
@@ -493,6 +567,9 @@ interface SummaryRow {
                         <input type="checkbox" [checked]="accepted()" (change)="accepted.set($any($event.target).checked)" class="mt-0.5 h-4 w-4 accent-trama-brand" />
                         <span>Leí y acepto los términos de consignación y la política de datos de Trama.</span>
                       </label>
+                      @if (attempted() && !accepted()) {
+                        <p class="text-xs text-status-none">Tenés que aceptar los términos para crear la cuenta.</p>
+                      }
                     </div>
                   }
                 }
@@ -511,7 +588,6 @@ interface SummaryRow {
                 <button
                   type="button"
                   (click)="next()"
-                  [disabled]="!canAdvance()"
                   class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                 >
                   Siguiente
@@ -520,7 +596,7 @@ interface SummaryRow {
                 <button
                   type="button"
                   (click)="submit()"
-                  [disabled]="!canAdvance() || submitting()"
+                  [disabled]="submitting()"
                   class="rounded-lg bg-trama-brand px-5 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
                 >
                   {{ submitting() ? 'Creando cuenta…' : 'Crear cuenta' }}
@@ -619,6 +695,7 @@ export class Register {
   protected readonly role = signal<Role | null>(null);
   protected readonly step = signal(0);
   protected readonly submitting = signal(false);
+  protected readonly attempted = signal(false);
 
   protected readonly daysSel = signal<boolean[]>([true, true, true, true, true, false, false]);
   protected readonly fromTime = signal('10:00');
@@ -681,7 +758,8 @@ export class Register {
   protected readonly current = computed<StepDef>(() => this.steps()[this.step()] ?? CONSIGNOR_STEPS[0]);
 
   protected readonly merchantPct = computed(() => 100 - this.consignorPct());
-
+  protected readonly hasDays = computed(() => this.daysSel().some(Boolean));
+  
   protected readonly summary = computed<SummaryRow[]>(() => this.buildSummary());
 
   protected readonly doneTitle = computed(() =>
@@ -708,8 +786,19 @@ export class Register {
 
   protected pick(role: Role): void {
     this.role.set(role);
+    this.applyNameValidators(role);
     this.step.set(0);
     this.view.set('wizard');
+    this.attempted.set(false);
+  }
+
+  private applyNameValidators(role: Role): void {
+    const { name, firstName, lastName } = this.accountForm.controls;
+    const isMerchant = role === 'merchant';
+    name.setValidators(isMerchant ? notBlank : null);
+    firstName.setValidators(isMerchant ? null : notBlank);
+    lastName.setValidators(isMerchant ? null : notBlank);
+    [name, firstName, lastName].forEach((control) => control.updateValueAndValidity());
   }
 
   protected circleClass(index: number): string {
@@ -726,6 +815,11 @@ export class Register {
   protected passwordMismatch(): boolean {
     const { password, password2 } = this.accountForm.controls;
     return !!password2.value && password.value !== password2.value;
+  }
+
+  protected errorFor(control: AbstractControl, patternMessage?: string): string | null {
+    if (control.valid || !(control.touched || this.attempted())) return null;
+    return validationMessage(control.errors, patternMessage);
   }
 
   protected hoursValid(): boolean {
@@ -770,19 +864,10 @@ export class Register {
     this.code.set(value.replace(/\D/g, '').slice(0, 6));
   }
 
-  // The consignor uses first/last name, the merchant a single name; names have no form validators
-  // (they differ by role), so check the right ones here.
-  private accountNamesValid(): boolean {
-    const { name, firstName, lastName } = this.accountForm.controls;
-    return this.role() === 'merchant'
-      ? !!name.value?.trim()
-      : !!firstName.value?.trim() && !!lastName.value?.trim();
-  }
-
   protected canAdvance(): boolean {
     switch (this.current().id) {
       case 'account':
-        return this.accountForm.valid && this.accountNamesValid() && !this.passwordMismatch();
+        return this.accountForm.valid && !this.passwordMismatch();
       case 'dni':
         return this.dniForm.valid;
       case 'location':
@@ -790,7 +875,7 @@ export class Register {
       case 'business':
         return this.businessForm.valid;
       case 'pdv':
-        return this.pdvForm.valid && this.daysSel().some(Boolean) && this.hoursValid();
+        return this.pdvForm.valid && this.hasDays() && this.hoursValid();
       case 'commission':
         return this.commissionValid();
       case 'conditions':
@@ -802,13 +887,43 @@ export class Register {
     }
   }
 
+  private currentForm(): AbstractControl | null {
+    switch (this.current().id) {
+      case 'account':
+        return this.accountForm;
+      case 'dni':
+        return this.dniForm;
+      case 'location':
+        return this.consignorLocationForm;
+      case 'business':
+        return this.businessForm;
+      case 'pdv':
+        return this.pdvForm;
+      case 'conditions':
+        return this.conditionsForm;
+      default:
+        return null;
+    }
+  }
+
+  private revealErrors(): void {
+    this.attempted.set(true);
+    this.currentForm()?.markAllAsTouched();
+  }
+
   protected next(): void {
-    if (this.canAdvance() && this.step() < this.steps().length - 1) {
+    if (!this.canAdvance()) {
+      this.revealErrors();
+      return;
+    }
+    if (this.step() < this.steps().length - 1) {
+      this.attempted.set(false);
       this.step.update((v) => v + 1);
     }
   }
 
   protected back(): void {
+    this.attempted.set(false);
     if (this.step() === 0) {
       this.view.set('role');
       this.role.set(null);
@@ -818,7 +933,11 @@ export class Register {
   }
 
   protected submit(): void {
-    if (!this.canAdvance() || this.submitting()) return;
+    if (this.submitting()) return;
+    if (!this.canAdvance()) {
+      this.revealErrors();
+      return;
+    }
     this.submitting.set(true);
     const request$ =
       this.role() === 'merchant'
