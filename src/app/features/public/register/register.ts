@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
@@ -10,6 +10,7 @@ import {
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 import { Coords, MapPickerDirective } from '../../../shared/directives/map-picker.directive';
+import { validationMessage } from '../../../core/utils/validation.util';
 
 interface StepDef {
   id: string;
@@ -619,6 +620,7 @@ export class Register {
   protected readonly role = signal<Role | null>(null);
   protected readonly step = signal(0);
   protected readonly submitting = signal(false);
+  protected readonly attempted = signal(false);
 
   protected readonly daysSel = signal<boolean[]>([true, true, true, true, true, false, false]);
   protected readonly fromTime = signal('10:00');
@@ -710,6 +712,7 @@ export class Register {
     this.role.set(role);
     this.step.set(0);
     this.view.set('wizard');
+    this.attempted.set(false);
   }
 
   protected circleClass(index: number): string {
@@ -726,6 +729,11 @@ export class Register {
   protected passwordMismatch(): boolean {
     const { password, password2 } = this.accountForm.controls;
     return !!password2.value && password.value !== password2.value;
+  }
+
+  protected errorFor(control: AbstractControl, patternMessage?: string): string | null {
+    if (control.valid || !(control.touched || this.attempted())) return null;
+    return validationMessage(control.errors, patternMessage);
   }
 
   protected hoursValid(): boolean {
@@ -809,6 +817,7 @@ export class Register {
   }
 
   protected back(): void {
+    this.attempted.set(false);
     if (this.step() === 0) {
       this.view.set('role');
       this.role.set(null);
