@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { catchError, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Category } from '../../../core/models/category.model';
@@ -35,6 +35,13 @@ interface Selection {
   salesPointId: string;
 }
 
+interface SentProposal {
+  garmentId: string;
+  garmentName: string;
+  merchantName: string;
+  consignorPrice: number;
+}
+
 const CONDITIONS: { value: GarmentCondition; label: string }[] = [
   { value: 'new', label: 'Nuevo' },
   { value: 'very_good', label: 'Muy bueno' },
@@ -46,290 +53,333 @@ const STEPS = ['Fotos', 'Comercio', 'Descripción', 'Precio'];
 
 @Component({
   selector: 'app-upload-garment',
-  imports: [ReactiveFormsModule, DecimalPipe, MoneyPipe],
+  imports: [ReactiveFormsModule, DecimalPipe, MoneyPipe, RouterLink],
   template: `
     <div class="mx-auto max-w-2xl space-y-6">
       <h1 class="text-2xl font-semibold text-trama-dark">Cargar artículo</h1>
 
-      <ol class="flex items-center">
-        @for (label of steps; track label; let i = $index; let last = $last) {
-          <li class="flex items-center" [class.flex-1]="!last">
-            <div class="flex flex-col items-center">
-              <span
-                class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium"
-                [class]="circleClass(i + 1)"
-                >{{ i + 1 }}</span
-              >
-              <span class="mt-1 whitespace-nowrap text-xs" [class]="labelClass(i + 1)">{{
-                label
-              }}</span>
-            </div>
-            @if (!last) {
-              <span
-                class="mx-2 h-0.5 flex-1"
-                [class]="i + 1 < step() ? 'bg-trama-brand' : 'bg-trama-sand-200'"
-              ></span>
-            }
-          </li>
-        }
-      </ol>
+      @if (sent(); as s) {
+        <div class="rounded-2xl border border-trama-sand-200 bg-white p-8 text-center">
+          <div
+            class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-trama-green-50 text-3xl text-trama-brand"
+          >
+            ✓
+          </div>
+          <h2 class="mt-4 text-xl font-semibold text-trama-dark">Tu propuesta está en camino</h2>
+          <p class="mx-auto mt-2 max-w-sm text-sm text-trama-dark/70">
+            <span class="font-medium text-trama-dark">{{ s.merchantName }}</span> ya puede revisar
+            "{{ s.garmentName }}". Te vamos a avisar cuando responda.
+          </p>
+          <p class="mx-auto mt-4 max-w-xs rounded-xl bg-trama-sand-50 p-3 text-sm text-trama-dark/80">
+            Pediste recibir
+            <span class="font-semibold text-trama-brand">{{ s.consignorPrice | money }}</span>
+            si se vende.
+          </p>
+          <div class="mt-6 flex flex-wrap justify-center gap-3">
+            <a
+              [routerLink]="['/c/garment', s.garmentId]"
+              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
+            >
+              Ver mi propuesta
+            </a>
+            <button
+              type="button"
+              (click)="startOver()"
+              class="rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
+            >
+              Cargar otra prenda
+            </button>
+            <a
+              routerLink="/c"
+              class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
+            >
+              Ir a mi panel
+            </a>
+          </div>
+        </div>
+      } @else {
+        <ol class="flex items-center">
+          @for (label of steps; track label; let i = $index; let last = $last) {
+            <li class="flex items-center" [class.flex-1]="!last">
+              <div class="flex flex-col items-center">
+                <span
+                  class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium"
+                  [class]="circleClass(i + 1)"
+                  >{{ i + 1 }}</span
+                >
+                <span class="mt-1 whitespace-nowrap text-xs" [class]="labelClass(i + 1)">{{
+                  label
+                }}</span>
+              </div>
+              @if (!last) {
+                <span
+                  class="mx-2 h-0.5 flex-1"
+                  [class]="i + 1 < step() ? 'bg-trama-brand' : 'bg-trama-sand-200'"
+                ></span>
+              }
+            </li>
+          }
+        </ol>
 
-      <div class="rounded-2xl border border-trama-sand-200 bg-white p-6">
-        @switch (step()) {
-          @case (1) {
-            <div class="space-y-4">
-              <p class="text-sm text-trama-dark/70">Subí al menos 3 fotos de tu prenda.</p>
-              <label
-                (dragover)="$event.preventDefault()"
-                (drop)="onDrop($event)"
-                class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-trama-sand-200 py-10 text-center text-trama-dark/60 hover:border-trama-brand"
-              >
-                <span class="text-sm">Arrastrá tus fotos acá o hacé click para elegir</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  class="hidden"
-                  (change)="onFilesSelected($event)"
-                />
-              </label>
+        <div class="rounded-2xl border border-trama-sand-200 bg-white p-6">
+          @switch (step()) {
+            @case (1) {
+              <div class="space-y-4">
+                <p class="text-sm text-trama-dark/70">Subí al menos 3 fotos de tu prenda.</p>
+                <label
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onDrop($event)"
+                  class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-trama-sand-200 py-10 text-center text-trama-dark/60 hover:border-trama-brand"
+                >
+                  <span class="text-sm">Arrastrá tus fotos acá o hacé click para elegir</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    class="hidden"
+                    (change)="onFilesSelected($event)"
+                  />
+                </label>
 
-              @if (photos().length) {
-                <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                  @for (photo of photos(); track $index) {
-                    <div class="relative aspect-square overflow-hidden rounded-lg">
-                      <img [src]="photo" alt="" class="h-full w-full object-cover" />
+                @if (photos().length) {
+                  <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+                    @for (photo of photos(); track $index) {
+                      <div class="relative aspect-square overflow-hidden rounded-lg">
+                        <img [src]="photo" alt="" class="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          (click)="removePhoto($index)"
+                          class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                          aria-label="Eliminar foto"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    }
+                  </div>
+                  <p class="text-xs text-trama-dark/50">{{ photos().length }} foto(s) cargada(s).</p>
+                }
+
+                <div>
+                  <span class="mb-1 block text-sm font-medium text-trama-dark">Video (opcional)</span>
+                  @if (videoName(); as name) {
+                    <div
+                      class="flex items-center justify-between rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                    >
+                      <span class="truncate text-trama-dark/80">{{ name }}</span>
                       <button
                         type="button"
-                        (click)="removePhoto($index)"
-                        class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
-                        aria-label="Eliminar foto"
+                        (click)="removeVideo()"
+                        class="ml-2 shrink-0 text-xs text-trama-dark/50 hover:text-status-none"
                       >
-                        ✕
+                        Quitar
                       </button>
                     </div>
-                  }
-                </div>
-                <p class="text-xs text-trama-dark/50">{{ photos().length }} foto(s) cargada(s).</p>
-              }
-
-              <div>
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Video (opcional)</span>
-                @if (videoName(); as name) {
-                  <div
-                    class="flex items-center justify-between rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                  >
-                    <span class="truncate text-trama-dark/80">{{ name }}</span>
-                    <button
-                      type="button"
-                      (click)="removeVideo()"
-                      class="ml-2 shrink-0 text-xs text-trama-dark/50 hover:text-status-none"
+                  } @else {
+                    <label
+                      class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-dark/60 hover:border-trama-brand"
                     >
-                      Quitar
-                    </button>
-                  </div>
-                } @else {
-                  <label
-                    class="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-trama-sand-200 px-3 py-3 text-sm text-trama-dark/60 hover:border-trama-brand"
-                  >
-                    Subí un video de tu prenda
-                    <input
-                      type="file"
-                      accept="video/*"
-                      class="hidden"
-                      (change)="onVideoSelected($event)"
-                    />
-                  </label>
-                }
-              </div>
-            </div>
-          }
-          @case (3) {
-            <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
-                <input
-                  formControlName="name"
-                  placeholder="Ej: Campera de jean azul"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
-                <select
-                  formControlName="category"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una categoría</option>
-                  @for (category of categories(); track category.label) {
-                    <option [value]="category.label">{{ category.label }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
-                <select
-                  formControlName="subcategory"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una subcategoría</option>
-                  @for (subcategory of subcategories(); track subcategory) {
-                    <option [value]="subcategory">{{ subcategory }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
-                <input
-                  formControlName="brand"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
-                <input
-                  formControlName="size"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
-                <input
-                  formControlName="color"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
-                <select
-                  formControlName="season"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Elegí una temporada</option>
-                  @for (season of seasons; track season) {
-                    <option [value]="season">{{ season }}</option>
-                  }
-                </select>
-              </div>
-              <div class="sm:col-span-2">
-                <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
-                <div class="flex flex-wrap gap-3">
-                  @for (condition of conditions; track condition.value) {
-                    <label class="flex items-center gap-2 text-sm text-trama-dark/80">
-                      <input type="radio" formControlName="condition" [value]="condition.value" />
-                      {{ condition.label }}
+                      Subí un video de tu prenda
+                      <input
+                        type="file"
+                        accept="video/*"
+                        class="hidden"
+                        (change)="onVideoSelected($event)"
+                      />
                     </label>
                   }
                 </div>
               </div>
-              <div class="sm:col-span-2">
-                <label class="mb-1 block text-sm font-medium text-trama-dark">Descripción</label>
-                <textarea
-                  formControlName="description"
-                  rows="3"
-                  class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-                ></textarea>
-              </div>
-            </form>
-          }
-          @case (2) {
-            <div class="space-y-4">
-              <input
-                type="search"
-                [value]="search()"
-                (input)="search.set($any($event.target).value)"
-                placeholder="Buscar por nombre o barrio"
-                class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
-              />
-              @if (merchantOptions().length) {
-                <div class="space-y-3">
-                  @for (option of merchantOptions(); track option.merchantId) {
-                    <button
-                      type="button"
-                      (click)="select(option)"
-                      class="flex w-full flex-col gap-1 rounded-xl border p-4 text-left"
-                      [class]="
-                        selection()?.merchantId === option.merchantId
-                          ? 'border-trama-brand bg-trama-green-50'
-                          : 'border-trama-sand-200 hover:border-trama-brand'
-                      "
-                    >
-                      <div class="flex items-center justify-between">
-                        <span class="font-medium text-trama-dark">{{ option.businessName }}</span>
-                        @if (option.distance !== null) {
-                          <span class="text-xs text-trama-dark/60"
-                            >{{ option.distance | number: '1.1-1' }} km</span
-                          >
-                        }
-                      </div>
-                      <span class="text-sm text-trama-dark/70">{{ option.neighborhood }}</span>
-                      <span class="text-xs text-trama-dark/60"
-                        >Comisión cedente: {{ option.commission }}% · Recepción:
-                        {{ option.scheduleDays }} {{ option.scheduleHours }}</span
-                      >
-                    </button>
-                  }
+            }
+            @case (3) {
+              <form [formGroup]="form" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div class="sm:col-span-2">
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Nombre</label>
+                  <input
+                    formControlName="name"
+                    placeholder="Ej: Campera de jean azul"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  />
                 </div>
-              } @else {
-                <p class="py-8 text-center text-sm text-trama-dark/60">
-                  No encontramos comercios para tu búsqueda.
-                </p>
-              }
-            </div>
-          }
-          @case (4) {
-            <form [formGroup]="form" class="space-y-4">
-              <div>
-                <label class="mb-1 block text-sm font-medium text-trama-dark"
-                  >¿Cuánto querés recibir?</label
-                >
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
+                  <select
+                    formControlName="category"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  >
+                    <option value="">Elegí una categoría</option>
+                    @for (category of categories(); track category.label) {
+                      <option [value]="category.label">{{ category.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
+                  <select
+                    formControlName="subcategory"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  >
+                    <option value="">Elegí una subcategoría</option>
+                    @for (subcategory of subcategories(); track subcategory) {
+                      <option [value]="subcategory">{{ subcategory }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
+                  <input
+                    formControlName="brand"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
+                  <input
+                    formControlName="size"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
+                  <input
+                    formControlName="color"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
+                  <select
+                    formControlName="season"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  >
+                    <option value="">Elegí una temporada</option>
+                    @for (season of seasons; track season) {
+                      <option [value]="season">{{ season }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="sm:col-span-2">
+                  <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
+                  <div class="flex flex-wrap gap-3">
+                    @for (condition of conditions; track condition.value) {
+                      <label class="flex items-center gap-2 text-sm text-trama-dark/80">
+                        <input type="radio" formControlName="condition" [value]="condition.value" />
+                        {{ condition.label }}
+                      </label>
+                    }
+                  </div>
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="mb-1 block text-sm font-medium text-trama-dark"
+                    >Descripción <span class="text-trama-dark/40">(opcional)</span></label
+                  >
+                  <textarea
+                    formControlName="description"
+                    rows="3"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  ></textarea>
+                </div>
+              </form>
+            }
+            @case (2) {
+              <div class="space-y-4">
                 <input
-                  type="number"
-                  formControlName="consignorPrice"
-                  min="1"
+                  type="search"
+                  [value]="search()"
+                  (input)="search.set($any($event.target).value)"
+                  placeholder="Buscar por nombre o barrio"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (merchantOptions().length) {
+                  <div class="space-y-3">
+                    @for (option of merchantOptions(); track option.merchantId) {
+                      <button
+                        type="button"
+                        (click)="select(option)"
+                        class="flex w-full flex-col gap-1 rounded-xl border p-4 text-left"
+                        [class]="
+                          selection()?.merchantId === option.merchantId
+                            ? 'border-trama-brand bg-trama-green-50'
+                            : 'border-trama-sand-200 hover:border-trama-brand'
+                        "
+                      >
+                        <div class="flex items-center justify-between">
+                          <span class="font-medium text-trama-dark">{{ option.businessName }}</span>
+                          @if (option.distance !== null) {
+                            <span class="text-xs text-trama-dark/60"
+                              >{{ option.distance | number: '1.1-1' }} km</span
+                            >
+                          }
+                        </div>
+                        <span class="text-sm text-trama-dark/70">{{ option.neighborhood }}</span>
+                        <span class="text-xs text-trama-dark/60"
+                          >Comisión cedente: {{ option.commission }}% · Recepción:
+                          {{ option.scheduleDays }} {{ option.scheduleHours }}</span
+                        >
+                      </button>
+                    }
+                  </div>
+                } @else {
+                  <p class="py-8 text-center text-sm text-trama-dark/60">
+                    No encontramos comercios para tu búsqueda.
+                  </p>
+                }
               </div>
-              @if (salePrice() !== null) {
-                <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
-                  El comercio lo venderá a
-                  <span class="font-semibold text-trama-brand">{{ salePrice() | money }}</span>
+            }
+            @case (4) {
+              <form [formGroup]="form" class="space-y-4">
+                <div>
+                  <label class="mb-1 block text-sm font-medium text-trama-dark"
+                    >¿Cuánto querés recibir?</label
+                  >
+                  <input
+                    type="number"
+                    formControlName="consignorPrice"
+                    min="1"
+                    class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
+                  />
                 </div>
-              }
-            </form>
+                @if (salePrice() !== null) {
+                  <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
+                    El comercio lo venderá a
+                    <span class="font-semibold text-trama-brand">{{ salePrice() | money }}</span>
+                  </div>
+                }
+              </form>
+            }
           }
-        }
-      </div>
+        </div>
 
-      <div class="flex items-center justify-between">
-        <button
-          type="button"
-          (click)="back()"
-          [disabled]="step() === 1"
-          class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 disabled:opacity-40"
-        >
-          Anterior
-        </button>
-        @if (step() < 4) {
+        <div class="flex items-center justify-between">
           <button
             type="button"
-            (click)="next()"
-            [disabled]="!canAdvance()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            (click)="back()"
+            [disabled]="step() === 1"
+            class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 disabled:opacity-40"
           >
-            Siguiente
+            Anterior
           </button>
-        } @else {
-          <button
-            type="button"
-            (click)="submit()"
-            [disabled]="!canAdvance() || submitting()"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
-          >
-            {{ submitting() ? 'Enviando…' : 'Enviar propuesta' }}
-          </button>
-        }
-      </div>
+          @if (step() < 4) {
+            <button
+              type="button"
+              (click)="next()"
+              [disabled]="!canAdvance()"
+              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          } @else {
+            <button
+              type="button"
+              (click)="submit()"
+              [disabled]="!canAdvance() || submitting()"
+              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            >
+              {{ submitting() ? 'Enviando…' : 'Enviar propuesta' }}
+            </button>
+          }
+        </div>
+      }
     </div>
   `,
 })
@@ -342,7 +392,6 @@ export class UploadGarment {
   private readonly consignorsService = inject(ConsignorsService);
   private readonly categoriesService = inject(CategoriesService);
   private readonly toast = inject(ToastService);
-  private readonly router = inject(Router);
 
   protected readonly steps = STEPS;
   protected readonly seasons = SEASONS;
@@ -354,6 +403,7 @@ export class UploadGarment {
   protected readonly selection = signal<Selection | null>(null);
   protected readonly search = signal('');
   protected readonly submitting = signal(false);
+  protected readonly sent = signal<SentProposal | null>(null);
 
   protected readonly form = this.fb.group({
     name: ['', Validators.required],
@@ -564,14 +614,40 @@ export class UploadGarment {
       )
       .subscribe({
         next: (garment) => {
-          this.toast.show('Propuesta enviada', 'success');
-          this.router.navigate(['/c/garment', garment.id]);
+          this.submitting.set(false);
+          this.sent.set({
+            garmentId: garment.id,
+            garmentName: garment.name,
+            merchantName: merchant.businessName,
+            consignorPrice,
+          });
         },
         error: () => {
           this.submitting.set(false);
           this.toast.show('No pudimos enviar la propuesta', 'error');
         },
       });
+  }
+
+  protected startOver(): void {
+    this.form.reset({
+      name: '',
+      category: '',
+      subcategory: '',
+      brand: '',
+      size: '',
+      color: '',
+      season: '',
+      condition: '',
+      description: '',
+      consignorPrice: null,
+    });
+    this.photos.set([]);
+    this.videoName.set(null);
+    this.selection.set(null);
+    this.search.set('');
+    this.sent.set(null);
+    this.step.set(1);
   }
 
   private step2Valid(): boolean {
