@@ -9,6 +9,7 @@ import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { VerifiedBadge } from '../../../shared/components/verified/verified-badge';
 
 type ConsignorsState =
   | { status: 'loading'; data: null }
@@ -17,7 +18,7 @@ type ConsignorsState =
 
 @Component({
   selector: 'app-consignors',
-  imports: [RouterLink, StatCard, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [RouterLink, StatCard, VerifiedBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
   template: `
     @if (isLoading()) {
       <app-loading-spinner />

@@ -1,5 +1,8 @@
 import { Component, computed, input } from '@angular/core';
 import { GarmentStatus } from '../../../core/models/garment.model';
+import { Seam } from '../seam/seam';
+import { SeamOutcome } from '../seam/seam-button';
+import { SeamSummary } from '../seam/seam-summary';
 
 const STEPS = [
   'Cargada',
@@ -25,56 +28,45 @@ const STEP_INDEX: Record<GarmentStatus, number> = {
   cancelled: 1,
 };
 
-// Terminal-bad outcomes: the current step is painted red instead of green.
-const NEGATIVE: Partial<Record<GarmentStatus, boolean>> = {
-  no_agreement: true,
-  rejected: true,
+// Estados donde termina la consignación
+const OUTCOME: Partial<Record<GarmentStatus, SeamOutcome>> = {
+  paid_out: 'complete',
+  no_agreement: 'negative',
+  rejected: 'negative',
+  cancelled: 'negative',
 };
 
 @Component({
   selector: 'app-progress-tracker',
+  imports: [Seam, SeamSummary],
   template: `
-    <ol class="flex items-center">
-      @for (step of steps; track step; let i = $index; let last = $last) {
-        <li class="flex items-center" [class.flex-1]="!last">
-          <div class="flex flex-col items-center">
-            <span
-              class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium"
-              [class]="circleClass(i)"
-              >{{ i + 1 }}</span
-            >
-            <span class="mt-1 whitespace-nowrap text-xs" [class]="labelClass(i)">{{ step }}</span>
-          </div>
-          @if (!last) {
-            <span
-              class="mx-2 h-0.5 flex-1"
-              [class]="i < currentIndex() ? 'bg-trama-brand' : 'bg-trama-sand-200'"
-            ></span>
-          }
-        </li>
+    <app-seam class="wide" [steps]="steps" [current]="current()" [outcome]="outcome()" />
+    <app-seam-summary class="narrow" [steps]="steps" [current]="current()" [outcome]="outcome()" />
+  `,
+  styles: `
+    :host {
+      display: block;
+      container-type: inline-size;
+    }
+
+    .narrow {
+      display: none;
+    }
+
+    @container (width < 480px) {
+      .wide {
+        display: none;
       }
-    </ol>
+
+      .narrow {
+        display: flex;
+      }
+    }
   `,
 })
 export class ProgressTracker {
   readonly currentStatus = input.required<GarmentStatus>();
   protected readonly steps = STEPS;
-  protected readonly currentIndex = computed(() => STEP_INDEX[this.currentStatus()]);
-  protected readonly isNegative = computed(() => NEGATIVE[this.currentStatus()] ?? false);
-
-  protected circleClass(i: number): string {
-    const current = this.currentIndex();
-    if (i < current) return 'bg-trama-brand text-white';
-    if (i === current) {
-      return this.isNegative()
-        ? 'bg-status-none text-white ring-4 ring-status-none-soft'
-        : 'bg-trama-brand text-white ring-4 ring-trama-green-100';
-    }
-    return 'bg-trama-sand-200 text-trama-dark/50';
-  }
-
-  protected labelClass(i: number): string {
-    if (i === this.currentIndex() && this.isNegative()) return 'font-medium text-status-none';
-    return i <= this.currentIndex() ? 'font-medium text-trama-dark' : 'text-trama-dark/40';
-  }
+  protected readonly current = computed(() => STEP_INDEX[this.currentStatus()]);
+  protected readonly outcome = computed(() => OUTCOME[this.currentStatus()] ?? 'open');
 }

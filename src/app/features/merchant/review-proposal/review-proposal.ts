@@ -48,7 +48,11 @@ type ReviewState =
     @if (isLoading()) {
       <app-loading-spinner />
     } @else if (isError()) {
-      <app-error-state message="No encontramos esta propuesta." link="/m" linkLabel="Volver al panel" />
+      <app-error-state
+        message="No encontramos esta propuesta."
+        link="/m"
+        linkLabel="Volver al panel"
+      />
     } @else if (data(); as d) {
       <div class="space-y-6">
         <h1 class="text-2xl font-semibold text-trama-dark">Revisar propuesta</h1>
@@ -63,7 +67,8 @@ type ReviewState =
                 <div>
                   <dt class="text-trama-dark/50">Categoría</dt>
                   <dd class="text-trama-dark/80">
-                    {{ d.garment.category }}@if (d.garment.subcategory) {
+                    {{ d.garment.category }}
+                    @if (d.garment.subcategory) {
                       · {{ d.garment.subcategory }}
                     }
                   </dd>
@@ -136,7 +141,9 @@ type ReviewState =
                 @if (counterSalePrice() !== null) {
                   <p class="text-sm text-trama-dark/70">
                     Se vendería a
-                    <span class="font-semibold text-trama-brand">{{ counterSalePrice() | money }}</span>
+                    <span class="font-semibold text-trama-brand">{{
+                      counterSalePrice() | money
+                    }}</span>
                   </p>
                 }
                 <div class="flex gap-2">
@@ -264,7 +271,7 @@ export class ReviewProposal {
   protected readonly modalConfirmLabel = computed(() =>
     this.activeModal() === 'reject' ? 'Rechazar' : 'Aceptar',
   );
-  protected readonly modalColor = computed<'green' | 'red' | 'blue'>(() =>
+  protected readonly modalColor = computed<'green' | 'red'>(() =>
     this.activeModal() === 'reject' ? 'red' : 'green',
   );
   protected readonly modalField = computed(() =>
@@ -357,7 +364,14 @@ export class ReviewProposal {
                 ? this.merchantsService.getById(garment.merchantId)
                 : of(undefined),
             }).pipe(
-              map(({ consignor, merchant }): ReviewData => ({ proposal, garment, consignor, merchant })),
+              map(
+                ({ consignor, merchant }): ReviewData => ({
+                  proposal,
+                  garment,
+                  consignor,
+                  merchant,
+                }),
+              ),
             );
           }),
         );

@@ -78,4 +78,29 @@ describe('BlobIcon', () => {
     expect(host.querySelector('.glyph')).not.toBeNull();
     expect(host.querySelector('.initials')).toBeNull();
   });
+
+  it('sin verified no lleva sello', () => {
+    expect(render().host.querySelector('app-verified-seal')).toBeNull();
+  });
+
+  it('verificado: sello de 26 px con borde papel sobre una burbuja de 64', () => {
+    const fixture = TestBed.createComponent(BlobIcon);
+    fixture.componentRef.setInput('initials', 'LF');
+    fixture.componentRef.setInput('size', 64);
+    fixture.componentRef.setInput('verified', 'verified');
+    fixture.detectChanges();
+    const seal = (fixture.nativeElement as HTMLElement).querySelector('app-verified-seal');
+    expect(seal?.querySelector('svg')?.getAttribute('width')).toBe('26');
+    expect(seal?.querySelector('.paper')).not.toBeNull();
+  });
+
+  it('en burbujas chicas el sello no baja de 16 px', () => {
+    const fixture = TestBed.createComponent(BlobIcon);
+    fixture.componentRef.setInput('initials', 'LF');
+    fixture.componentRef.setInput('verified', 'pending');
+    fixture.detectChanges();
+    const seal = (fixture.nativeElement as HTMLElement).querySelector('app-verified-seal');
+    expect(seal?.querySelector('svg')?.getAttribute('width')).toBe('16');
+    expect(seal?.querySelector('.basted')).not.toBeNull();
+  });
 });
