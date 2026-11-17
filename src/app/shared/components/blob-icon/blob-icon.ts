@@ -25,6 +25,11 @@ const TONES: Record<BlobTone, string> = {
         d="M0,-28 C18,-28 30,-14 28,4 C26,22 12,30 -4,28 C-20,26 -30,12 -28,-6 C-26,-22 -14,-28 0,-28Z"
       />
     </svg>
+    @if (icon(); as glyph) {
+      <lucide-angular class="glyph" [img]="glyph" [size]="glyphSize()" [strokeWidth]="2" />
+    } @else if (letters()) {
+      <span class="initials" [style.font-size.px]="initialsSize()">{{ letters() }}</span>
+    }
     @if (verified(); as seal) {
       <app-verified-seal
         class="seal"
@@ -33,8 +38,6 @@ const TONES: Record<BlobTone, string> = {
         [size]="sealSize()"
         [style.translate]="sealOffset() + 'px ' + sealOffset() + 'px'"
       />
-    } @else if (letters()) {
-      <span class="initials" [style.font-size.px]="initialsSize()">{{ letters() }}</span>
     }
   `,
   styles: `
@@ -59,13 +62,6 @@ const TONES: Record<BlobTone, string> = {
 
     .glyph {
       display: flex;
-    }
-
-    .blob,
-    .glyph,
-    .initials,
-    .seal {
-      grid-area: 1 / 1;
     }
 
     .seal {

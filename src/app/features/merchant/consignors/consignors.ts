@@ -81,11 +81,7 @@ type ConsignorsState =
                       <div class="flex items-center gap-2">
                         <span class="font-medium text-trama-dark">{{ row.name }}</span>
                         @if (row.verified) {
-                          <span
-                            class="rounded-full bg-trama-green-100 px-2 py-0.5 text-xs font-medium text-trama-green-700"
-                          >
-                            Verificado
-                          </span>
+                          <app-verified-badge />
                         }
                       </div>
                     </td>
