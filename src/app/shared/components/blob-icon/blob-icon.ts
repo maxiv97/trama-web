@@ -1,5 +1,6 @@
 import { Component, computed, input } from '@angular/core';
 import { LucideAngularModule, LucideIconData } from 'lucide-angular';
+import { VerifiedSeal, VerifiedState } from '../verified/verified-seal';
 
 export type BlobTone = 'gold' | 'cream' | 'sage' | 'peach' | 'success' | 'error' | 'warning';
 
@@ -15,7 +16,7 @@ const TONES: Record<BlobTone, string> = {
 
 @Component({
   selector: 'app-blob-icon',
-  imports: [LucideAngularModule],
+  imports: [LucideAngularModule, VerifiedSeal],
   host: { 'aria-hidden': 'true' },
   template: `
     <svg class="blob" [attr.width]="size()" [attr.height]="size()" viewBox="-32 -32 64 64">
@@ -24,8 +25,14 @@ const TONES: Record<BlobTone, string> = {
         d="M0,-28 C18,-28 30,-14 28,4 C26,22 12,30 -4,28 C-20,26 -30,12 -28,-6 C-26,-22 -14,-28 0,-28Z"
       />
     </svg>
-    @if (icon(); as glyph) {
-      <lucide-angular class="glyph" [img]="glyph" [size]="glyphSize()" [strokeWidth]="2" />
+    @if (verified(); as seal) {
+      <app-verified-seal
+        class="seal"
+        ringed
+        [state]="seal"
+        [size]="sealSize()"
+        [style.translate]="sealOffset() + 'px ' + sealOffset() + 'px'"
+      />
     } @else if (letters()) {
       <span class="initials" [style.font-size.px]="initialsSize()">{{ letters() }}</span>
     }
@@ -53,6 +60,17 @@ const TONES: Record<BlobTone, string> = {
     .glyph {
       display: flex;
     }
+
+    .blob,
+    .glyph,
+    .initials,
+    .seal {
+      grid-area: 1 / 1;
+    }
+
+    .seal {
+      place-self: end;
+    }
   `,
 })
 export class BlobIcon {
@@ -61,6 +79,8 @@ export class BlobIcon {
   // 34 px en encabezados y 72 px a 104 px en ilustraciones y estados vacíos
   readonly size = input(34);
   readonly tone = input<BlobTone>('gold');
+  // Sello de verificado
+  readonly verified = input<VerifiedState>();
 
   protected readonly fill = computed(() => TONES[this.tone()]);
   protected readonly letters = computed(() =>
@@ -68,6 +88,10 @@ export class BlobIcon {
   );
   // Iniciales: 22 px en blob de 64 px
   protected readonly initialsSize = computed(() => Math.round(this.size() * 0.34));
+
+  protected readonly sealSize = computed(() => Math.max(16, Math.round(this.size() * 0.4)));
+  protected readonly sealOffset = computed(() => Math.round(this.size() / 16));
+
   // Tamaño del icono sobre el blob
   // Encabezados: 18 px sobre 34 px
   // Ilustraciones: 36 px sobre 72 px o 52 px sobre 104 px

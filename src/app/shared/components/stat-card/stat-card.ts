@@ -1,17 +1,72 @@
-import { Component, computed, input } from '@angular/core';
+import { booleanAttribute, Component, input } from '@angular/core';
+import { Stitch } from '../stitch/stitch';
 
 type StatColor = 'default' | 'green' | 'red';
 
 @Component({
   selector: 'app-stat-card',
+  imports: [Stitch],
+  host: {
+    '[class.featured]': 'featured()',
+    '[class]': "'tone-' + color()",
+  },
   template: `
-    <div class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-      <p class="text-sm text-trama-dark/60">{{ title() }}</p>
-      <p class="mt-1 font-display text-2xl font-semibold" [class]="valueClass()">{{ value() }}</p>
-      @if (subtitle()) {
-        <p class="mt-1 text-xs text-trama-dark/50">{{ subtitle() }}</p>
-      }
-    </div>
+    <p class="label">{{ title() }}</p>
+    <p class="trama-number value">{{ value() }}</p>
+    @if (featured()) {
+      <app-stitch class="underline" variant="knot" [sew]="true" />
+    }
+    @if (subtitle()) {
+      <p class="note">{{ subtitle() }}</p>
+    }
+  `,
+  styles: `
+    :host {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 18px;
+      border: 1px solid var(--color-trama-sand-100);
+      border-radius: var(--radius-popover);
+      background-color: var(--color-trama-paper);
+    }
+
+    :host(.featured) {
+      border-color: transparent;
+      background-color: var(--color-trama-sand-50);
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .label {
+      color: var(--color-trama-body);
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+
+    .value {
+      color: var(--color-trama-dark);
+    }
+
+    :host(.tone-green) .value {
+      color: var(--color-status-agreed);
+    }
+
+    :host(.tone-red) .value {
+      color: var(--color-status-none);
+    }
+
+    .underline {
+      width: 120px;
+      max-width: 100%;
+    }
+
+    .note {
+      color: var(--color-trama-body);
+      font-size: 0.8125rem;
+    }
   `,
 })
 export class StatCard {
@@ -19,13 +74,5 @@ export class StatCard {
   readonly value = input.required<string | number>();
   readonly subtitle = input<string>();
   readonly color = input<StatColor>('default');
-
-  protected readonly valueClass = computed(
-    () =>
-      ({
-        default: 'text-trama-dark',
-        green: 'text-trama-green-700',
-        red: 'text-status-none',
-      })[this.color()],
-  );
+  readonly featured = input(false, { transform: booleanAttribute });
 }
