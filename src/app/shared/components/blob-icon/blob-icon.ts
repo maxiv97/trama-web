@@ -71,6 +71,8 @@ const TONES: Record<BlobTone, string> = {
 })
 export class BlobIcon {
   readonly icon = input<LucideIconData>();
+  // Para size de icon custom
+  readonly iconSize = input<number>();
   readonly initials = input<string>();
   // 34 px en encabezados y 72 px a 104 px en ilustraciones y estados vacíos
   readonly size = input(34);
@@ -91,7 +93,7 @@ export class BlobIcon {
   // Tamaño del icono sobre el blob
   // Encabezados: 18 px sobre 34 px
   // Ilustraciones: 36 px sobre 72 px o 52 px sobre 104 px
-  protected readonly glyphSize = computed(() =>
-    Math.round(this.size() * (this.size() <= 40 ? 0.53 : 0.5)),
+  protected readonly glyphSize = computed(
+    () => this.iconSize() ?? Math.round(this.size() * (this.size() <= 40 ? 0.53 : 0.5)),
   );
 }

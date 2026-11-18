@@ -19,8 +19,9 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
 import { Role } from '../../../core/models/user.model';
-import { LogoIcon } from '../logo/logo';
 import { UserMenu } from '../user-menu/user-menu';
+import { SideNav } from './side-nav';
+import { BottomNav } from './bottom-nav';
 
 interface NavItem {
   label: string;
@@ -52,34 +53,17 @@ const MENUS: Record<Role, NavItem[]> = {
 
 @Component({
   selector: 'app-shell',
-  imports: [RouterLink, RouterLinkActive, LucideAngularModule, LogoIcon, UserMenu],
+  imports: [RouterLink, LucideAngularModule, UserMenu, SideNav, BottomNav],
   template: `
     <div [class]="isPublic() ? '' : 'min-h-screen bg-trama-sand-50'">
       @if (!isPublic()) {
-        <aside class="fixed inset-y-0 left-0 z-40 hidden w-60 flex-col bg-trama-sidebar md:flex">
-          <div class="flex items-center gap-2 px-6 py-5">
-            <app-logo-icon [size]="26" />
-            <span class="font-display text-xl font-semibold text-white">Trama</span>
-          </div>
-          <nav class="flex-1 space-y-1 px-3">
-            @for (item of menu(); track item.link) {
-              <a
-                [routerLink]="item.link"
-                routerLinkActive="bg-trama-brand text-white"
-                [routerLinkActiveOptions]="{ exact: !!item.exact }"
-                class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-white/70 hover:bg-white/10"
-              >
-                <lucide-angular [img]="item.icon" [size]="20" />
-                <span>{{ item.label }}</span>
-                @if (item.badge && unread()) {
-                  <span
-                    class="ml-auto rounded-full bg-red-500 px-1.5 text-xs font-medium text-white"
-                    >{{ unread() }}</span
-                  >
-                }
-              </a>
-            }
-          </nav>
+        <aside class="fixed inset-y-0 left-0 z-40 hidden w-60 md:flex">
+          <app-side-nav
+            class="flex-1"
+            [items]="menu()"
+            [role]="currentRole()"
+            [unread]="unread()"
+          />
         </aside>
       }
 
@@ -105,23 +89,7 @@ const MENUS: Record<Role, NavItem[]> = {
       </div>
 
       @if (!isPublic()) {
-        <nav
-          class="fixed inset-x-0 bottom-0 z-40 flex border-t border-trama-sand-200 bg-white md:hidden"
-        >
-          @for (item of menu(); track item.link) {
-            <a
-              [routerLink]="item.link"
-              routerLinkActive="text-trama-brand"
-              [routerLinkActiveOptions]="{ exact: !!item.exact }"
-              class="relative flex flex-1 flex-col items-center py-2 text-trama-dark/60"
-            >
-              <lucide-angular [img]="item.icon" [size]="22" />
-              @if (item.badge && unread()) {
-                <span class="absolute right-[28%] top-1 h-2 w-2 rounded-full bg-red-500"></span>
-              }
-            </a>
-          }
-        </nav>
+        <app-bottom-nav class="md:hidden" [items]="menu()" [unread]="unread()" />
       }
     </div>
   `,
