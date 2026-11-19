@@ -112,7 +112,7 @@ let nextSheetId = 0;
       position: fixed;
       inset-inline: 0;
       bottom: 0;
-      z-index: 40;
+      z-index: 42;
       display: flex;
       padding-bottom: env(safe-area-inset-bottom);
       border-top: 1px solid var(--color-trama-sand-100);
