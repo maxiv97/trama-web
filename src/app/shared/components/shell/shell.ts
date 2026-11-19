@@ -1,55 +1,14 @@
 import { Component, computed, inject } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { catchError, filter, map, of, switchMap } from 'rxjs';
-import {
-  BarChart3,
-  Bell,
-  Handshake,
-  LayoutDashboard,
-  LucideAngularModule,
-  LucideIconData,
-  MapPin,
-  Package,
-  Receipt,
-  Settings,
-  Users,
-  Tags,
-} from 'lucide-angular';
+import { Bell, LucideAngularModule } from 'lucide-angular';
 import { AuthService } from '../../../core/auth/auth.service';
 import { NotificationsService } from '../../../core/services/notifications.service';
-import { Role } from '../../../core/models/user.model';
 import { UserMenu } from '../user-menu/user-menu';
 import { SideNav } from './side-nav';
 import { BottomNav } from './bottom-nav';
-
-interface NavItem {
-  label: string;
-  link: string;
-  icon: LucideIconData;
-  exact?: boolean;
-  badge?: boolean;
-}
-
-const MENUS: Record<Role, NavItem[]> = {
-  consignor: [
-    { label: 'Mi panel', link: '/c', icon: LayoutDashboard, exact: true },
-    { label: 'Mis liquidaciones', link: '/c/payouts', icon: Receipt },
-    { label: 'Notificaciones', link: '/c/notifications', icon: Bell, badge: true },
-  ],
-  merchant: [
-    { label: 'Panel', link: '/m', icon: LayoutDashboard, exact: true },
-    { label: 'Propuestas', link: '/m/proposals', icon: Handshake },
-    { label: 'Inventario', link: '/m/inventory', icon: Package },
-    { label: 'Liquidaciones', link: '/m/payouts', icon: Receipt },
-    { label: 'Reportes', link: '/m/reports', icon: BarChart3 },
-    { label: 'Mis cedentes', link: '/m/consignors', icon: Users },
-    { label: 'Puntos de venta', link: '/m/sales-points', icon: MapPin },
-    { label: 'Configuración', link: '/m/settings', icon: Settings },
-    { label: 'Notificaciones', link: '/m/notifications', icon: Bell, badge: true },
-    { label: 'Categorías', link: '/m/categories', icon: Tags },
-  ],
-};
+import { NAV_ITEMS, NavItem } from './nav-items';
 
 @Component({
   selector: 'app-shell',
@@ -124,7 +83,7 @@ export class Shell {
 
   protected readonly menu = computed<NavItem[]>(() => {
     const role = this.auth.role();
-    return role ? MENUS[role] : [];
+    return role ? NAV_ITEMS[role] : [];
   });
 
   protected readonly notificationsLink = computed(() =>
