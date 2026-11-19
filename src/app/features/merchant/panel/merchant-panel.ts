@@ -22,6 +22,13 @@ import { EmptyState } from '../../../shared/components/empty-state/empty-state';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { LayoutDashboard } from 'lucide-angular';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { StatCard } from '../../../shared/components/stat-card/stat-card';
+import { BarList } from '../../../shared/components/charts/bar-list';
+import { ColumnChart } from '../../../shared/components/charts/column-chart';
+import { ChartPoint } from '../../../shared/components/charts/chart-point';
+import { greetingFor, greetingName } from '../../../shared/utils/greeting';
 
 interface Urgencia {
   key: string;
@@ -50,7 +57,16 @@ const EXPIRY_URGENT_DAYS = 30;
 
 @Component({
   selector: 'app-merchant-panel',
-  imports: [RouterLink, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [
+    RouterLink,
+    LoadingSpinner,
+    ErrorState,
+    EmptyState,
+    PageHeader,
+    StatCard,
+    BarList,
+    ColumnChart,
+  ],
   providers: [MoneyPipe],
   template: `
     @if (isLoading()) {
@@ -58,8 +74,14 @@ const EXPIRY_URGENT_DAYS = 30;
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar el resumen." (retry)="retry()" />
     } @else if (data(); as d) {
-      <div class="space-y-8">
-        <h1 class="font-display text-2xl font-semibold text-trama-dark">Resumen</h1>
+      <div class="trama-enter space-y-8">
+        <app-page-header
+          eyebrow="Comercio"
+          [icon]="panelIcon"
+          tone="sage"
+          [title]="greeting()"
+          [stitched]="true"
+        />
 
         @if (!d.hasData) {
           <app-empty-state
@@ -114,90 +136,36 @@ const EXPIRY_URGENT_DAYS = 30;
             El mes en números
           </h2>
           <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
-            @for (kpi of kpis(); track kpi.label) {
-              <div class="rounded-2xl border border-trama-sand-200 bg-white p-4">
-                <p class="text-sm text-trama-dark/50">{{ kpi.label }}</p>
-                <p class="mt-1 font-display text-2xl font-semibold text-trama-dark">
-                  {{ kpi.value }}
-                </p>
-                @if (kpi.delta) {
-                  <p
-                    class="mt-1 text-xs font-medium"
-                    [class]="kpi.up ? 'text-trama-green-700' : 'text-status-none'"
-                  >
-                    {{ kpi.delta }}
-                  </p>
-                } @else {
-                  <p class="mt-1 text-xs text-trama-dark/40">sin período anterior</p>
-                }
-              </div>
+            @for (kpi of kpis(); track kpi.label; let first = $first) {
+              <app-stat-card
+                [featured]="first"
+                [title]="kpi.label"
+                [value]="kpi.value"
+                [subtitle]="kpi.delta ?? 'sin período anterior'"
+              />
             }
           </div>
         </section>
 
         <div class="grid gap-6 lg:grid-cols-2">
-          <!-- Ganancia por categoría -->
-          <section class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-            <div class="mb-4 flex items-baseline justify-between">
-              <h2 class="font-display text-base font-semibold text-trama-dark">
-                Ganancia por categoría
-              </h2>
-              <a routerLink="/m/reports" class="text-xs font-semibold text-trama-brand"
-                >Ver reporte</a
-              >
+          <section class="trama-card space-y-4">
+            <div class="flex items-baseline justify-between gap-3">
+              <h2 class="trama-title-3 text-trama-dark">¿Qué categorías dejan más ganancia?</h2>
+              <a routerLink="/m/reports" class="trama-link">Ver reporte</a>
             </div>
-            @if (d.categories.length) {
-              <div class="space-y-3">
-                @for (c of d.categories; track c.category) {
-                  <div>
-                    <div class="mb-1 flex justify-between text-sm">
-                      <span class="text-trama-dark/70">{{ c.category }}</span>
-                      <span class="font-semibold text-trama-dark">{{
-                        c.merchantProfit | money
-                      }}</span>
-                    </div>
-                    <span class="block h-2 rounded-full bg-trama-sand-100">
-                      <span
-                        class="block h-2 rounded-full bg-trama-green-700"
-                        [style.width.%]="catWidth(c)"
-                      ></span>
-                    </span>
-                  </div>
-                }
-              </div>
+            @if (categoryPoints().length) {
+              <app-bar-list thin [points]="categoryPoints()" />
             } @else {
-              <p class="text-sm text-trama-dark/50">Sin ventas por categoría todavía.</p>
+              <p class="trama-body text-trama-muted">Sin ventas por categoría todavía.</p>
             }
           </section>
 
-          <!-- Ganancia por semana -->
-          <section class="rounded-2xl border border-trama-sand-200 bg-white p-5">
-            <div class="mb-4 flex items-baseline justify-between">
-              <h2 class="font-display text-base font-semibold text-trama-dark">
-                Ganancia por semana
-              </h2>
-              <span class="text-xs text-trama-dark/40">últimas 6</span>
+          <section class="trama-card space-y-4">
+            <div class="flex items-baseline justify-between gap-3">
+              <h2 class="trama-title-3 text-trama-dark">¿Cómo viene la ganancia por semana?</h2>
+              <span class="text-sm text-trama-muted">últimas 6</span>
             </div>
-            <div class="flex h-32 items-end gap-2 border-b border-trama-sand-200">
-              @for (w of d.weekly; track w.weekStart) {
-                <div class="flex h-full flex-1 flex-col items-center justify-end gap-1">
-                  <span class="text-[10px] text-trama-dark/40">{{
-                    w.profit ? shortMoney(w.profit) : ''
-                  }}</span>
-                  <span
-                    class="w-full rounded-t bg-trama-green-700"
-                    [style.height.px]="weekHeight(w)"
-                  ></span>
-                </div>
-              }
-            </div>
-            <div class="mt-2 flex gap-2">
-              @for (w of d.weekly; track w.weekStart) {
-                <span class="flex-1 text-center text-[10px] text-trama-dark/40">{{
-                  weekLabel(w.weekStart)
-                }}</span>
-              }
-            </div>
+            <app-column-chart [points]="weekPoints()" />
           </section>
         </div>
       </div>
@@ -233,6 +201,31 @@ export class MerchantPanel {
     return current.status === 'loaded' ? current.data : null;
   });
 
+  protected readonly panelIcon = LayoutDashboard;
+  protected readonly greeting = computed(
+    () => `${greetingFor()}, ${greetingName(this.auth.user()?.name ?? '', 'merchant')}`,
+  );
+
+  protected readonly categoryPoints = computed<ChartPoint[]>(() =>
+    (this.data()?.categories ?? []).map((c, i) => ({
+      label: c.category,
+      value: c.merchantProfit,
+      display: this.money.transform(c.merchantProfit),
+      tone: i === 0 ? 'highlight' : 'secondary',
+    })),
+  );
+
+  // Le damos mas importancia a la semana actual
+  protected readonly weekPoints = computed<ChartPoint[]>(() => {
+    const weeks = this.data()?.weekly ?? [];
+    return weeks.map((w, i) => ({
+      label: this.weekLabel(w.weekStart),
+      value: w.profit,
+      display: `$${this.shortMoney(w.profit)}`,
+      tone: i === weeks.length - 1 ? 'highlight' : 'main',
+    }));
+  });
+
   protected readonly kpis = computed(() => {
     const d = this.data();
     if (!d) return [];
@@ -266,24 +259,12 @@ export class MerchantPanel {
     this.reload.next();
   }
 
-  protected catWidth(c: CategorySales): number {
-    const max = Math.max(1, ...(this.data()?.categories ?? []).map((x) => x.merchantProfit));
-    return c.merchantProfit ? Math.max(4, Math.round((c.merchantProfit / max) * 100)) : 0;
-  }
-
-  // Pixel height against the ~108px track, so the bars actually scale (a percentage would
-  // resolve against the column's own auto height and collapse).
-  protected weekHeight(w: WeeklyPoint): number {
-    const max = Math.max(1, ...(this.data()?.weekly ?? []).map((x) => x.profit));
-    return w.profit ? Math.max(4, Math.round((w.profit / max) * 108)) : 0;
-  }
-
-  protected weekLabel(weekStart: string): string {
+  private weekLabel(weekStart: string): string {
     const [, m, day] = weekStart.split('-');
     return `${day}/${m}`;
   }
 
-  protected shortMoney(n: number): string {
+  private shortMoney(n: number): string {
     return n >= 1000 ? `${Math.round(n / 1000)}k` : String(n);
   }
 
