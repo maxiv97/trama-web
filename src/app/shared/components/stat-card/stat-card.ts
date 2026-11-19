@@ -33,7 +33,7 @@ type StatColor = 'default' | 'green' | 'red';
 
     :host(.featured) {
       border-color: transparent;
-      background-color: var(--color-trama-sand-50);
+      box-shadow: var(--shadow-elevated);
     }
 
     p {

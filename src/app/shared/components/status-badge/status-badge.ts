@@ -36,6 +36,8 @@ export function badgeToneClass(tone: BadgeTone): string {
 })
 export class StatusBadge {
   readonly status = input.required<GarmentStatus>();
-  protected readonly meta = computed(() => STATUS_META[this.status()]);
+  protected readonly meta = computed<StatusMeta>(
+    () => STATUS_META[this.status()] ?? { label: this.status(), tone: 'neutral' },
+  );
   protected readonly toneClass = computed(() => badgeToneClass(this.meta().tone));
 }

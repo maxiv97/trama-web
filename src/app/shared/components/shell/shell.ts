@@ -69,16 +69,23 @@ const MENUS: Record<Role, NavItem[]> = {
 
       @if (!isPublic()) {
         <header
-          class="sticky top-0 z-30 flex items-center justify-end gap-3 border-b border-trama-sand-200 bg-white px-4 py-3 md:ml-60 md:px-8"
+          class="sticky top-0 z-30 flex items-center justify-end gap-2 border-b border-trama-sand-100 bg-trama-paper px-4 py-2.5 md:ml-60 md:px-8"
         >
           <a
             [routerLink]="notificationsLink()"
-            class="relative hidden items-center justify-center rounded-lg p-2 text-trama-dark/60 hover:bg-trama-sand-100 md:flex"
+            class="relative flex h-11 w-11 items-center justify-center rounded-xl text-trama-body transition-colors hover:bg-trama-sand-50 hover:text-trama-dark"
           >
             <lucide-angular [img]="bellIcon" [size]="20" />
             @if (unread()) {
-              <span class="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500"></span>
+              <span
+                class="absolute right-1 top-1 min-w-5 rounded-full bg-trama-knot px-1 text-center text-xs font-bold text-trama-dark"
+                aria-hidden="true"
+                >{{ unread() }}</span
+              >
             }
+            <span class="sr-only"
+              >Notificaciones{{ unread() ? ', ' + unread() + ' sin leer' : '' }}</span
+            >
           </a>
           <app-user-menu [name]="currentUserName()" [role]="currentRole()" (logout)="logout()" />
         </header>
