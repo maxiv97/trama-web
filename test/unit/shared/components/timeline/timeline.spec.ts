@@ -42,7 +42,7 @@ describe('Timeline', () => {
   it('muestra quién lo hizo y la nota, si hay', () => {
     const last = render(EVENTS).querySelectorAll('ol > li')[2];
     expect(last.querySelector('.who')?.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-      'Comercio · Falta un botón',
+      'Comercio - Falta un botón',
     );
   });
 

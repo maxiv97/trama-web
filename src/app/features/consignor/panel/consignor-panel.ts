@@ -1,7 +1,16 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, forkJoin, map, Observable, of, startWith, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  forkJoin,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { GarmentStatus } from '../../../core/models/garment.model';
 import { AgreementsService } from '../../../core/services/agreements.service';
@@ -14,6 +23,9 @@ import { LoadingSpinner } from '../../../shared/components/loading-spinner/loadi
 import { StatCard } from '../../../shared/components/stat-card/stat-card';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
+import { LayoutDashboard } from 'lucide-angular';
+import { PageHeader } from '../../../shared/components/page-header/page-header';
+import { greetingFor, greetingName } from '../../../shared/utils/greeting';
 
 interface GarmentRow {
   id: string;
@@ -39,27 +51,41 @@ type PanelState =
 
 @Component({
   selector: 'app-consignor-panel',
-  imports: [RouterLink, StatCard, StatusBadge, MoneyPipe, LoadingSpinner, ErrorState, EmptyState],
+  imports: [
+    RouterLink,
+    StatCard,
+    StatusBadge,
+    MoneyPipe,
+    LoadingSpinner,
+    ErrorState,
+    EmptyState,
+    PageHeader,
+  ],
   template: `
     @if (isLoading()) {
       <app-loading-spinner />
     } @else if (isError()) {
       <app-error-state message="No pudimos cargar tu panel." (retry)="retry()" />
     } @else if (data(); as data) {
-      <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h1 class="font-display text-2xl font-semibold text-trama-dark">Mi panel</h1>
-          <a
-            routerLink="/c/upload"
-            class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700"
-            >Cargar artículo</a
-          >
-        </div>
+      <div class="trama-enter space-y-6">
+        <app-page-header
+          eyebrow="Cedente"
+          [icon]="panelIcon"
+          tone="sage"
+          [title]="greeting()"
+          [stitched]="true"
+        >
+          <a pageActions routerLink="/c/upload" class="trama-btn">Cargar artículo</a>
+        </app-page-header>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <app-stat-card title="Artículos activos" [value]="data.activeCount" />
           <app-stat-card title="Pendientes de acuerdo" [value]="data.pendingCount" />
-          <app-stat-card title="Liquidación pendiente" [value]="data.pendingPayout | money" />
+          <app-stat-card
+            featured
+            title="Liquidación pendiente"
+            [value]="data.pendingPayout | money"
+          />
           <app-stat-card title="Total liquidado" [value]="data.totalPaidOut | money" />
         </div>
 
@@ -104,6 +130,10 @@ type PanelState =
 })
 export class ConsignorPanel {
   private readonly auth = inject(AuthService);
+  protected readonly panelIcon = LayoutDashboard;
+  protected readonly greeting = computed(
+    () => `${greetingFor()}, ${greetingName(this.auth.user()?.name ?? '', 'consignor')}`,
+  );
   private readonly garmentsService = inject(GarmentsService);
   private readonly payoutsService = inject(PayoutsService);
   private readonly merchantsService = inject(MerchantsService);
