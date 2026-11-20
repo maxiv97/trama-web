@@ -581,7 +581,70 @@
   }
 
   .trama-table-scroll {
+    position: relative;
     overflow-x: auto;
+  }
+
+  .trama-row-link:focus-within td {
+    background-color: var(--color-trama-sand-50);
+  }
+
+  /* Tabla como cards en mobile */
+  @media (width < 48rem) {
+    .trama-table--cards thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    .trama-table--cards tbody {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .trama-table--cards tbody tr {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px;
+      border-radius: 16px;
+      background-color: var(--color-trama-sand-50);
+    }
+
+    .trama-table--cards td {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0;
+      border: 0;
+    }
+
+    .trama-table--cards tbody tr:hover td {
+      border-radius: 0;
+      background-color: transparent;
+    }
+
+    .trama-table--cards td:empty {
+      display: none;
+    }
+
+    .trama-table--cards td[data-label]::before {
+      content: attr(data-label);
+      color: var(--color-trama-muted);
+      font-size: 0.8125rem;
+    }
+
+    .trama-table--cards td:first-child {
+      padding-bottom: 6px;
+    }
+
+    .trama-table--cards .trama-table__chevron {
+      display: none;
+    }
   }
 
   .trama-thumb {
@@ -730,6 +793,11 @@
       --enter-rise: 0px;
     }
   }
+}
+
+/* Con un drawer abierto la pantalla de atras no tiene scroll */
+html:has(.trama-drawer[open]) {
+  overflow: hidden;
 }
 
 /* Títulos en Bricolage */

@@ -65,6 +65,7 @@ const TONES: Record<BlobTone, string> = {
     }
 
     .seal {
+      grid-area: 1 / 1;
       place-self: end;
     }
   `,
