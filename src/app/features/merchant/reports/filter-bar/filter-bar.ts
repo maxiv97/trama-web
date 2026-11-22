@@ -1,23 +1,22 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
+import { map, of } from 'rxjs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {
   DashboardFilterOptionsService,
   FilterOption,
 } from '../../../../core/services/dashboard-filter-options.service';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
+import { Dropdown, DropdownOption } from '../../../../shared/components/dropdown/dropdown';
+import { Segmented, SegmentOption } from '../../../../shared/components/segmented/segmented';
+import { mediaQuery, NARROW_SCREEN } from '../../../../shared/utils/media-query';
+import { FilterSheet } from '../../../../shared/components/filter-sheet/filter-sheet';
 
-interface PeriodPreset {
-  key: string;
-  label: string;
-}
-
-const PERIODS: PeriodPreset[] = [
-  { key: 'all', label: 'Todo el período' },
-  { key: 'this-month', label: 'Este mes' },
-  { key: 'last-month', label: 'Mes pasado' },
-  { key: 'last-3', label: 'Últimos 3 meses' },
+const PERIODS: SegmentOption[] = [
+  { value: 'all', label: 'Todo el período' },
+  { value: 'this-month', label: 'Este mes' },
+  { value: 'last-month', label: 'Mes pasado' },
+  { value: 'last-3', label: 'Últimos 3 meses' },
 ];
 
 const pad = (n: number): string => String(n).padStart(2, '0');
@@ -39,78 +38,79 @@ function rangeFor(key: string): { from?: string; to?: string } {
   }
 }
 
+function withAll(all: string, options: FilterOption[]): DropdownOption[] {
+  return [{ value: '', label: all }, ...options];
+}
+
 @Component({
   selector: 'app-reports-filter-bar',
+  imports: [Dropdown, FilterSheet, Segmented],
   template: `
-    <div class="space-y-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <select
+    <div class="flex flex-wrap items-center gap-3">
+      @if (narrow()) {
+        <app-dropdown
+          class="min-w-0 flex-1"
+          ariaLabel="Período"
+          [options]="periods"
           [value]="periodKey()"
-          (change)="onPeriod($any($event.target).value)"
-          aria-label="Período"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
-        >
-          @for (p of periods; track p.key) {
-            <option [value]="p.key">{{ p.label }}</option>
-          }
-        </select>
+          (valueChange)="choosePeriod($event)"
+        />
+      } @else {
+        <app-segmented
+          class="basis-full"
+          ariaLabel="Período"
+          [options]="periods"
+          [value]="periodKey()"
+          (valueChange)="choosePeriod($event)"
+        />
+      }
 
-        <select
-          [value]="filters.salesPointId() ?? ''"
-          (change)="filters.setSalesPoint($any($event.target).value || undefined)"
-          aria-label="Punto de venta"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
-        >
-          <option value="">Todos los puntos</option>
-          @for (o of salesPoints(); track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
+      <app-filter-sheet [active]="activeInSheet()" (clear)="clearSheet()">
+        <ng-template let-inSheet>
+          <div class="space-y-2 md:w-56">
+            @if (inSheet) {
+              <p class="trama-label text-trama-dark">Punto de venta</p>
+            }
+            <app-dropdown
+              ariaLabel="Punto de venta"
+              [options]="salesPoints()"
+              [value]="filters.salesPointId() ?? ''"
+              (valueChange)="filters.setSalesPoint($event || undefined)"
+            />
+          </div>
+          <div class="space-y-2 md:w-56">
+            @if (inSheet) {
+              <p class="trama-label mt-3 text-trama-dark">Categoría</p>
+            }
+            <app-dropdown
+              ariaLabel="Categoría"
+              [options]="categories()"
+              [value]="filters.category() ?? ''"
+              (valueChange)="filters.setCategory($event || undefined)"
+            />
+          </div>
+          <div class="space-y-2 md:w-56">
+            @if (inSheet) {
+              <p class="trama-label mt-3 text-trama-dark">Cedente</p>
+            }
+            <app-dropdown
+              ariaLabel="Cedente"
+              [options]="consignors()"
+              [value]="filters.consignorId() ?? ''"
+              (valueChange)="filters.setConsignor($event || undefined)"
+            />
+          </div>
+        </ng-template>
+      </app-filter-sheet>
 
-        <select
-          [value]="filters.category() ?? ''"
-          (change)="filters.setCategory($any($event.target).value || undefined)"
-          aria-label="Categoría"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
+      @if (!narrow() && filters.hasAny()) {
+        <button
+          type="button"
+          class="trama-btn trama-btn--ghost trama-btn--small"
+          (click)="clearAll()"
         >
-          <option value="">Todas las categorías</option>
-          @for (o of categories(); track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-
-        <select
-          [value]="filters.consignorId() ?? ''"
-          (change)="filters.setConsignor($any($event.target).value || undefined)"
-          aria-label="Cedente"
-          class="rounded-lg border border-trama-sand-200 bg-white px-3 py-2 text-sm"
-        >
-          <option value="">Todos los cedentes</option>
-          @for (o of consignors(); track o.value) {
-            <option [value]="o.value">{{ o.label }}</option>
-          }
-        </select>
-      </div>
-
-      @if (chips().length) {
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-semibold uppercase tracking-wide text-trama-dark/40">
-            Recorte activo
-          </span>
-          @for (chip of chips(); track chip.key) {
-            <span
-              class="inline-flex items-center gap-1.5 rounded-full border border-trama-green-200 bg-trama-green-50 px-3 py-1 text-xs font-medium text-trama-green-700"
-            >
-              {{ chip.label }}
-            </span>
-          }
-          <button
-            (click)="clear()"
-            class="text-xs font-semibold text-trama-brand underline"
-          >
-            Limpiar
-          </button>
-        </div>
+          Limpiar filtros
+        </button>
       }
     </div>
   `,
@@ -120,43 +120,59 @@ export class ReportsFilterBar {
   private readonly options = inject(DashboardFilterOptionsService);
   private readonly auth = inject(AuthService);
 
+  protected readonly narrow = mediaQuery(NARROW_SCREEN);
   protected readonly periods = PERIODS;
-  protected readonly periodKey = signal<string>('all');
+
+  protected readonly periodKey = computed(() => {
+    const from = this.filters.from();
+    const to = this.filters.to();
+    const match = PERIODS.find(({ value }) => {
+      const range = rangeFor(value);
+      return range.from === from && range.to === to;
+    });
+    return match?.value ?? 'all';
+  });
+
+  private readonly merchantId = this.auth.user()?.id;
 
   protected readonly categories = toSignal(
-    this.auth.user()?.id ? this.options.categories(this.auth.user()!.id) : of<FilterOption[]>([]),
-    { initialValue: [] as FilterOption[] },
+    (this.merchantId ? this.options.categories(this.merchantId) : of<FilterOption[]>([])).pipe(
+      map((options) => withAll('Todas las categorías', options)),
+    ),
+    { initialValue: withAll('Todas las categorías', []) },
   );
 
   protected readonly salesPoints = toSignal(
-    this.auth.user()?.id ? this.options.salesPoints(this.auth.user()!.id) : of<FilterOption[]>([]),
-    { initialValue: [] as FilterOption[] },
+    (this.merchantId ? this.options.salesPoints(this.merchantId) : of<FilterOption[]>([])).pipe(
+      map((options) => withAll('Todos los puntos', options)),
+    ),
+    { initialValue: withAll('Todos los puntos', []) },
   );
-  protected readonly consignors = toSignal(this.options.consignors(), {
-    initialValue: [] as FilterOption[],
-  });
 
-  protected readonly chips = computed(() => {
-    const chips: { key: string; label: string }[] = [];
-    const period = this.periods.find((p) => p.key === this.periodKey());
-    if (period && period.key !== 'all') chips.push({ key: 'period', label: period.label });
-    const sp = this.salesPoints().find((o) => o.value === this.filters.salesPointId());
-    if (sp) chips.push({ key: 'sp', label: sp.label });
-    const category = this.filters.category();
-    if (category) chips.push({ key: 'category', label: category });
-    const consignor = this.consignors().find((o) => o.value === this.filters.consignorId());
-    if (consignor) chips.push({ key: 'consignor', label: consignor.label });
-    return chips;
-  });
+  protected readonly consignors = toSignal(
+    this.options.consignors().pipe(map((options) => withAll('Todos los cedentes', options))),
+    { initialValue: withAll('Todos los cedentes', []) },
+  );
 
-  protected onPeriod(key: string): void {
-    this.periodKey.set(key);
-    const range = rangeFor(key);
+  protected readonly activeInSheet = computed(
+    () =>
+      Number(!!this.filters.salesPointId()) +
+      Number(!!this.filters.category()) +
+      Number(!!this.filters.consignorId()),
+  );
+
+  protected choosePeriod(key: string | null): void {
+    const range = rangeFor(key ?? 'all');
     this.filters.setPeriod(range.from, range.to);
   }
 
-  protected clear(): void {
-    this.periodKey.set('all');
+  protected clearSheet(): void {
+    this.filters.setSalesPoint(undefined);
+    this.filters.setCategory(undefined);
+    this.filters.setConsignor(undefined);
+  }
+
+  protected clearAll(): void {
     this.filters.clear();
   }
 }

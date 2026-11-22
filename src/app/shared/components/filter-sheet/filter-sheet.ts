@@ -95,7 +95,8 @@ export class FilterSheet {
   protected readonly filters = contentChild.required(TemplateRef);
 
   readonly active = input(0);
-  readonly results = input.required<number>();
+  // Cuántos resultados quedan, si no tiene el pie solo dice "Listo"
+  readonly results = input<number>();
 
   // Unidad de lo que estamos mostrando: cedentes, prendas, etc.
   readonly noun = input('resultados');
@@ -110,6 +111,7 @@ export class FilterSheet {
 
   protected readonly showLabel = computed(() => {
     const count = this.results();
+    if (count === undefined) return 'Listo';
     if (count === 0) return 'Sin resultados';
     return `Ver ${count} ${count === 1 ? this.nounOne() : this.noun()}`;
   });

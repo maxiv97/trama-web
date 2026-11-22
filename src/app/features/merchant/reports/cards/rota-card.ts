@@ -1,6 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { BehaviorSubject, catchError, combineLatest, map, Observable, of, startWith, switchMap } from 'rxjs';
+import {
+  BehaviorSubject,
+  catchError,
+  combineLatest,
+  map,
+  Observable,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import { RotationReport } from '../../../../core/models/rotation.model';
 import { DashboardFiltersService } from '../../../../core/services/dashboard-filters.service';
 import { GarmentsService } from '../../../../core/services/garments.service';
@@ -9,7 +18,7 @@ import { EmptyState } from '../../../../shared/components/empty-state/empty-stat
 import { ErrorState } from '../../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../../shared/components/loading-spinner/loading-spinner';
 import { downloadCsv } from '../../../../shared/csv/to-csv';
-import { DrillModal, DrillRow } from '../drill-modal/drill-modal';
+import { DetailRow, ReportDetail, ReportDetailData } from '../report-detail/report-detail';
 
 const DAY = 24 * 60 * 60 * 1000;
 const BUCKET_RANGE: Record<string, [number, number]> = {
@@ -29,13 +38,15 @@ type State =
 
 @Component({
   selector: 'app-rota-card',
-  imports: [LoadingSpinner, ErrorState, EmptyState, DrillModal],
+  imports: [LoadingSpinner, ErrorState, EmptyState, ReportDetail],
   template: `
     <div id="rep-rota" class="scroll-mt-4 rounded-2xl border border-trama-sand-200 bg-white p-5">
       <div class="mb-4 flex items-start justify-between gap-3">
         <div>
           <h2 class="font-display text-lg font-semibold text-trama-dark">¿Qué stock no rota?</h2>
-          <p class="mt-1 text-sm text-trama-dark/50">Prendas en stock por antigüedad, en cantidad.</p>
+          <p class="mt-1 text-sm text-trama-dark/50">
+            Prendas en stock por antigüedad, en cantidad.
+          </p>
         </div>
         @if (totalStock()) {
           <button
@@ -64,7 +75,11 @@ type State =
                 <span class="h-5 flex-1 overflow-hidden rounded bg-trama-sand-100">
                   <span
                     class="block h-5 rounded"
-                    [class]="bucket.bucket === '+120' || bucket.bucket === '91-120' ? 'bg-status-none' : 'bg-trama-green-700'"
+                    [class]="
+                      bucket.bucket === '+120' || bucket.bucket === '91-120'
+                        ? 'bg-status-none'
+                        : 'bg-trama-green-700'
+                    "
                     [style.width.%]="barWidth(bucket.count)"
                   ></span>
                 </span>
@@ -73,9 +88,11 @@ type State =
             }
           </div>
           <div class="mt-4 border-t border-trama-sand-100 pt-3 text-sm text-trama-dark/60">
-            <b class="text-trama-dark">{{ r.staleCount }}</b> prenda(s) llevan más de 90 días en stock.
+            <b class="text-trama-dark">{{ r.staleCount }}</b> prenda(s) llevan más de 90 días en
+            stock.
             @if (r.avgDaysToSale !== null) {
-              Días promedio a venta: <b class="text-trama-dark">{{ r.avgDaysToSale }}</b>.
+              Días promedio a venta: <b class="text-trama-dark">{{ r.avgDaysToSale }}</b
+              >.
             }
           </div>
         } @else {
@@ -83,14 +100,11 @@ type State =
         }
       }
 
-      @if (drill(); as d) {
-        <app-drill-modal
-          [title]="d.title"
-          [rows]="d.rows"
-          [csvName]="d.csvName"
-          (close)="drill.set(null)"
-        />
-      }
+      <app-report-detail
+        question="¿Qué stock no rota?"
+        [detail]="drill()"
+        (closed)="drill.set(null)"
+      />
     </div>
   `,
 })
@@ -99,7 +113,7 @@ export class RotaCard {
   private readonly reportsService = inject(ReportsService);
   private readonly garmentsService = inject(GarmentsService);
 
-  protected readonly drill = signal<{ title: string; rows: DrillRow[]; csvName: string } | null>(null);
+  protected readonly drill = signal<ReportDetailData | null>(null);
 
   private readonly filters$ = toObservable(this.filters.current);
   private readonly retry$ = new BehaviorSubject<void>(undefined);
@@ -144,7 +158,7 @@ export class RotaCard {
     const consignor = this.filters.consignorId();
     const now = Date.now();
     this.garmentsService.list().subscribe((garments) => {
-      const rows: DrillRow[] = garments
+      const rows: DetailRow[] = garments
         .filter((g) => {
           if (g.status !== 'in_stock' && g.status !== 'with_remarks') return false;
           if (sp && g.salesPointId !== sp) return false;
