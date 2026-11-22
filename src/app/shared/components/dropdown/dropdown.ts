@@ -145,7 +145,7 @@ let nextId = 0;
     }
 
     .panel {
-      position: absolute;
+      position: var(--trama-dropdown-panel, absolute);
       top: calc(100% + 4px);
       left: 0;
       z-index: 50;
