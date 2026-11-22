@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { afterRenderEffect, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TabOption, Tabs } from '../../../shared/components/tabs/tabs';
 import { CedentesCard } from './cards/cedentes-card';
 import { ConvieneCard } from './cards/conviene-card';
 import { DeboCard } from './cards/debo-card';
@@ -9,50 +12,81 @@ import { RotaCard } from './cards/rota-card';
 import { TardoCard } from './cards/tardo-card';
 import { ReportsFilterBar } from './filter-bar/filter-bar';
 
-interface IndexEntry {
-  group: string;
-  questions: { label: string; card: string }[];
+type ReportTab = 'pagos' | 'financiera' | 'stock' | 'cedentes';
+type ReportCard =
+  | 'debo'
+  | 'plazos'
+  | 'tardo'
+  | 'conviene'
+  | 'pdv'
+  | 'rota'
+  | 'cedentes'
+  | 'discrepancias';
+
+interface ReportSection {
+  tab: ReportTab;
+  label: string;
+  cards: ReportCard[];
+  questions: { label: string; card: ReportCard }[];
 }
 
-// The "¿Qué querés saber?" index: each question jumps to its card and (from F2/F3) sets that
-// card's sort. Cards are added in the following slices; the anchors resolve as they land.
-const INDEX: IndexEntry[] = [
+const SECTIONS: ReportSection[] = [
   {
-    group: 'Pagos y plazos',
+    tab: 'pagos',
+    label: 'Pagos y plazos',
+    cards: ['debo', 'plazos', 'tardo'],
     questions: [
-      { label: '¿Cuánto debo y qué está vencido?', card: 'rep-debo' },
-      { label: '¿Qué plazos están por vencer?', card: 'rep-plazos' },
-      { label: '¿Cuánto tardo en liquidar?', card: 'rep-tardo' },
+      { label: '¿Cuánto debo y qué está vencido?', card: 'debo' },
+      { label: '¿Qué plazos están por vencer?', card: 'plazos' },
+      { label: '¿Cuánto tardo en liquidar?', card: 'tardo' },
     ],
   },
   {
-    group: 'Financiera',
+    tab: 'financiera',
+    label: 'Financiera',
+    cards: ['conviene', 'pdv'],
     questions: [
-      { label: '¿Qué me conviene recibir?', card: 'rep-conviene' },
-      { label: '¿Cuánto gané por punto de venta?', card: 'rep-pdv' },
-      { label: '¿Cuál es mi ticket promedio?', card: 'rep-pdv' },
+      { label: '¿Qué me conviene recibir?', card: 'conviene' },
+      { label: '¿Cuánto gané por punto de venta?', card: 'pdv' },
+      { label: '¿Cuál es mi ticket promedio?', card: 'pdv' },
     ],
   },
   {
-    group: 'Stock y rotación',
+    tab: 'stock',
+    label: 'Stock y rotación',
+    cards: ['rota'],
     questions: [
-      { label: '¿Qué stock no rota?', card: 'rep-rota' },
-      { label: '¿Cuánto tarda en venderse una prenda?', card: 'rep-conviene' },
+      { label: '¿Qué stock no rota?', card: 'rota' },
+      { label: '¿Cuánto tarda en venderse una prenda?', card: 'conviene' },
     ],
   },
   {
-    group: 'Cedentes',
+    tab: 'cedentes',
+    label: 'Cedentes',
+    cards: ['cedentes', 'discrepancias'],
     questions: [
-      { label: '¿Quiénes me dan más ganancia?', card: 'rep-cedentes' },
-      { label: '¿Qué cedentes venden mejor lo que recibo?', card: 'rep-cedentes' },
-      { label: '¿Cuántas prendas recibidas tuvieron observaciones?', card: 'rep-discrepancias' },
+      { label: '¿Quiénes me dan más ganancia?', card: 'cedentes' },
+      { label: '¿Qué cedentes venden mejor lo que recibo?', card: 'cedentes' },
+      { label: '¿Cuántas prendas recibidas tuvieron observaciones?', card: 'discrepancias' },
     ],
   },
 ];
 
+const TAB_OPTIONS: TabOption[] = SECTIONS.map(({ tab, label }) => ({ value: tab, label }));
+
+function sectionOf(tab: string | null): ReportSection {
+  return SECTIONS.find((section) => section.tab === tab) ?? SECTIONS[0];
+}
+
+function tabOf(card: ReportCard): ReportTab {
+  return SECTIONS.find((section) => section.cards.includes(card))!.tab;
+}
+
 @Component({
   selector: 'app-reports',
   imports: [
+    RouterLink,
+    Tabs,
     ReportsFilterBar,
     DeboCard,
     PlazosCard,
@@ -68,58 +102,126 @@ const INDEX: IndexEntry[] = [
       <div>
         <h1 class="text-2xl font-semibold text-trama-dark">Reportes</h1>
         <p class="mt-1 text-sm text-trama-dark/50">
-          Elegí un recorte y respondé las preguntas del negocio. Tocá una pregunta para saltar a su
-          tarjeta.
+          Elegí un recorte y una sección. Tocá una pregunta para ir a su tarjeta.
         </p>
       </div>
 
-      <app-reports-filter-bar />
+      <!-- block: el componente es en línea y no tomaría el espacio de space-y -->
+      <app-reports-filter-bar class="block" />
 
-      <div class="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-        <nav class="hidden self-start lg:sticky lg:top-4 lg:block">
-          <div class="mb-2 text-xs font-semibold uppercase tracking-wide text-trama-dark/40">
-            ¿Qué querés saber?
-          </div>
-          <div class="space-y-4">
-            @for (entry of index; track entry.group) {
-              <div>
-                <div class="mb-1 text-xs font-medium text-trama-dark/50">{{ entry.group }}</div>
-                <div class="space-y-0.5">
-                  @for (q of entry.questions; track q.label) {
-                    <button
-                      type="button"
-                      (click)="jumpTo(q.card)"
-                      class="block w-full rounded-md px-2 py-1.5 text-left text-sm text-trama-dark/70 hover:bg-trama-sand-100"
-                    >
-                      {{ q.label }}
-                    </button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
+      <app-tabs
+        #tabs
+        ariaLabel="Secciones de reportes"
+        [options]="tabOptions"
+        [value]="section().tab"
+        (valueChange)="openTab($event)"
+      />
+
+      <section
+        role="tabpanel"
+        class="space-y-6"
+        [id]="tabs.panelId(section().tab)"
+        [attr.aria-labelledby]="tabs.tabId(section().tab)"
+      >
+        <nav class="questions" aria-label="¿Qué querés saber?">
+          @for (question of section().questions; track question.label) {
+            <a
+              class="question"
+              routerLink="."
+              replaceUrl
+              [queryParams]="{ seccion: tabOf(question.card), tarjeta: question.card }"
+              (click)="target.set(question.card)"
+            >
+              {{ question.label }}
+            </a>
+          }
         </nav>
 
-        <div class="min-w-0 space-y-6">
-          <app-debo-card />
-          <app-plazos-card />
-          <app-tardo-card />
-          <app-conviene-card />
-          <app-pdv-card />
-          <app-rota-card />
-          <app-cedentes-card />
-          <app-discrepancias-card />
-        </div>
-      </div>
+        @switch (section().tab) {
+          @case ('pagos') {
+            <app-debo-card />
+            <app-plazos-card />
+            <app-tardo-card />
+          }
+          @case ('financiera') {
+            <app-conviene-card />
+            <app-pdv-card />
+          }
+          @case ('stock') {
+            <app-rota-card />
+          }
+          @case ('cedentes') {
+            <app-cedentes-card />
+            <app-discrepancias-card />
+          }
+        }
+      </section>
     </div>
+  `,
+  styles: `
+    .questions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .question {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 6px 14px;
+      border: 1.5px solid var(--color-trama-thread-light);
+      border-radius: 999px;
+      color: var(--color-trama-dark);
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background-color var(--duration-fast);
+    }
+
+    .question:hover {
+      background-color: var(--color-trama-sand-50);
+    }
+
+    .question:focus-visible {
+      outline: 2px solid var(--color-trama-brand);
+      outline-offset: 2px;
+    }
   `,
 })
 export class Reports {
-  protected readonly index = INDEX;
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  // Scroll to the card instead of a fragment href — a `#anchor` link changes the route under
-  // hash-based routing (as in the prod deploy) and bounces to the landing.
-  protected jumpTo(cardId: string): void {
-    document.getElementById(cardId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  private readonly params = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
+  protected readonly tabOptions = TAB_OPTIONS;
+  protected readonly tabOf = tabOf;
+  protected readonly section = computed(() => sectionOf(this.params().get('seccion')));
+
+  protected readonly target = signal(this.route.snapshot.queryParamMap.get('tarjeta'));
+
+  constructor() {
+    afterRenderEffect(() => {
+      const card = this.target();
+      this.section();
+      if (!card) return;
+      const element = document.getElementById(`rep-${card}`);
+      if (!element) return;
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      this.target.set(null);
+    });
+  }
+
+  /** Al cambiar de pestaña, la tareta de la URL ya no aplica. */
+  protected openTab(tab: string): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { seccion: tab, tarjeta: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 }
