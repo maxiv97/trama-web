@@ -1,7 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { AbstractControl, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   BehaviorSubject,
   catchError,
@@ -24,8 +25,11 @@ import { GarmentsService } from '../../../core/services/garments.service';
 import { MerchantsService } from '../../../core/services/merchants.service';
 import { ProposalsService } from '../../../core/services/proposals.service';
 import { calculateSalePrice } from '../../../core/utils/price.util';
+import { compressImage } from '../../../core/utils/image.util';
+import { validationMessage } from '../../../core/utils/validation.util';
 import { ErrorState } from '../../../shared/components/error-state/error-state';
 import { LoadingSpinner } from '../../../shared/components/loading-spinner/loading-spinner';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 import { MoneyPipe } from '../../../shared/pipes/money.pipe';
 
 interface EditData {
@@ -44,6 +48,8 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
   value,
   label: CONDITION_LABELS[value],
 }));
+
+const MIN_PHOTOS = 3;
 
 @Component({
   selector: 'app-edit-consignment',
@@ -79,11 +85,28 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
             <h2 class="mb-3 text-sm font-semibold text-trama-dark">Fotos</h2>
             <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
               @for (photo of photos(); track $index) {
-                <div class="aspect-square overflow-hidden rounded-lg">
+                <div class="relative aspect-square overflow-hidden rounded-lg">
                   <img [src]="photo" alt="" class="h-full w-full object-cover" />
+                  <button
+                    type="button"
+                    (click)="removePhoto($index)"
+                    class="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                    aria-label="Quitar foto"
+                  >
+                    ✕
+                  </button>
                 </div>
               }
             </div>
+            <label
+              class="mt-3 inline-flex cursor-pointer items-center rounded-lg border border-trama-sand-200 px-4 py-2 text-sm font-medium text-trama-dark hover:bg-trama-sand-100"
+            >
+              Agregar fotos
+              <input type="file" accept="image/*" multiple class="hidden" (change)="onFilesSelected($event)" />
+            </label>
+            @if (photosError()) {
+              <p class="mt-2 text-xs text-status-none">Subí al menos {{ minPhotos }} fotos.</p>
+            }
           </section>
 
           <form [formGroup]="form" class="space-y-6">
@@ -97,6 +120,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                   formControlName="name"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (errorFor(form.controls.name); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Categoría</label>
@@ -109,6 +135,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                     <option [value]="category.label">{{ category.label }}</option>
                   }
                 </select>
+                @if (errorFor(form.controls.category); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Subcategoría</label>
@@ -121,6 +150,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                     <option [value]="subcategory">{{ subcategory }}</option>
                   }
                 </select>
+                @if (errorFor(form.controls.subcategory); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Marca</label>
@@ -128,6 +160,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                   formControlName="brand"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (errorFor(form.controls.brand); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Talle</label>
@@ -135,6 +170,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                   formControlName="size"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (errorFor(form.controls.size); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Color</label>
@@ -142,6 +180,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                   formControlName="color"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (errorFor(form.controls.color); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div>
                 <label class="mb-1 block text-sm font-medium text-trama-dark">Temporada</label>
@@ -154,6 +195,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                     <option [value]="season">{{ season }}</option>
                   }
                 </select>
+                @if (errorFor(form.controls.season); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div class="sm:col-span-2">
                 <span class="mb-1 block text-sm font-medium text-trama-dark">Condición</span>
@@ -165,6 +209,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                     </label>
                   }
                 </div>
+                @if (errorFor(form.controls.condition); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               <div class="sm:col-span-2">
                 <label class="mb-1 block text-sm font-medium text-trama-dark"
@@ -190,6 +237,9 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
                   min="1"
                   class="w-full rounded-lg border border-trama-sand-200 px-3 py-2 text-sm"
                 />
+                @if (errorFor(form.controls.consignorPrice); as msg) {
+                  <p class="mt-1 text-xs text-status-none">{{ msg }}</p>
+                }
               </div>
               @if (salePrice() !== null) {
                 <div class="rounded-xl bg-trama-sand-50 p-4 text-sm text-trama-dark/80">
@@ -200,13 +250,24 @@ const CONDITION_OPTIONS = (Object.keys(CONDITION_LABELS) as GarmentCondition[]).
             </section>
           </form>
 
-          <div class="flex justify-end">
+          @if (saveError()) {
+            <p class="text-sm text-status-none">{{ saveError() }}</p>
+          }
+          <div class="flex justify-end gap-3">
             <a
               [routerLink]="['/c/garment', d.garment.id]"
               class="rounded-lg px-4 py-2 text-sm font-medium text-trama-dark/70 hover:bg-trama-sand-100"
             >
               Cancelar
             </a>
+            <button
+              type="button"
+              (click)="save(d.garment)"
+              [disabled]="saving() || processing() > 0"
+              class="rounded-lg bg-trama-brand px-4 py-2 text-sm font-medium text-white hover:bg-trama-green-700 disabled:opacity-40"
+            >
+              {{ saving() ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
           </div>
         }
       </div>
@@ -220,12 +281,22 @@ export class EditConsignment {
   private readonly proposalsService = inject(ProposalsService);
   private readonly merchantsService = inject(MerchantsService);
   private readonly categoriesService = inject(CategoriesService);
+  private readonly toast = inject(ToastService);
+  private readonly router = inject(Router);
 
   private readonly garmentId = inject(ActivatedRoute).snapshot.paramMap.get('id') ?? '';
 
   protected readonly seasons = SEASONS;
   protected readonly conditions = CONDITION_OPTIONS;
   protected readonly photos = signal<string[]>([]);
+  protected readonly minPhotos = MIN_PHOTOS;
+  protected readonly attempted = signal(false);
+  protected readonly saving = signal(false);
+  protected readonly processing = signal(0);
+  protected readonly saveError = signal('');
+  protected readonly photosError = computed(
+    () => this.attempted() && this.photos().length < MIN_PHOTOS,
+  );
 
   protected readonly form = this.fb.group({
     name: ['', Validators.required],
@@ -292,6 +363,59 @@ export class EditConsignment {
     this.reload.next();
   }
 
+  protected errorFor(control: AbstractControl): string | null {
+    if (control.valid || !(control.touched || this.attempted())) return null;
+    return validationMessage(control.errors);
+  }
+
+  protected onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) this.addFiles(input.files);
+    input.value = '';
+  }
+
+  protected removePhoto(index: number): void {
+    this.photos.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  protected save(garment: Garment): void {
+    if (this.saving()) return;
+    if (this.form.invalid || this.photos().length < MIN_PHOTOS) {
+      this.attempted.set(true);
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const raw = this.form.getRawValue();
+    this.saving.set(true);
+    this.saveError.set('');
+    this.garmentsService
+      .updateDraft(garment.id, {
+        name: raw.name ?? '',
+        category: raw.category ?? '',
+        subcategory: raw.subcategory ?? '',
+        brand: raw.brand ?? '',
+        size: raw.size ?? '',
+        color: raw.color ?? '',
+        season: raw.season ?? '',
+        condition: raw.condition as GarmentCondition,
+        description: raw.description ?? '',
+        photos: this.photos(),
+        video: garment.video,
+        requestedConsignorPrice: Number(raw.consignorPrice),
+      })
+      .subscribe({
+        next: () => {
+          this.toast.show('Consignación actualizada', 'success');
+          this.router.navigate(['/c/garment', garment.id]);
+        },
+        error: (err: HttpErrorResponse) => {
+          this.saving.set(false);
+          this.saveError.set(this.saveErrorMessage(err));
+        },
+      });
+  }
+
   private load(): Observable<EditData> {
     return this.garmentsService.getById(this.garmentId).pipe(
       switchMap((garment) =>
@@ -326,5 +450,22 @@ export class EditConsignment {
       consignorPrice: proposal?.requestedConsignorPrice ?? null,
     });
     this.photos.set(garment.photos);
+  }
+  
+  private addFiles(files: FileList): void {
+    Array.from(files)
+      .filter((file) => file.type.startsWith('image/'))
+      .forEach((file) => {
+        this.processing.update((n) => n + 1);
+        compressImage(file)
+          .then((dataUrl) => this.photos.update((list) => [...list, dataUrl]))
+          .catch(() => this.toast.show('No se pudo procesar una foto', 'error'))
+          .finally(() => this.processing.update((n) => n - 1));
+      });
+  }
+
+  private saveErrorMessage(err: HttpErrorResponse): string {
+    const message = err.error?.message;
+    return typeof message === 'string' ? message : 'No pudimos guardar los cambios. Probá de nuevo.';
   }
 }
