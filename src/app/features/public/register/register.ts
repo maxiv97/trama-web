@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { AbstractControl, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Role } from '../../../core/models/user.model';
 import {
@@ -8,6 +8,7 @@ import {
   RegisterMerchantRequest,
 } from '../../../core/models/register.model';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PlatformConfigService } from '../../../core/services/platform-config.service';
 import { LogoIcon } from '../../../shared/components/logo/logo';
 import { Coords, MapPickerDirective } from '../../../shared/directives/map-picker.directive';
 import { notBlank, validationMessage } from '../../../core/utils/validation.util';
@@ -161,6 +162,9 @@ interface SummaryRow {
                 <p class="text-sm text-trama-dark/70">
                   Cargás tus artículos, acordás el precio con el comercio y cobrás cuando se venden.
                 </p>
+                @if (monetization()) {
+                  <p class="text-xs font-semibold text-trama-brand">Gratis para cedentes</p>
+                }
                 <ul class="mt-1 space-y-1 text-sm text-trama-dark/60">
                   <li>Datos personales y DNI</li>
                   <li>Barrio y ciudad</li>
@@ -183,6 +187,9 @@ interface SummaryRow {
                 <p class="text-sm text-trama-dark/70">
                   Configurás tu comisión, tus condiciones de venta y el punto de venta donde recibís.
                 </p>
+                @if (monetization()) {
+                  <p class="text-xs font-semibold text-trama-gold">Servicio pago para comercios</p>
+                }
                 <ul class="mt-1 space-y-1 text-sm text-trama-dark/60">
                   <li>Datos del comercio y CUIT</li>
                   <li>Punto de venta y horarios</li>
@@ -562,6 +569,12 @@ interface SummaryRow {
                         <p>El comercio recibe, revisa y exhibe las prendas acordadas, y registra cualquier discrepancia respecto de la propuesta al momento de la recepción.</p>
                         <p>El reparto de cada venta se rige por la comisión acordada. Un cambio posterior de comisión no afecta a las prendas ya acordadas.</p>
                         <p>Las liquidaciones se pagan el día del mes definido por el comercio, por las prendas vendidas en el período anterior.</p>
+                        @if (role() === 'merchant' && monetization()) {
+                          <p class="font-medium text-trama-dark">
+                            Trama es un servicio pago para comercios: con la suscripción aparecés ante los
+                            cedentes de tu zona que buscan dónde consignar.
+                          </p>
+                        }
                       </div>
                       <label class="flex items-start gap-3 text-sm text-trama-dark">
                         <input type="checkbox" [checked]="accepted()" (change)="accepted.set($any($event.target).checked)" class="mt-0.5 h-4 w-4 accent-trama-brand" />
@@ -684,8 +697,8 @@ export class Register {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly toast = inject(ToastService);
-  private readonly router = inject(Router);
 
+  protected readonly monetization = inject(PlatformConfigService).monetization;
   protected readonly days = DAYS;
   protected readonly timeSlots = TIME_SLOTS;
   protected readonly inputClass =
