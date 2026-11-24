@@ -39,6 +39,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'garment/:id/edit',
+        loadComponent: () =>
+          import('./features/consignor/edit-consignment/edit-consignment').then(
+            (m) => m.EditConsignment,
+          ),
+      },
+      {
         path: 'payouts',
         loadComponent: () =>
           import('./features/consignor/payouts/consignor-payouts').then((m) => m.ConsignorPayouts),
